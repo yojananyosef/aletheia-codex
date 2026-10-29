@@ -13,6 +13,7 @@ data/corpora/*
 !data/corpora/.gitkeep
 data/lexicon/*
 !data/lexicon/.gitkeep
+!data/lexicon/*.json
 .env
 .env.*
 !.env.example

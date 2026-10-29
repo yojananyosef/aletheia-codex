@@ -1,5 +1,9 @@
 ---
-import type { TextDirection, Verse } from "@bibleol/contracts";
+import type {
+  GrammarGroupDefinition,
+  TextDirection,
+  Verse,
+} from "@bibleol/contracts";
 import { t } from "../../i18n";
 import { scriptClass } from "../../lib/scripts";
 import WordToken from "./WordToken.astro";
@@ -10,10 +14,17 @@ interface Props {
   direction: TextDirection;
   translitLang: string;
   showTransliteration: boolean;
+  groups: GrammarGroupDefinition[];
 }
 
-const { verses, language, direction, translitLang, showTransliteration } =
-  Astro.props;
+const {
+  verses,
+  language,
+  direction,
+  translitLang,
+  showTransliteration,
+  groups,
+} = Astro.props;
 
 const verseScriptClass = scriptClass(language);
 ---
@@ -38,8 +49,10 @@ const verseScriptClass = scriptClass(language);
           <WordToken
             word={word}
             lang={language}
+            direction={direction}
             translitLang={translitLang}
             showTransliteration={showTransliteration}
+            groups={groups}
           />
         ))}
       </div>

@@ -77,8 +77,86 @@ test.describe("lectura hebrea", () => {
     await expect(panel.getByText("Gramática", { exact: true })).toBeVisible();
     await expect(panel.getByText("Lema", { exact: true })).toBeVisible();
     await expect(panel.locator("dt", { hasText: "Categoría" })).toBeVisible();
-    await expect(panel.locator("dd", { hasText: "preposición" })).toBeVisible();
-    await expect(panel.locator("dd", { hasText: "hebreo" })).toBeVisible();
+    await expect(
+      panel.locator("dd", { hasText: "preposición" }).first(),
+    ).toBeVisible();
+    await expect(
+      panel.locator("dd", { hasText: "hebreo" }).first(),
+    ).toBeVisible();
+    await expect(
+      panel.locator(".word__group-title", { hasText: "Forma en el texto" }),
+    ).toBeVisible();
+    await expect(
+      panel.locator(".word__group-title", { hasText: "Glosas" }),
+    ).toBeVisible();
+    await expect(
+      panel.locator("dd", { hasText: /en, a \(hora, lugar\)/ }),
+    ).toBeVisible();
+    await expect(panel.getByText("español", { exact: true })).toBeVisible();
+
+    const secondWord = page.locator(".verse").first().locator(".word").nth(1);
+    await secondWord.locator("summary").click();
+    const secondPanel = secondWord.locator(".word__panel");
+    await expect(
+      secondPanel.locator(".word__group-title", { hasText: "Morfología" }),
+    ).toBeVisible();
+    await expect(
+      secondPanel.getByText("Persona, género, número", { exact: true }),
+    ).toBeVisible();
+    await expect(
+      secondPanel.locator("dd", { hasText: "femenino, singular" }),
+    ).toBeVisible();
+  });
+
+  test("muestra la estructura gramatical y la conserva al navegar", async ({
+    page,
+  }) => {
+    await page.goto("/read/ETCBC4/Genesis/1");
+
+    await page.getByRole("link", { name: "Mostrar gramática" }).click();
+    await expect(page).toHaveURL(/\/Genesis\/1\?grammar=1$/);
+    await expect(page.locator(".verses")).toHaveCount(0);
+
+    const grammar = page.locator(".grammar");
+    await expect(grammar).toBeVisible();
+    await expect(grammar.locator(".grammar-legend__item")).toHaveCount(3);
+    await expect(
+      grammar.locator('[data-level="sentence"]').first(),
+    ).toContainText("Oración");
+    await expect(
+      grammar.locator('[data-level="clause"]').first(),
+    ).toContainText("xQtX: x-qatal-X");
+    await expect(
+      grammar.locator('[data-level="phrase"]').first(),
+    ).toContainText("PP fr. preposicional");
+    expect(nfc(await grammar.innerText())).toContain(nfc("בְּ"));
+
+    await page
+      .locator(".chapter-nav")
+      .first()
+      .locator(".chapter-step--next")
+      .click();
+    await expect(page).toHaveURL(/\/Genesis\/2\?grammar=1$/);
+    await expect(page.locator(".grammar")).toBeVisible();
+
+    await page.getByRole("link", { name: "Ocultar gramática" }).click();
+    await expect(page).not.toHaveURL(/grammar=1/);
+    await expect(page.locator(".verses")).toBeVisible();
+  });
+
+  test("combina la transliteración con la vista gramatical", async ({
+    page,
+  }) => {
+    await page.goto("/read/ETCBC4/Genesis/1?translit=1");
+
+    await page.getByRole("link", { name: "Mostrar gramática" }).click();
+    await expect(page).toHaveURL(/translit=1&grammar=1/);
+    await expect(page.locator(".word__translit").first()).toBeVisible();
+    await expect(page.locator(".grammar")).toBeVisible();
+
+    await page.getByRole("link", { name: "Ocultar gramática" }).click();
+    await expect(page).toHaveURL(/translit=1$/);
+    await expect(page.locator(".word__translit").first()).toBeVisible();
   });
 
   test("alterna la transliteración mediante un enlace", async ({ page }) => {
@@ -160,6 +238,30 @@ test.describe("lectura griega y latina", () => {
     await expect(
       page.getByRole("link", { name: /transliteración/i }),
     ).toHaveCount(0);
+
+    const firstWord = page.locator(".verse").first().locator(".word").first();
+    await firstWord.locator("summary").click();
+    const panel = firstWord.locator(".word__panel");
+    await expect(panel).toBeVisible();
+    await expect(
+      panel.locator(".word__group-title", { hasText: "Glosas" }),
+    ).toBeVisible();
+    await expect(panel.locator("dd", { hasText: "libro" })).toBeVisible();
+    await expect(panel.getByText("español", { exact: true })).toBeVisible();
+    await expect(panel.locator("dd", { hasText: "nominativo" })).toBeVisible();
+    await expect(panel.locator("dd", { hasText: "femenino" })).toBeVisible();
+
+    await page.goto("/read/nestle1904/Matthew/1?grammar=1");
+    const grammar = page.locator(".grammar");
+    await expect(grammar).toBeVisible();
+    await expect(grammar.locator(".grammar-legend__item")).toHaveCount(3);
+    await expect(
+      grammar.locator('[data-level="clause2"]').first(),
+    ).toContainText("Cláusula nivel 2");
+    await expect(
+      grammar.locator('[data-level="clause1"]').first(),
+    ).toContainText("Cláusula nivel 1");
+    expect(nfc(await grammar.innerText())).toContain(nfc("Βίβλος"));
   });
 
   test("el latín se muestra LTR con gramática", async ({ page }) => {
@@ -177,6 +279,15 @@ test.describe("lectura griega y latina", () => {
     await expect(panel).toBeVisible();
     await expect(panel.locator("dd", { hasText: "sustantivo" })).toBeVisible();
     await expect(panel.locator("dd", { hasText: "masculino" })).toBeVisible();
+    await expect(
+      panel.locator(".word__group-title", { hasText: "Morfología" }),
+    ).toBeVisible();
+
+    await page.goto("/read/jvulgate/Matthew/1?grammar=1");
+    await expect(page.locator(".grammar")).toBeVisible();
+    await expect(
+      page.locator('.grammar [data-level="sentence"]').first(),
+    ).toContainText("Oración");
   });
 });
 
@@ -250,6 +361,17 @@ test.describe("móvil", () => {
       () => document.documentElement.scrollWidth - window.innerWidth,
     );
     expect(overflow).toBeLessThanOrEqual(1);
+
+    await page.goto("/read/ETCBC4/Genesis/1?grammar=1");
+    await expect(page.locator(".grammar")).toBeVisible();
+    const grammarWord = page.locator(".grammar .word").first();
+    await grammarWord.locator("summary").click();
+    await expect(grammarWord.locator(".word__panel")).toBeVisible();
+
+    const grammarOverflow = await page.evaluate(
+      () => document.documentElement.scrollWidth - window.innerWidth,
+    );
+    expect(grammarOverflow).toBeLessThanOrEqual(1);
   });
 });
 
@@ -265,7 +387,17 @@ test.describe("tableta", () => {
     await firstWord.locator("summary").click();
     await expect(firstWord.locator(".word__panel")).toBeVisible();
 
-    const overflow = await page.evaluate(
+    let overflow = await page.evaluate(
+      () => document.documentElement.scrollWidth - window.innerWidth,
+    );
+    expect(overflow).toBeLessThanOrEqual(1);
+
+    await page.goto("/read/ETCBC4/Genesis/1?grammar=1");
+    const grammarWord = page.locator(".grammar .word").first();
+    await grammarWord.locator("summary").click();
+    await expect(grammarWord.locator(".word__panel")).toBeVisible();
+
+    overflow = await page.evaluate(
       () => document.documentElement.scrollWidth - window.innerWidth,
     );
     expect(overflow).toBeLessThanOrEqual(1);

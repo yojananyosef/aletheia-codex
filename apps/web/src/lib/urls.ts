@@ -4,6 +4,7 @@ function segment(value: string): string {
 
 export interface ChapterUrlOptions {
   transliteration?: boolean;
+  grammar?: boolean;
 }
 
 export function chapterUrl(
@@ -13,7 +14,15 @@ export function chapterUrl(
   options: ChapterUrlOptions = {},
 ): string {
   const path = `/read/${segment(corpusId)}/${segment(bookId)}/${chapter}`;
-  return options.transliteration ? `${path}?translit=1` : path;
+  const params = new URLSearchParams();
+  if (options.transliteration) {
+    params.set("translit", "1");
+  }
+  if (options.grammar) {
+    params.set("grammar", "1");
+  }
+  const query = params.toString();
+  return query ? `${path}?${query}` : path;
 }
 
 export function corpusUrl(corpusId: string, bookId: string): string {

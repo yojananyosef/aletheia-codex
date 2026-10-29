@@ -1,5 +1,5 @@
 {
-  "version": 1,
+  "version": 2,
   "generatedFrom": "BibleOL",
   "corpora": [
     {
@@ -51,8 +51,79 @@
           }
         },
         {
+          "key": "pdp",
+          "label": "Parte dependiente del discurso",
+          "kind": "enum",
+          "enum": "part_of_speech_t",
+          "values": {
+            "0": "art",
+            "1": "verb",
+            "2": "subs",
+            "3": "nmpr",
+            "4": "advb",
+            "5": "prep",
+            "6": "conj",
+            "7": "prps",
+            "8": "prde",
+            "9": "prin",
+            "10": "intj",
+            "11": "nega",
+            "12": "inrg",
+            "13": "adjv"
+          }
+        },
+        {
+          "key": "ls",
+          "label": "Conjunto lexical",
+          "kind": "enum",
+          "enum": "lexical_set_t",
+          "values": {
+            "1": "none",
+            "2": "nmdi",
+            "3": "nmcp",
+            "4": "padv",
+            "5": "afad",
+            "6": "ppre",
+            "7": "cjad",
+            "8": "ordn",
+            "9": "vbcp",
+            "10": "mult",
+            "11": "focp",
+            "12": "ques",
+            "13": "gntl",
+            "14": "quot",
+            "15": "card"
+          }
+        },
+        {
+          "key": "verb_class",
+          "label": "Clase verbal",
+          "kind": "multi-enum",
+          "enum": "verb_class_t",
+          "values": {
+            "1": "regular",
+            "2": "i_guttural",
+            "3": "ii_guttural",
+            "4": "iii_guttural",
+            "5": "i_aleph",
+            "6": "iii_aleph",
+            "7": "iii_he",
+            "8": "i_nun",
+            "9": "analog_i_nun",
+            "10": "i_waw",
+            "11": "analog_i_waw",
+            "12": "i_yod",
+            "13": "i_waw_yod",
+            "14": "ii_waw",
+            "15": "ii_yod",
+            "16": "four_consonants",
+            "17": "geminate",
+            "18": "hjh_xjh"
+          }
+        },
+        {
           "key": "vs",
-          "label": "Tallo verbal",
+          "label": "Raíz",
           "kind": "enum",
           "enum": "verbal_stem_t",
           "values": {
@@ -86,7 +157,7 @@
         },
         {
           "key": "vt",
-          "label": "Tiempo verbal",
+          "label": "Tiempo",
           "kind": "enum",
           "enum": "verbal_tense_t",
           "values": {
@@ -160,6 +231,47 @@
           }
         },
         {
+          "key": "suffix_person",
+          "label": "Persona del sufijo",
+          "kind": "enum",
+          "enum": "person_t",
+          "values": {
+            "-1": "NA",
+            "0": "unknown",
+            "1": "p1",
+            "2": "p2",
+            "3": "p3",
+            "4": "absent"
+          }
+        },
+        {
+          "key": "suffix_gender",
+          "label": "Género del sufijo",
+          "kind": "enum",
+          "enum": "gender_t",
+          "values": {
+            "-1": "NA",
+            "0": "unknown",
+            "1": "f",
+            "2": "m",
+            "3": "absent"
+          }
+        },
+        {
+          "key": "suffix_number",
+          "label": "Número del sufijo",
+          "kind": "enum",
+          "enum": "number_t",
+          "values": {
+            "-1": "NA",
+            "0": "unknown",
+            "1": "sg",
+            "2": "du",
+            "3": "pl",
+            "4": "absent"
+          }
+        },
+        {
           "key": "language",
           "label": "Idioma",
           "kind": "enum",
@@ -168,8 +280,678 @@
             "1": "Hebrew",
             "2": "Aramaic"
           }
+        },
+        {
+          "key": "lexeme_occurrences",
+          "label": "Ocurrencias",
+          "kind": "number"
+        },
+        {
+          "key": "frequency_rank",
+          "label": "Rango de frecuencia",
+          "kind": "number"
+        },
+        {
+          "key": "g_lex_utf8",
+          "label": "Lexical stem",
+          "kind": "string",
+          "table": "word_mdf_g_lex_utf8_set"
+        },
+        {
+          "key": "g_vbs_utf8",
+          "label": "Formación de raíz",
+          "kind": "string",
+          "table": "word_mdf_g_vbs_utf8_set"
+        },
+        {
+          "key": "g_pfm_utf8",
+          "label": "Preformativo",
+          "kind": "string",
+          "table": "word_mdf_g_pfm_utf8_set"
+        },
+        {
+          "key": "g_vbe_utf8",
+          "label": "Terminación verbal",
+          "kind": "string",
+          "table": "word_mdf_g_vbe_utf8_set"
+        },
+        {
+          "key": "g_nme_utf8",
+          "label": "Terminación nominal",
+          "kind": "string",
+          "table": "word_mdf_g_nme_utf8_set"
+        },
+        {
+          "key": "g_prs_utf8",
+          "label": "Sufijo pronominal",
+          "kind": "string",
+          "table": "word_mdf_g_prs_utf8_set"
+        },
+        {
+          "key": "g_uvf_utf8",
+          "label": "Final univalente",
+          "kind": "string",
+          "table": "word_mdf_g_uvf_utf8_set"
+        },
+        {
+          "key": "qere_utf8",
+          "label": "Qere",
+          "kind": "string",
+          "table": "word_mdf_qere_utf8_set"
+        },
+        {
+          "key": "g_voc_lex_translit",
+          "label": "Lexema (transliterado)",
+          "kind": "string",
+          "table": "word_mdf_g_voc_lex_translit_set"
+        },
+        {
+          "key": "lex",
+          "label": "Código de lexema",
+          "kind": "string",
+          "table": "word_mdf_lex_set",
+          "hidden": true
         }
       ],
+      "groups": [
+        {
+          "key": "form_in_text",
+          "label": "Forma en el texto",
+          "features": [
+            "g_lex_utf8",
+            "g_vbs_utf8",
+            "g_pfm_utf8",
+            "g_vbe_utf8",
+            "g_nme_utf8",
+            "g_prs_utf8",
+            "g_uvf_utf8",
+            "qere_utf8"
+          ],
+          "metaFeatures": []
+        },
+        {
+          "key": "lexeme",
+          "label": "Lexema",
+          "features": [
+            "g_voc_lex_translit",
+            "lexeme_occurrences",
+            "frequency_rank",
+            "sp",
+            "pdp",
+            "ls",
+            "verb_class",
+            "language"
+          ],
+          "metaFeatures": []
+        },
+        {
+          "key": "morphology",
+          "label": "Morfología",
+          "features": ["vs", "vt", "st"],
+          "metaFeatures": [
+            {
+              "key": "pgn",
+              "label": "Persona, género, número",
+              "features": ["ps", "gn", "nu"]
+            },
+            {
+              "key": "suffix_pgn",
+              "label": "Sufijo: persona, género, número",
+              "features": ["suffix_person", "suffix_gender", "suffix_number"]
+            }
+          ]
+        },
+        {
+          "key": "glosses",
+          "label": "Glosas",
+          "features": [],
+          "metaFeatures": []
+        }
+      ],
+      "levels": [
+        {
+          "key": "word",
+          "label": "Palabra",
+          "table": "word_objects",
+          "rank": 0,
+          "color": null,
+          "features": [
+            {
+              "key": "sp",
+              "label": "Categoría",
+              "kind": "enum",
+              "enum": "part_of_speech_t",
+              "values": {
+                "0": "art",
+                "1": "verb",
+                "2": "subs",
+                "3": "nmpr",
+                "4": "advb",
+                "5": "prep",
+                "6": "conj",
+                "7": "prps",
+                "8": "prde",
+                "9": "prin",
+                "10": "intj",
+                "11": "nega",
+                "12": "inrg",
+                "13": "adjv"
+              }
+            },
+            {
+              "key": "pdp",
+              "label": "Parte dependiente del discurso",
+              "kind": "enum",
+              "enum": "part_of_speech_t",
+              "values": {
+                "0": "art",
+                "1": "verb",
+                "2": "subs",
+                "3": "nmpr",
+                "4": "advb",
+                "5": "prep",
+                "6": "conj",
+                "7": "prps",
+                "8": "prde",
+                "9": "prin",
+                "10": "intj",
+                "11": "nega",
+                "12": "inrg",
+                "13": "adjv"
+              }
+            },
+            {
+              "key": "ls",
+              "label": "Conjunto lexical",
+              "kind": "enum",
+              "enum": "lexical_set_t",
+              "values": {
+                "1": "none",
+                "2": "nmdi",
+                "3": "nmcp",
+                "4": "padv",
+                "5": "afad",
+                "6": "ppre",
+                "7": "cjad",
+                "8": "ordn",
+                "9": "vbcp",
+                "10": "mult",
+                "11": "focp",
+                "12": "ques",
+                "13": "gntl",
+                "14": "quot",
+                "15": "card"
+              }
+            },
+            {
+              "key": "verb_class",
+              "label": "Clase verbal",
+              "kind": "multi-enum",
+              "enum": "verb_class_t",
+              "values": {
+                "1": "regular",
+                "2": "i_guttural",
+                "3": "ii_guttural",
+                "4": "iii_guttural",
+                "5": "i_aleph",
+                "6": "iii_aleph",
+                "7": "iii_he",
+                "8": "i_nun",
+                "9": "analog_i_nun",
+                "10": "i_waw",
+                "11": "analog_i_waw",
+                "12": "i_yod",
+                "13": "i_waw_yod",
+                "14": "ii_waw",
+                "15": "ii_yod",
+                "16": "four_consonants",
+                "17": "geminate",
+                "18": "hjh_xjh"
+              }
+            },
+            {
+              "key": "vs",
+              "label": "Raíz",
+              "kind": "enum",
+              "enum": "verbal_stem_t",
+              "values": {
+                "-1": "NA",
+                "0": "qal",
+                "1": "piel",
+                "2": "hif",
+                "3": "nif",
+                "4": "pual",
+                "5": "haf",
+                "6": "hit",
+                "7": "htpe",
+                "8": "hof",
+                "9": "pasq",
+                "10": "hsht",
+                "11": "hotp",
+                "12": "nit",
+                "13": "etpa",
+                "14": "tif",
+                "15": "afel",
+                "16": "shaf",
+                "17": "peal",
+                "18": "pael",
+                "19": "peil",
+                "20": "htpa",
+                "21": "etpe",
+                "24": "poel",
+                "25": "poal",
+                "26": "htpo"
+              }
+            },
+            {
+              "key": "vt",
+              "label": "Tiempo",
+              "kind": "enum",
+              "enum": "verbal_tense_t",
+              "values": {
+                "-1": "NA",
+                "1": "impf",
+                "2": "perf",
+                "3": "impv",
+                "4": "infc",
+                "5": "infa",
+                "6": "ptca",
+                "11": "wayq",
+                "12": "weyq",
+                "62": "ptcp",
+                "101": "juss",
+                "102": "coho",
+                "103": "emim"
+              }
+            },
+            {
+              "key": "st",
+              "label": "Estado",
+              "kind": "enum",
+              "enum": "state_t",
+              "values": {
+                "-1": "NA",
+                "0": "unknown",
+                "1": "c",
+                "2": "a",
+                "3": "e"
+              }
+            },
+            {
+              "key": "ps",
+              "label": "Persona",
+              "kind": "enum",
+              "enum": "person_t",
+              "values": {
+                "-1": "NA",
+                "0": "unknown",
+                "1": "p1",
+                "2": "p2",
+                "3": "p3",
+                "4": "absent"
+              }
+            },
+            {
+              "key": "gn",
+              "label": "Género",
+              "kind": "enum",
+              "enum": "gender_t",
+              "values": {
+                "-1": "NA",
+                "0": "unknown",
+                "1": "f",
+                "2": "m",
+                "3": "absent"
+              }
+            },
+            {
+              "key": "nu",
+              "label": "Número",
+              "kind": "enum",
+              "enum": "number_t",
+              "values": {
+                "-1": "NA",
+                "0": "unknown",
+                "1": "sg",
+                "2": "du",
+                "3": "pl",
+                "4": "absent"
+              }
+            },
+            {
+              "key": "suffix_person",
+              "label": "Persona del sufijo",
+              "kind": "enum",
+              "enum": "person_t",
+              "values": {
+                "-1": "NA",
+                "0": "unknown",
+                "1": "p1",
+                "2": "p2",
+                "3": "p3",
+                "4": "absent"
+              }
+            },
+            {
+              "key": "suffix_gender",
+              "label": "Género del sufijo",
+              "kind": "enum",
+              "enum": "gender_t",
+              "values": {
+                "-1": "NA",
+                "0": "unknown",
+                "1": "f",
+                "2": "m",
+                "3": "absent"
+              }
+            },
+            {
+              "key": "suffix_number",
+              "label": "Número del sufijo",
+              "kind": "enum",
+              "enum": "number_t",
+              "values": {
+                "-1": "NA",
+                "0": "unknown",
+                "1": "sg",
+                "2": "du",
+                "3": "pl",
+                "4": "absent"
+              }
+            },
+            {
+              "key": "language",
+              "label": "Idioma",
+              "kind": "enum",
+              "enum": "language_t",
+              "values": {
+                "1": "Hebrew",
+                "2": "Aramaic"
+              }
+            },
+            {
+              "key": "lexeme_occurrences",
+              "label": "Ocurrencias",
+              "kind": "number"
+            },
+            {
+              "key": "frequency_rank",
+              "label": "Rango de frecuencia",
+              "kind": "number"
+            },
+            {
+              "key": "g_lex_utf8",
+              "label": "Lexical stem",
+              "kind": "string",
+              "table": "word_mdf_g_lex_utf8_set"
+            },
+            {
+              "key": "g_vbs_utf8",
+              "label": "Formación de raíz",
+              "kind": "string",
+              "table": "word_mdf_g_vbs_utf8_set"
+            },
+            {
+              "key": "g_pfm_utf8",
+              "label": "Preformativo",
+              "kind": "string",
+              "table": "word_mdf_g_pfm_utf8_set"
+            },
+            {
+              "key": "g_vbe_utf8",
+              "label": "Terminación verbal",
+              "kind": "string",
+              "table": "word_mdf_g_vbe_utf8_set"
+            },
+            {
+              "key": "g_nme_utf8",
+              "label": "Terminación nominal",
+              "kind": "string",
+              "table": "word_mdf_g_nme_utf8_set"
+            },
+            {
+              "key": "g_prs_utf8",
+              "label": "Sufijo pronominal",
+              "kind": "string",
+              "table": "word_mdf_g_prs_utf8_set"
+            },
+            {
+              "key": "g_uvf_utf8",
+              "label": "Final univalente",
+              "kind": "string",
+              "table": "word_mdf_g_uvf_utf8_set"
+            },
+            {
+              "key": "qere_utf8",
+              "label": "Qere",
+              "kind": "string",
+              "table": "word_mdf_qere_utf8_set"
+            },
+            {
+              "key": "g_voc_lex_translit",
+              "label": "Lexema (transliterado)",
+              "kind": "string",
+              "table": "word_mdf_g_voc_lex_translit_set"
+            },
+            {
+              "key": "lex",
+              "label": "Código de lexema",
+              "kind": "string",
+              "table": "word_mdf_lex_set",
+              "hidden": true
+            }
+          ]
+        },
+        {
+          "key": "phrase",
+          "label": "Frase",
+          "table": "phrase_objects",
+          "rank": 1,
+          "color": "#43B02A",
+          "features": [
+            {
+              "key": "typ",
+              "label": "Tipo",
+              "kind": "enum",
+              "enum": "phrase_type_t",
+              "values": {
+                "1": "VP",
+                "2": "NP",
+                "3": "PrNP",
+                "4": "AdvP",
+                "5": "PP",
+                "6": "CP",
+                "7": "PPrP",
+                "8": "DPrP",
+                "9": "IPrP",
+                "10": "InjP",
+                "11": "NegP",
+                "12": "InrP",
+                "13": "AdjP"
+              }
+            },
+            {
+              "key": "function",
+              "label": "Función",
+              "kind": "enum",
+              "enum": "phrase_function_t",
+              "values": {
+                "1": "Adju",
+                "2": "Cmpl",
+                "3": "Conj",
+                "4": "EPPr",
+                "5": "ExsS",
+                "6": "Exst",
+                "7": "Frnt",
+                "8": "Intj",
+                "9": "IntS",
+                "10": "Loca",
+                "11": "Modi",
+                "12": "ModS",
+                "13": "NCop",
+                "14": "NCoS",
+                "15": "Nega",
+                "16": "Objc",
+                "17": "PrAd",
+                "18": "PrcS",
+                "19": "PreC",
+                "20": "Pred",
+                "21": "PreO",
+                "22": "PreS",
+                "23": "PtcO",
+                "24": "Ques",
+                "25": "Rela",
+                "26": "Subj",
+                "27": "Supp",
+                "28": "Time",
+                "29": "Unkn",
+                "30": "Voct"
+              }
+            },
+            {
+              "key": "det",
+              "label": "Determinación",
+              "kind": "enum",
+              "enum": "phrase_determination_t",
+              "values": {
+                "-1": "NA",
+                "0": "und",
+                "1": "det"
+              }
+            },
+            {
+              "key": "rela",
+              "label": "Relación",
+              "kind": "enum",
+              "enum": "phrase_relation_t",
+              "values": {
+                "1": "NA",
+                "2": "PrAd",
+                "3": "Resu"
+              }
+            }
+          ]
+        },
+        {
+          "key": "clause",
+          "label": "Cláusula",
+          "table": "clause_objects",
+          "rank": 2,
+          "color": "#C35CF4",
+          "features": [
+            {
+              "key": "typ",
+              "label": "Tipo",
+              "kind": "enum",
+              "enum": "clause_type_t",
+              "values": {
+                "1": "AjCl",
+                "2": "CPen",
+                "3": "Ellp",
+                "4": "InfA",
+                "5": "InfC",
+                "6": "MSyn",
+                "7": "NmCl",
+                "8": "Ptcp",
+                "9": "Reop",
+                "10": "Unkn",
+                "11": "Voct",
+                "12": "Way0",
+                "13": "WayX",
+                "14": "WIm0",
+                "15": "WImX",
+                "16": "WQt0",
+                "17": "WQtX",
+                "18": "WxI0",
+                "19": "WXIm",
+                "20": "WxIX",
+                "21": "WxQ0",
+                "22": "WXQt",
+                "23": "WxQX",
+                "24": "WxY0",
+                "25": "WXYq",
+                "26": "WxYX",
+                "27": "WYq0",
+                "28": "WYqX",
+                "29": "xIm0",
+                "30": "XImp",
+                "31": "xImX",
+                "32": "XPos",
+                "33": "xQt0",
+                "34": "XQtl",
+                "35": "xQtX",
+                "36": "xYq0",
+                "37": "XYqt",
+                "38": "xYqX",
+                "39": "ZIm0",
+                "40": "ZImX",
+                "41": "ZQt0",
+                "42": "ZQtX",
+                "43": "ZYq0",
+                "44": "ZYqX"
+              }
+            },
+            {
+              "key": "kind",
+              "label": "Clase",
+              "kind": "enum",
+              "enum": "clause_kind_t",
+              "values": {
+                "0": "unknown",
+                "1": "VC",
+                "2": "NC",
+                "3": "WP"
+              }
+            },
+            {
+              "key": "rela",
+              "label": "Relación",
+              "kind": "enum",
+              "enum": "clause_constituent_relation_t",
+              "values": {
+                "1": "NA",
+                "2": "Adju",
+                "3": "Attr",
+                "4": "Cmpl",
+                "5": "Coor",
+                "6": "Objc",
+                "7": "PrAd",
+                "8": "PreC",
+                "9": "ReVo",
+                "10": "Resu",
+                "11": "RgRc",
+                "12": "Spec",
+                "13": "Subj"
+              }
+            },
+            {
+              "key": "txt",
+              "label": "Tipo de texto",
+              "kind": "string",
+              "table": "clause_mdf_txt_set"
+            },
+            {
+              "key": "domain",
+              "label": "Dominio",
+              "kind": "string",
+              "table": null
+            }
+          ]
+        },
+        {
+          "key": "sentence",
+          "label": "Oración",
+          "table": "sentence_objects",
+          "rank": 3,
+          "color": "#006187",
+          "features": []
+        }
+      ],
+      "gloss": {
+        "file": "ETCBC4.json",
+        "languages": ["es", "en"],
+        "strategy": "stem"
+      },
       "books": [
         {
           "id": "Genesis",
@@ -466,6 +1248,55 @@
           }
         },
         {
+          "key": "case",
+          "label": "Caso",
+          "kind": "enum",
+          "enum": "case_t",
+          "values": {
+            "1": "NA",
+            "2": "nominative",
+            "3": "vocative",
+            "4": "genitive",
+            "5": "dative",
+            "6": "accusative"
+          }
+        },
+        {
+          "key": "number",
+          "label": "Número",
+          "kind": "enum",
+          "enum": "number_t",
+          "values": {
+            "1": "NA",
+            "2": "singular",
+            "3": "plural"
+          }
+        },
+        {
+          "key": "gender",
+          "label": "Género",
+          "kind": "enum",
+          "enum": "gender_t",
+          "values": {
+            "1": "NA",
+            "2": "masculine",
+            "3": "feminine",
+            "4": "neuter"
+          }
+        },
+        {
+          "key": "person",
+          "label": "Persona",
+          "kind": "enum",
+          "enum": "person_t",
+          "values": {
+            "1": "NA",
+            "2": "first_person",
+            "3": "second_person",
+            "4": "third_person"
+          }
+        },
+        {
           "key": "tense",
           "label": "Tiempo",
           "kind": "enum",
@@ -518,22 +1349,8 @@
           }
         },
         {
-          "key": "case",
-          "label": "Caso",
-          "kind": "enum",
-          "enum": "case_t",
-          "values": {
-            "1": "NA",
-            "2": "nominative",
-            "3": "vocative",
-            "4": "genitive",
-            "5": "dative",
-            "6": "accusative"
-          }
-        },
-        {
-          "key": "number",
-          "label": "Número",
+          "key": "possessor_number",
+          "label": "Número del poseedor",
           "kind": "enum",
           "enum": "number_t",
           "values": {
@@ -543,30 +1360,515 @@
           }
         },
         {
-          "key": "gender",
-          "label": "Género",
+          "key": "suffix",
+          "label": "Sufijo",
           "kind": "enum",
-          "enum": "gender_t",
+          "enum": "suffix_t",
           "values": {
             "1": "NA",
-            "2": "masculine",
-            "3": "feminine",
-            "4": "neuter"
+            "2": "superlative",
+            "3": "comparative",
+            "4": "interrogative",
+            "5": "negative",
+            "6": "attic",
+            "7": "particle_attached",
+            "8": "crasis"
           }
         },
         {
-          "key": "person",
-          "label": "Persona",
+          "key": "verb_type",
+          "label": "Tipo verbal",
           "kind": "enum",
-          "enum": "person_t",
+          "enum": "verb_type_t",
           "values": {
             "1": "NA",
-            "2": "first_person",
-            "3": "second_person",
-            "4": "third_person"
+            "2": "irregular",
+            "3": "alpha",
+            "4": "beta",
+            "5": "gamma",
+            "6": "delta",
+            "7": "epsilon",
+            "8": "epsilon_upsilon",
+            "9": "zeta",
+            "10": "eta",
+            "11": "theta",
+            "12": "iota",
+            "13": "kappa",
+            "14": "lambda",
+            "15": "mu",
+            "16": "mu_iota",
+            "17": "nu",
+            "18": "omicron",
+            "19": "pi",
+            "20": "rho",
+            "21": "sigma_kappa",
+            "22": "tau",
+            "23": "upsilon",
+            "24": "phi",
+            "25": "khi"
           }
+        },
+        {
+          "key": "noun_declension",
+          "label": "Declinación nominal",
+          "kind": "enum",
+          "enum": "noun_declension_t",
+          "values": {
+            "1": "NA",
+            "2": "first_eta",
+            "3": "first_alpha_breve",
+            "4": "first_alpha_macron",
+            "5": "first_alpha_macron_doric",
+            "6": "second_d",
+            "7": "second_attic",
+            "8": "third_d",
+            "9": "indeclinable",
+            "10": "irregular"
+          }
+        },
+        {
+          "key": "noun_stem",
+          "label": "Raíz nominal",
+          "kind": "enum",
+          "enum": "noun_stem_t",
+          "values": {
+            "1": "NA",
+            "2": "indeclinable",
+            "3": "irregular",
+            "4": "alpha",
+            "5": "beta",
+            "6": "gamma",
+            "7": "delta",
+            "8": "epsilon_upsilon",
+            "9": "iota",
+            "10": "kappa",
+            "11": "kappa_tau",
+            "12": "nu",
+            "13": "nu_tau",
+            "14": "omicron",
+            "15": "omicron_upsilon",
+            "16": "pi",
+            "17": "rho",
+            "18": "sigma",
+            "19": "tau",
+            "20": "upsilon",
+            "21": "khi",
+            "22": "omega"
+          }
+        },
+        {
+          "key": "strongs",
+          "label": "Número Strong",
+          "kind": "number"
+        },
+        {
+          "key": "strongs_unreliable",
+          "label": "Strong no fiable",
+          "kind": "enum",
+          "enum": "boolean_t",
+          "values": {
+            "0": "false",
+            "1": "true"
+          }
+        },
+        {
+          "key": "lexeme_occurrences",
+          "label": "Ocurrencias",
+          "kind": "number"
+        },
+        {
+          "key": "frequency_rank",
+          "label": "Rango de frecuencia",
+          "kind": "number"
         }
       ],
+      "groups": [
+        {
+          "key": "lexeme",
+          "label": "Lexema",
+          "features": [
+            "strongs",
+            "strongs_unreliable",
+            "lexeme_occurrences",
+            "frequency_rank",
+            "psp",
+            "verb_type",
+            "noun_declension",
+            "noun_stem"
+          ],
+          "metaFeatures": []
+        },
+        {
+          "key": "morphology",
+          "label": "Morfología",
+          "features": [
+            "case",
+            "possessor_number",
+            "tense",
+            "mood",
+            "voice",
+            "suffix"
+          ],
+          "metaFeatures": [
+            {
+              "key": "pgn",
+              "label": "Persona, género, número",
+              "features": ["person", "gender", "number"]
+            }
+          ]
+        },
+        {
+          "key": "glosses",
+          "label": "Glosas",
+          "features": [],
+          "metaFeatures": []
+        }
+      ],
+      "levels": [
+        {
+          "key": "word",
+          "label": "Palabra",
+          "table": "word_objects",
+          "rank": 0,
+          "color": null,
+          "features": [
+            {
+              "key": "psp",
+              "label": "Categoría",
+              "kind": "enum",
+              "enum": "psp_t",
+              "values": {
+                "1": "NA",
+                "2": "adverb",
+                "3": "conjunction",
+                "4": "cond",
+                "5": "particle",
+                "6": "preposition",
+                "7": "interjection",
+                "8": "aramaic",
+                "9": "hebrew",
+                "10": "proper_noun_indeclinable",
+                "11": "numeral_indeclinable",
+                "12": "letter_indeclinable",
+                "13": "noun_other_type_indeclinable",
+                "14": "noun",
+                "15": "adjective",
+                "16": "relative_pronoun",
+                "17": "reciprocal_pronoun",
+                "18": "demonstrative_pronoun",
+                "19": "article",
+                "20": "correlative_pronoun",
+                "21": "interrogative_pronoun",
+                "22": "indefinite_pronoun",
+                "23": "correlative_or_interrogative_pronoun",
+                "24": "reflexive_pronoun",
+                "25": "possessive_pronoun",
+                "26": "personal_pronoun",
+                "27": "verb"
+              }
+            },
+            {
+              "key": "case",
+              "label": "Caso",
+              "kind": "enum",
+              "enum": "case_t",
+              "values": {
+                "1": "NA",
+                "2": "nominative",
+                "3": "vocative",
+                "4": "genitive",
+                "5": "dative",
+                "6": "accusative"
+              }
+            },
+            {
+              "key": "number",
+              "label": "Número",
+              "kind": "enum",
+              "enum": "number_t",
+              "values": {
+                "1": "NA",
+                "2": "singular",
+                "3": "plural"
+              }
+            },
+            {
+              "key": "gender",
+              "label": "Género",
+              "kind": "enum",
+              "enum": "gender_t",
+              "values": {
+                "1": "NA",
+                "2": "masculine",
+                "3": "feminine",
+                "4": "neuter"
+              }
+            },
+            {
+              "key": "person",
+              "label": "Persona",
+              "kind": "enum",
+              "enum": "person_t",
+              "values": {
+                "1": "NA",
+                "2": "first_person",
+                "3": "second_person",
+                "4": "third_person"
+              }
+            },
+            {
+              "key": "tense",
+              "label": "Tiempo",
+              "kind": "enum",
+              "enum": "tense_t",
+              "values": {
+                "1": "NA",
+                "2": "present",
+                "3": "imperfect",
+                "4": "future",
+                "5": "second_future",
+                "6": "aorist",
+                "7": "second_aorist",
+                "8": "perfect",
+                "9": "second_perfect",
+                "10": "pluperfect",
+                "11": "second_pluperfect"
+              }
+            },
+            {
+              "key": "voice",
+              "label": "Voz",
+              "kind": "enum",
+              "enum": "voice_t",
+              "values": {
+                "1": "NA",
+                "2": "active",
+                "3": "middle",
+                "4": "passive",
+                "5": "middle_or_passive",
+                "6": "middle_deponent",
+                "7": "passive_deponent",
+                "8": "middle_or_passive_deponent",
+                "9": "impersonal_active"
+              }
+            },
+            {
+              "key": "mood",
+              "label": "Modo",
+              "kind": "enum",
+              "enum": "mood_t",
+              "values": {
+                "1": "NA",
+                "2": "indicative",
+                "3": "subjunctive",
+                "4": "optative",
+                "5": "imperative",
+                "6": "infinitive",
+                "7": "participle",
+                "8": "imperative_participle"
+              }
+            },
+            {
+              "key": "possessor_number",
+              "label": "Número del poseedor",
+              "kind": "enum",
+              "enum": "number_t",
+              "values": {
+                "1": "NA",
+                "2": "singular",
+                "3": "plural"
+              }
+            },
+            {
+              "key": "suffix",
+              "label": "Sufijo",
+              "kind": "enum",
+              "enum": "suffix_t",
+              "values": {
+                "1": "NA",
+                "2": "superlative",
+                "3": "comparative",
+                "4": "interrogative",
+                "5": "negative",
+                "6": "attic",
+                "7": "particle_attached",
+                "8": "crasis"
+              }
+            },
+            {
+              "key": "verb_type",
+              "label": "Tipo verbal",
+              "kind": "enum",
+              "enum": "verb_type_t",
+              "values": {
+                "1": "NA",
+                "2": "irregular",
+                "3": "alpha",
+                "4": "beta",
+                "5": "gamma",
+                "6": "delta",
+                "7": "epsilon",
+                "8": "epsilon_upsilon",
+                "9": "zeta",
+                "10": "eta",
+                "11": "theta",
+                "12": "iota",
+                "13": "kappa",
+                "14": "lambda",
+                "15": "mu",
+                "16": "mu_iota",
+                "17": "nu",
+                "18": "omicron",
+                "19": "pi",
+                "20": "rho",
+                "21": "sigma_kappa",
+                "22": "tau",
+                "23": "upsilon",
+                "24": "phi",
+                "25": "khi"
+              }
+            },
+            {
+              "key": "noun_declension",
+              "label": "Declinación nominal",
+              "kind": "enum",
+              "enum": "noun_declension_t",
+              "values": {
+                "1": "NA",
+                "2": "first_eta",
+                "3": "first_alpha_breve",
+                "4": "first_alpha_macron",
+                "5": "first_alpha_macron_doric",
+                "6": "second_d",
+                "7": "second_attic",
+                "8": "third_d",
+                "9": "indeclinable",
+                "10": "irregular"
+              }
+            },
+            {
+              "key": "noun_stem",
+              "label": "Raíz nominal",
+              "kind": "enum",
+              "enum": "noun_stem_t",
+              "values": {
+                "1": "NA",
+                "2": "indeclinable",
+                "3": "irregular",
+                "4": "alpha",
+                "5": "beta",
+                "6": "gamma",
+                "7": "delta",
+                "8": "epsilon_upsilon",
+                "9": "iota",
+                "10": "kappa",
+                "11": "kappa_tau",
+                "12": "nu",
+                "13": "nu_tau",
+                "14": "omicron",
+                "15": "omicron_upsilon",
+                "16": "pi",
+                "17": "rho",
+                "18": "sigma",
+                "19": "tau",
+                "20": "upsilon",
+                "21": "khi",
+                "22": "omega"
+              }
+            },
+            {
+              "key": "strongs",
+              "label": "Número Strong",
+              "kind": "number"
+            },
+            {
+              "key": "strongs_unreliable",
+              "label": "Strong no fiable",
+              "kind": "enum",
+              "enum": "boolean_t",
+              "values": {
+                "0": "false",
+                "1": "true"
+              }
+            },
+            {
+              "key": "lexeme_occurrences",
+              "label": "Ocurrencias",
+              "kind": "number"
+            },
+            {
+              "key": "frequency_rank",
+              "label": "Rango de frecuencia",
+              "kind": "number"
+            }
+          ]
+        },
+        {
+          "key": "clause2",
+          "label": "Cláusula nivel 2",
+          "table": "clause2_objects",
+          "rank": 1,
+          "color": "#43B02A",
+          "features": [
+            {
+              "key": "typ",
+              "label": "Función",
+              "kind": "enum",
+              "enum": "clause_type_t",
+              "values": {
+                "1": "ADV",
+                "2": "CL",
+                "3": "IO",
+                "4": "O",
+                "5": "O2",
+                "6": "P",
+                "7": "S",
+                "8": "V",
+                "9": "VC"
+              }
+            }
+          ]
+        },
+        {
+          "key": "clause1",
+          "label": "Cláusula nivel 1",
+          "table": "clause1_objects",
+          "rank": 2,
+          "color": "#C35CF4",
+          "features": [
+            {
+              "key": "typ",
+              "label": "Función",
+              "kind": "enum",
+              "enum": "clause_type_t",
+              "values": {
+                "1": "ADV",
+                "2": "CL",
+                "3": "IO",
+                "4": "O",
+                "5": "O2",
+                "6": "P",
+                "7": "S",
+                "8": "V",
+                "9": "VC"
+              }
+            }
+          ]
+        },
+        {
+          "key": "sentence",
+          "label": "Oración",
+          "table": "sentence_objects",
+          "rank": 3,
+          "color": "#006187",
+          "features": []
+        }
+      ],
+      "gloss": {
+        "file": "nestle1904.json",
+        "languages": ["es", "en"],
+        "strategy": "strongs"
+      },
       "books": [
         {
           "id": "Matthew",
@@ -750,8 +2052,8 @@
         "table": "word_mdf_surface_set"
       },
       "lemma": {
-        "key": "lemma",
-        "table": "word_mdf_lemma_set"
+        "key": "lemma_with_variant",
+        "table": "word_mdf_lemma_with_variant_set"
       },
       "transliteration": null,
       "features": [
@@ -954,8 +2256,285 @@
             "18": "indeclinable",
             "19": "irregular"
           }
+        },
+        {
+          "key": "lexeme_occurrences",
+          "label": "Ocurrencias",
+          "kind": "number"
+        },
+        {
+          "key": "frequency_rank",
+          "label": "Rango de frecuencia",
+          "kind": "number"
         }
       ],
+      "groups": [
+        {
+          "key": "lexeme",
+          "label": "Lexema",
+          "features": [
+            "lexeme_occurrences",
+            "frequency_rank",
+            "psp",
+            "conjugation",
+            "declension",
+            "stem"
+          ],
+          "metaFeatures": []
+        },
+        {
+          "key": "morphology",
+          "label": "Morfología",
+          "features": ["case", "tense", "mood", "voice", "degree"],
+          "metaFeatures": [
+            {
+              "key": "pgn",
+              "label": "Persona, género, número",
+              "features": ["person", "gender", "number"]
+            }
+          ]
+        },
+        {
+          "key": "glosses",
+          "label": "Glosas",
+          "features": [],
+          "metaFeatures": []
+        }
+      ],
+      "levels": [
+        {
+          "key": "word",
+          "label": "Palabra",
+          "table": "word_objects",
+          "rank": 0,
+          "color": null,
+          "features": [
+            {
+              "key": "psp",
+              "label": "Categoría",
+              "kind": "enum",
+              "enum": "psp_t",
+              "values": {
+                "1": "adjective",
+                "2": "adverb",
+                "3": "cardinal_numeral",
+                "4": "conjunction",
+                "5": "demonstrative_pronoun",
+                "6": "foreign_word",
+                "7": "indefinite_pronoun",
+                "8": "interjection",
+                "9": "interrogative_adverb",
+                "10": "interrogative_pronoun",
+                "11": "noun",
+                "12": "ordinal_numeral",
+                "13": "personal_pronoun",
+                "14": "personal_reflexive_pronoun",
+                "15": "possessive_pronoun",
+                "16": "possessive_reflexive_pronoun",
+                "17": "preposition",
+                "18": "proper_noun",
+                "19": "reciprocal_pronoun",
+                "20": "relative_adverb",
+                "21": "relative_pronoun",
+                "22": "subjunction",
+                "23": "verb"
+              }
+            },
+            {
+              "key": "case",
+              "label": "Caso",
+              "kind": "enum",
+              "enum": "case_t",
+              "values": {
+                "1": "NA",
+                "2": "nominative",
+                "3": "accusative",
+                "4": "genitive",
+                "5": "dative",
+                "6": "ablative",
+                "7": "vocative"
+              }
+            },
+            {
+              "key": "number",
+              "label": "Número",
+              "kind": "enum",
+              "enum": "number_t",
+              "values": {
+                "1": "NA",
+                "2": "singular",
+                "3": "plural"
+              }
+            },
+            {
+              "key": "gender",
+              "label": "Género",
+              "kind": "enum",
+              "enum": "gender_t",
+              "values": {
+                "1": "NA",
+                "2": "masculine",
+                "3": "feminine",
+                "4": "neuter",
+                "5": "masculine_or_feminine",
+                "6": "masculine_or_neuter",
+                "7": "feminine_or_neuter",
+                "8": "masculine_or_feminine_or_neuter"
+              }
+            },
+            {
+              "key": "person",
+              "label": "Persona",
+              "kind": "enum",
+              "enum": "person_t",
+              "values": {
+                "1": "NA",
+                "2": "first_person",
+                "3": "second_person",
+                "4": "third_person"
+              }
+            },
+            {
+              "key": "tense",
+              "label": "Tiempo",
+              "kind": "enum",
+              "enum": "tense_t",
+              "values": {
+                "1": "NA",
+                "2": "future",
+                "3": "future_perfect",
+                "4": "imperfect",
+                "5": "perfect",
+                "6": "pluperfect",
+                "7": "present"
+              }
+            },
+            {
+              "key": "voice",
+              "label": "Voz",
+              "kind": "enum",
+              "enum": "voice_t",
+              "values": {
+                "1": "NA",
+                "2": "active",
+                "3": "passive"
+              }
+            },
+            {
+              "key": "mood",
+              "label": "Modo",
+              "kind": "enum",
+              "enum": "mood_t",
+              "values": {
+                "1": "NA",
+                "2": "indicative",
+                "3": "subjunctive",
+                "4": "imperative",
+                "5": "infinitive",
+                "6": "participle",
+                "7": "gerund",
+                "8": "gerundive",
+                "9": "supine"
+              }
+            },
+            {
+              "key": "degree",
+              "label": "Grado",
+              "kind": "enum",
+              "enum": "degree_t",
+              "values": {
+                "1": "NA",
+                "2": "positive",
+                "3": "comparative",
+                "4": "superlative"
+              }
+            },
+            {
+              "key": "declension",
+              "label": "Declinación",
+              "kind": "enum",
+              "enum": "declension_t",
+              "values": {
+                "1": "NA",
+                "2": "first_d",
+                "3": "first_or_second_d",
+                "4": "second_d",
+                "5": "second_d_er",
+                "6": "third_d",
+                "7": "fourth_d",
+                "8": "fifth_d",
+                "9": "indeclinable",
+                "10": "irregular"
+              }
+            },
+            {
+              "key": "conjugation",
+              "label": "Conjugación",
+              "kind": "enum",
+              "enum": "conjugation_t",
+              "values": {
+                "1": "NA",
+                "2": "first_c",
+                "3": "second_c",
+                "4": "third_c",
+                "5": "third_c_io",
+                "6": "fourth_c",
+                "7": "irregular"
+              }
+            },
+            {
+              "key": "stem",
+              "label": "Raíz",
+              "kind": "enum",
+              "enum": "stem_t",
+              "values": {
+                "1": "NA",
+                "2": "a",
+                "3": "b",
+                "4": "c",
+                "5": "d",
+                "6": "e",
+                "7": "g",
+                "8": "i",
+                "9": "l",
+                "10": "n",
+                "11": "o",
+                "12": "o_or_a",
+                "13": "p",
+                "14": "r",
+                "15": "t",
+                "16": "u",
+                "17": "v",
+                "18": "indeclinable",
+                "19": "irregular"
+              }
+            },
+            {
+              "key": "lexeme_occurrences",
+              "label": "Ocurrencias",
+              "kind": "number"
+            },
+            {
+              "key": "frequency_rank",
+              "label": "Rango de frecuencia",
+              "kind": "number"
+            }
+          ]
+        },
+        {
+          "key": "sentence",
+          "label": "Oración",
+          "table": "sentence_objects",
+          "rank": 3,
+          "color": "#006187",
+          "features": []
+        }
+      ],
+      "gloss": {
+        "file": "jvulgate.json",
+        "languages": ["en", "es"],
+        "strategy": "lemma-pos"
+      },
       "books": [
         {
           "id": "Matthew",

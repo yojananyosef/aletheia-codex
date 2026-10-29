@@ -19,6 +19,7 @@
     "test": "pnpm -r test",
     "test:e2e": "pnpm --filter @bibleol/web test:e2e",
     "data:import": "python3 scripts/import_legacy.py",
+    "data:lexicons": "python3 scripts/import_lexicons.py",
     "data:sync": "python3 scripts/sync_corpora.py",
     "data:verify": "python3 scripts/verify_corpora.py"
   },

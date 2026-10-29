@@ -623,9 +623,20 @@ input[type="number"]:focus {
   text-decoration: none;
 }
 
-.tool-link:hover {
+.tool-link:hover,
+.tool-link--active {
   border-color: var(--accent);
   color: var(--accent-strong);
+}
+
+.tool-link--active {
+  background: var(--wash);
+}
+
+.reading-tools__links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
 }
 
 .verses {
@@ -738,6 +749,8 @@ input[type="number"]:focus {
   font-size: 0.82rem;
   line-height: 1.45;
   text-align: left;
+  max-height: min(75vh, 36rem);
+  overflow-y: auto;
 }
 
 .word__panel-title {
@@ -805,9 +818,158 @@ input[type="number"]:focus {
   overflow-wrap: break-word;
 }
 
+.word__group + .word__group {
+  margin-top: 0.6rem;
+  padding-top: 0.6rem;
+  border-top: 1px dashed var(--line-soft);
+}
+
+.word__group-title {
+  margin: 0 0 0.32rem;
+  color: var(--accent);
+  font-size: 0.58rem;
+  font-weight: 700;
+  letter-spacing: 0.11em;
+  text-transform: uppercase;
+}
+
+.word__gloss-language {
+  color: var(--muted);
+  font-size: 0.65rem;
+}
+
 .word__empty {
   margin: 0;
   color: var(--muted);
+}
+
+.grammar {
+  padding-top: 0.65rem;
+  border-top: 1px solid var(--line);
+}
+
+.grammar-legend {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.35rem 0.9rem;
+  margin: 0 0 1rem;
+  padding: 0.55rem 0.75rem;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  color: var(--muted);
+  font-size: 0.72rem;
+}
+
+.grammar-legend__title {
+  color: var(--ink);
+  font-size: 0.58rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.grammar-legend__item {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+
+.grammar-legend__swatch {
+  width: 0.65rem;
+  height: 0.65rem;
+  border-radius: 2px;
+  background: var(--level-color);
+}
+
+.grammar-verses {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.grammar-verse {
+  display: grid;
+  grid-template-columns: 2.25rem minmax(0, 1fr);
+  padding: 0.65rem 0 0.8rem;
+  border-bottom: 1px solid var(--line-soft);
+}
+
+.grammar-verse__body {
+  grid-column: 2;
+  min-width: 0;
+}
+
+.grammar-node {
+  margin: 0.3rem 0 0.3rem var(--indent, 0);
+  padding: 0.12rem 0 0.12rem 0.55rem;
+  border-left: 3px solid var(--level-color);
+}
+
+.grammar-node__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.15rem 0.55rem;
+  margin: 0;
+  font-size: 0.7rem;
+  line-height: 1.4;
+}
+
+.grammar-node__badge {
+  color: var(--level-color);
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.grammar-node__ref {
+  color: var(--muted);
+  font-size: 0.63rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.grammar-node__features {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.1rem 0.8rem;
+  margin: 0.1rem 0 0;
+  color: var(--muted);
+  font-size: 0.68rem;
+  line-height: 1.4;
+}
+
+.grammar-node__feature-label {
+  font-size: 0.56rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  opacity: 0.85;
+}
+
+.grammar-words {
+  margin: 0.15rem 0 0.2rem var(--indent, 0);
+  padding-left: 0.55rem;
+  /* The grammar tree is laid out left-to-right even for RTL corpora, so the
+     word line starts next to the tree labels while word order stays RTL. */
+  text-align: left;
+}
+
+.grammar-words.script-hebrew {
+  font-size: 1.45rem;
+  line-height: 1.95;
+}
+
+.grammar-words.script-greek {
+  font-size: 1.35rem;
+  line-height: 1.75;
+}
+
+.grammar-words.script-latin {
+  font-size: 1.3rem;
+  line-height: 1.75;
 }
 
 .not-found {
@@ -864,7 +1026,9 @@ input[type="number"]:focus {
     position: static;
     width: auto;
     max-width: 34rem;
+    max-height: none;
     margin: 0.4rem 0 0.2rem;
+    overflow: visible;
     transform: none;
     box-shadow: 0 2px 10px rgba(24, 18, 10, 0.14);
   }
@@ -943,8 +1107,13 @@ input[type="number"]:focus {
     max-width: none;
   }
 
-  .verse {
+  .verse,
+  .grammar-verse {
     grid-template-columns: 1.75rem minmax(0, 1fr);
+  }
+
+  .grammar-legend {
+    padding: 0.45rem 0.55rem;
   }
 
   .script-hebrew {

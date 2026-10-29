@@ -5,7 +5,9 @@ desde Astro SSR y se lee directamente de los corpus Emdros mediante SQLite de
 solo lectura. La interfaz está en español y funciona sin JavaScript.
 
 Este primer corte cubre la lectura de corpus, libros y capítulos: hebreo con
-transliteración, griego y latín, con lema y rasgos gramaticales por palabra.
+transliteración, griego y latín, con la forma en el texto, el lexema, la
+morfología, las glosas y la estructura gramatical (frases, cláusulas y
+oraciones) de cada palabra.
 
 ## Requisitos
 
@@ -28,8 +30,13 @@ quiere regenerar el catálogo desde el proyecto legacy:
 
 ```sh
 pnpm data:import --legacy ../BibleOL
+pnpm data:lexicons --legacy ../BibleOL
 pnpm data:verify
 ```
+
+Las glosas se generan a partir de los lexicones CSV del proyecto legacy y se
+guardan como JSON en `data/lexicon/` para que un clon limpio las tenga sin
+necesidad de MySQL.
 
 ## Rutas
 
@@ -37,30 +44,47 @@ pnpm data:verify
 - `/read/:corpus/:book/:chapter`: lectura del capítulo.
 - `/read?corpus=...&book=...&chapter=...`: redirección a la URL canónica.
 - `?translit=1`: muestra la transliteración cuando el corpus la ofrece.
+- `?grammar=1`: muestra la estructura gramatical por versículo.
 
-Las URL de lectura conservan `translit=1` al cambiar de capítulo, de libro o de
-corpus hebreo.
+Las URL de lectura conservan `translit=1` y `grammar=1` al cambiar de capítulo,
+de libro o de corpus.
+
+En la vista gramatical, cada nivel (frase, cláusula y oración) aparece con el
+color del proyecto original. Las palabras se agrupan bajo el objeto gramatical
+más profundo que las contiene y siguen siendo desplegables para consultar todos
+sus datos.
 
 ## Scripts
 
-| Comando            | Descripción                                             |
-| ------------------ | ------------------------------------------------------- |
-| `pnpm dev`         | Servidor de desarrollo en el puerto 4321.               |
-| `pnpm build`       | Comprobación de tipos y compilación de producción.      |
-| `pnpm start`       | Servidor de producción (requiere `pnpm build`).         |
-| `pnpm check`       | Comprobación de tipos de todos los paquetes.            |
-| `pnpm test`        | Pruebas de integración del lector de corpus.            |
-| `pnpm test:e2e`    | Pruebas end-to-end sin JavaScript sobre la compilación. |
-| `pnpm data:sync`   | Descarga y verifica los corpus Emdros.                  |
-| `pnpm data:import` | Regenera `data/metadata/corpora.json` desde el legacy.  |
-| `pnpm data:verify` | Verifica archivos, checksums y metadatos.               |
+| Comando              | Descripción                                             |
+| -------------------- | ------------------------------------------------------- |
+| `pnpm dev`           | Servidor de desarrollo en el puerto 4321.               |
+| `pnpm build`         | Comprobación de tipos y compilación de producción.      |
+| `pnpm start`         | Servidor de producción (requiere `pnpm build`).         |
+| `pnpm check`         | Comprobación de tipos de todos los paquetes.            |
+| `pnpm test`          | Pruebas de integración del lector de corpus.            |
+| `pnpm test:e2e`      | Pruebas end-to-end sin JavaScript sobre la compilación. |
+| `pnpm data:sync`     | Descarga y verifica los corpus Emdros.                  |
+| `pnpm data:import`   | Regenera `data/metadata/corpora.json` desde el legacy.  |
+| `pnpm data:lexicons` | Regenera las glosas de `data/lexicon/` desde el legacy. |
+| `pnpm data:verify`   | Verifica archivos, checksums y metadatos.               |
 
 ## Datos
 
 - `data/corpora/`: archivos Emdros (no se versionan).
 - `data/metadata/corpora.json`: catálogo normalizado (se versiona).
+- `data/lexicon/`: glosas en JSON generadas desde los CSV del legacy (se
+  versionan).
 - Los corpus actuales son ETCBC4 (hebreo), Nestlé 1904 (griego) y JVulgate
   (latín).
+
+El catálogo incluye los rasgos que muestra cada palabra, sus etiquetas en
+español, los grupos del panel de palabra, los niveles gramaticales con sus
+colores y la configuración de glosas de cada corpus.
+
+Las glosas hebreas y arameas se eligen por la columna del tallo verbal; las
+griegas usan el lexicón español con respaldo en inglés, y las latinas proceden
+del lexicón inglés disponible.
 
 El lector usa `better-sqlite3` en modo de solo lectura y SQL explícito. No hay
 ORM ni una capa de repositorios genérica.
@@ -73,7 +97,8 @@ locales. Se omiten si los corpus no están descargados.
 `pnpm test:e2e` compila la aplicación, arranca el servidor de producción en el
 puerto 4323 y ejecuta Playwright con JavaScript desactivado en el navegador. Las
 pruebas cubren selección, lectura hebrea/griega/latina, transliteración, paneles
-gramaticales, navegación, redirecciones, 404 y vista móvil.
+de palabra con glosas, vista gramatical, navegación, redirecciones, 404 y vista
+móvil.
 
 Las pruebas usan Chromium. En macOS 12 el WebKit empaquetado por Playwright está
 congelado y no es compatible con la versión actual; en macOS 13 o superior se
@@ -89,7 +114,7 @@ PLAYWRIGHT_WEBKIT=1 pnpm test:e2e
 - `packages/contracts`: tipos compartidos.
 - `packages/corpus`: catálogo y lector Emdros de solo lectura.
 - `apps/web/e2e`: pruebas end-to-end.
-- `scripts`: importación, descarga y verificación de datos.
+- `scripts`: importación, glosas, descarga y verificación de datos.
 
 Los componentes viven junto a la funcionalidad que los usa
 (`features/reading`, `features/navigation`). No hay un paquete de UI separado.

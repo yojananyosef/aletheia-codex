@@ -1,0 +1,127 @@
+---
+import type {
+  GrammarGroupDefinition,
+  GrammarLevelDefinition,
+  GrammarObject,
+  TextDirection,
+  Verse,
+} from "@bibleol/contracts";
+import { t } from "../../i18n";
+import { featureValueLabel } from "../../lib/grammar-labels";
+import { buildGrammarByVerse } from "../../lib/grammar-tree";
+import { scriptClass } from "../../lib/scripts";
+import WordToken from "./WordToken.astro";
+
+interface Props {
+  verses: Verse[];
+  objects: GrammarObject[];
+  levels: GrammarLevelDefinition[];
+  groups: GrammarGroupDefinition[];
+  language: string;
+  direction: TextDirection;
+  translitLang: string;
+  showTransliteration: boolean;
+}
+
+const {
+  verses,
+  objects,
+  levels,
+  groups,
+  language,
+  direction,
+  translitLang,
+  showTransliteration,
+} = Astro.props;
+
+const trees = buildGrammarByVerse(verses, objects, levels);
+const legendLevels = levels.filter((level) => level.key !== "word");
+const verseScriptClass = scriptClass(language);
+
+function rangeLabel(object: GrammarObject): string {
+  if (object.verseStart === object.verseEnd) {
+    return `${t.verseShort} ${object.verseStart}`;
+  }
+  return `${t.versesShort} ${object.verseStart}–${object.verseEnd}`;
+}
+---
+
+<div class="grammar">
+  <div class="grammar-legend">
+    <span class="grammar-legend__title">{t.grammarLevels}</span>
+    {legendLevels.map((level) => (
+      <span
+        class="grammar-legend__item"
+        style={`--level-color: ${level.color ?? "var(--line-strong)"}`}
+      >
+        <span class="grammar-legend__swatch" aria-hidden="true" />
+        {level.label}
+      </span>
+    ))}
+  </div>
+
+  <ol class="grammar-verses" aria-label={t.grammarStructure}>
+    {trees.map(({ verse, items }) => (
+      <li class="grammar-verse" id={`v${verse.number}`}>
+        <a
+          class="verse__number"
+          href={`#v${verse.number}`}
+          aria-label={`${t.verse} ${verse.number}`}
+        >
+          {verse.number}
+        </a>
+        <div class="grammar-verse__body" title={verse.label}>
+          {items.map((item) =>
+            item.kind === "words" ? (
+              <div
+                class={`grammar-words ${verseScriptClass}`}
+                style={`--indent: ${item.depth * 0.85}rem`}
+                dir={direction}
+                lang={language}
+              >
+                {item.words.map((word) => (
+                  <WordToken
+                    word={word}
+                    lang={language}
+                    direction={direction}
+                    translitLang={translitLang}
+                    showTransliteration={showTransliteration}
+                    groups={groups}
+                  />
+                ))}
+              </div>
+            ) : (
+              <div
+                class={`grammar-node grammar-node--${item.object.level}`}
+                style={`--indent: ${item.depth * 0.85}rem; --level-color: ${item.color ?? "var(--line-strong)"}`}
+                data-level={item.object.level}
+                data-object-id={item.object.id}
+              >
+                <p class="grammar-node__head">
+                  <span class="grammar-node__badge">{item.object.label}</span>
+                  <span class="grammar-node__ref">
+                    {rangeLabel(item.object)}
+                  </span>
+                </p>
+                {item.object.features.length > 0 ? (
+                  <p class="grammar-node__features">
+                    {item.object.features.map((feature) => (
+                      <span class="grammar-node__feature">
+                        <span class="grammar-node__feature-label">
+                          {feature.label}
+                        </span>{" "}
+                        <bdi title={feature.value}>
+                          {featureValueLabel(feature)}
+                        </bdi>
+                      </span>
+                    ))}
+                  </p>
+                ) : null}
+              </div>
+            ),
+          )}
+        </div>
+      </li>
+    ))}
+  </ol>
+</div>

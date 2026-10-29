@@ -10,6 +10,13 @@ export {
   type CorpusSummary,
   type FeatureDefinition,
   type FeatureValue,
+  type GlossDefinition,
+  type GlossStrategy,
+  type GrammarGroupDefinition,
+  type GrammarLevelDefinition,
+  type GrammarMetaFeatureDefinition,
+  type GrammarObject,
   type Verse,
   type Word,
+  type WordGloss,
 } from "@bibleol/contracts";

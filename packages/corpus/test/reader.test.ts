@@ -7,13 +7,18 @@ import { CorpusReader, NotFoundError } from "../src/index";
 const dataDir = fileURLToPath(new URL("../../../data", import.meta.url));
 const cataloguePath = join(dataDir, "metadata", "corpora.json");
 const corporaDir = join(dataDir, "corpora");
+const lexiconDir = join(dataDir, "lexicon");
 const available =
-  existsSync(cataloguePath) && existsSync(join(corporaDir, "ETCBC4.v24"));
+  existsSync(cataloguePath) &&
+  existsSync(join(corporaDir, "ETCBC4.v24")) &&
+  existsSync(join(lexiconDir, "ETCBC4.json")) &&
+  existsSync(join(lexiconDir, "nestle1904.json")) &&
+  existsSync(join(lexiconDir, "jvulgate.json"));
 
 const nfc = (value: string) => value.normalize("NFC");
 
 describe.skipIf(!available)("CorpusReader", () => {
-  const reader = new CorpusReader({ cataloguePath, corporaDir });
+  const reader = new CorpusReader({ cataloguePath, corporaDir, lexiconDir });
 
   afterAll(() => {
     reader.close();
@@ -27,7 +32,31 @@ describe.skipIf(!available)("CorpusReader", () => {
     ]);
   });
 
-  it("reads Hebrew Genesis 1 with transliteration and grammar", () => {
+  it("exposes the grammar groups and levels used by the reading view", () => {
+    const hebrew = reader.getCorpus("ETCBC4");
+    expect(hebrew.groups.map((group) => group.key)).toEqual([
+      "form_in_text",
+      "lexeme",
+      "morphology",
+      "glosses",
+    ]);
+    expect(hebrew.levels.map((level) => level.key)).toEqual([
+      "word",
+      "phrase",
+      "clause",
+      "sentence",
+    ]);
+
+    const greek = reader.getCorpus("nestle1904");
+    expect(greek.levels.map((level) => level.key)).toEqual([
+      "word",
+      "clause2",
+      "clause1",
+      "sentence",
+    ]);
+  });
+
+  it("reads Hebrew Genesis 1 with transliteration, lexeme, gloss and grammar", () => {
     const chapter = reader.getChapter("ETCBC4", "Genesis", 1);
     expect(chapter.corpus.direction).toBe("rtl");
     expect(chapter.corpus.hasTransliteration).toBe(true);
@@ -42,32 +71,114 @@ describe.skipIf(!available)("CorpusReader", () => {
     const firstWord = firstVerse.words[0]!;
     expect(nfc(firstWord.text)).toContain(nfc("בְּ"));
     expect(firstWord.transliteration).toBe("bᵊ");
-    expect(firstWord.lemma).toBeTruthy();
+    expect(nfc(firstWord.lemma!)).toBe(nfc("בְּ"));
+    expect(firstWord.gloss).toEqual({
+      text: "en, a (hora, lugar); con; por; por medio de",
+      language: "es",
+    });
 
     const partOfSpeech = firstWord.features.find(
       (feature) => feature.enumName === "part_of_speech_t",
     );
-    expect(partOfSpeech).toMatchObject({ value: "prep" });
+    expect(partOfSpeech).toMatchObject({ value: "prep", label: "Categoría" });
     const language = firstWord.features.find(
       (feature) => feature.enumName === "language_t",
     );
     expect(language).toMatchObject({ value: "Hebrew" });
+
+    const verbClass = chapter.verses
+      .flatMap((verse) => verse.words)
+      .flatMap((word) => word.features)
+      .find((feature) => feature.key === "verb_class");
+    expect(verbClass).toMatchObject({
+      kind: "multi-enum",
+      enumName: "verb_class_t",
+    });
+    expect(verbClass?.value).toBeTruthy();
   });
 
-  it("reads Greek Matthew 1 without transliteration", () => {
+  it("builds a readable grammar tree for Hebrew", () => {
+    const chapter = reader.getChapter("ETCBC4", "Genesis", 1);
+    const objects = chapter.grammar.objects;
+    expect(objects.length).toBeGreaterThan(50);
+    expect(new Set(objects.map((object) => object.level))).toEqual(
+      new Set(["phrase", "clause", "sentence"]),
+    );
+
+    const sentence = objects.find((object) => object.level === "sentence")!;
+    expect(sentence.parentId).toBeNull();
+    expect(sentence.depth).toBe(0);
+
+    const phrase = objects.find((object) => object.level === "phrase")!;
+    expect(phrase.parentId).toMatch(/^clause:/);
+    expect(phrase.depth).toBeGreaterThan(1);
+
+    const byId = new Map(objects.map((object) => [object.id, object]));
+    for (const object of objects) {
+      if (!object.parentId) {
+        continue;
+      }
+      const parent = byId.get(object.parentId);
+      expect(parent).toBeDefined();
+      expect(parent!.depth).toBe(object.depth - 1);
+      expect(parent!.firstMonad).toBeLessThanOrEqual(object.firstMonad);
+      expect(parent!.lastMonad).toBeGreaterThanOrEqual(object.lastMonad);
+    }
+  });
+
+  it("reads Greek Matthew 1 with glosses and nested clauses", () => {
     const chapter = reader.getChapter("nestle1904", "Matthew", 1);
     expect(chapter.corpus.direction).toBe("ltr");
     expect(chapter.corpus.hasTransliteration).toBe(false);
     expect(chapter.verses).toHaveLength(25);
-    expect(nfc(chapter.verses[0]!.words[0]!.text)).toBe(nfc("Βίβλος"));
-    expect(chapter.verses[0]!.words[0]!.transliteration).toBeNull();
+
+    const firstWord = chapter.verses[0]!.words[0]!;
+    expect(nfc(firstWord.text)).toBe(nfc("Βίβλος"));
+    expect(firstWord.transliteration).toBeNull();
+    expect(firstWord.gloss).toEqual({ text: "libro", language: "es" });
+    expect(firstWord.features).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          key: "psp",
+          label: "Categoría",
+          value: "noun",
+        }),
+        expect.objectContaining({ key: "case", value: "nominative" }),
+        expect.objectContaining({ key: "gender", value: "feminine" }),
+      ]),
+    );
+
+    const objects = chapter.grammar.objects;
+    expect(new Set(objects.map((object) => object.level))).toEqual(
+      new Set(["clause2", "clause1", "sentence"]),
+    );
+    const inner = objects.find((object) => object.level === "clause2")!;
+    expect(inner.parentId).toMatch(/^clause1:/);
+    expect(inner.depth).toBe(2);
   });
 
-  it("reads Latin Matthew 1", () => {
+  it("reads Latin Matthew 1 with morphology and sentence structure", () => {
     const chapter = reader.getChapter("jvulgate", "Matthew", 1);
     expect(chapter.corpus.direction).toBe("ltr");
     expect(chapter.verses).toHaveLength(25);
-    expect(chapter.verses[0]!.words[0]!.text).toBe("liber");
+
+    const firstWord = chapter.verses[0]!.words[0]!;
+    expect(firstWord.text).toBe("liber");
+    expect(firstWord.lemma).toBe("liber");
+    expect(firstWord.gloss).toBeNull();
+    expect(firstWord.features).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ key: "psp", value: "noun" }),
+        expect.objectContaining({ key: "gender", value: "masculine" }),
+        expect.objectContaining({ key: "declension", value: "second_d_er" }),
+      ]),
+    );
+
+    expect(
+      chapter.grammar.objects.every(
+        (object) => object.level === "sentence" && object.parentId === null,
+      ),
+    ).toBe(true);
   });
 
   it("accepts the last chapter and rejects the next one", () => {

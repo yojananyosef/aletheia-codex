@@ -17,13 +17,25 @@ interface Props {
   next: ChapterLink | null;
   position: "top" | "bottom";
   showTransliteration: boolean;
+  showGrammar: boolean;
 }
 
-const { corpus, book, chapter, previous, next, position, showTransliteration } =
-  Astro.props;
+const {
+  corpus,
+  book,
+  chapter,
+  previous,
+  next,
+  position,
+  showTransliteration,
+  showGrammar,
+} = Astro.props;
 const bookSelectId = `book-${position}`;
 const chapterInputId = `chapter-${position}`;
-const linkOptions = { transliteration: showTransliteration };
+const linkOptions = {
+  transliteration: showTransliteration,
+  grammar: showGrammar,
+};
 ---
 
 <nav class="chapter-nav" aria-label={t.chapterNavigation}>
@@ -78,6 +90,7 @@ const linkOptions = { transliteration: showTransliteration };
     {showTransliteration ? (
       <input type="hidden" name="translit" value="1" />
     ) : null}
+    {showGrammar ? <input type="hidden" name="grammar" value="1" /> : null}
     <label class="visually-hidden" for={bookSelectId}>
       {t.bookLabel}
     </label>

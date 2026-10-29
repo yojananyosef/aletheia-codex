@@ -3,6 +3,7 @@ import { NotFoundError, type Book } from "@bibleol/contracts";
 import BaseLayout from "../../../../layouts/BaseLayout.astro";
 import CorpusTabs from "../../../../features/navigation/CorpusTabs.astro";
 import ChapterNavigation from "../../../../features/navigation/ChapterNavigation.astro";
+import GrammarView from "../../../../features/reading/GrammarView.astro";
 import VerseList from "../../../../features/reading/VerseList.astro";
 import { t } from "../../../../i18n";
 import { bookName } from "../../../../lib/book-names";
@@ -35,7 +36,7 @@ try {
   throw error;
 }
 
-const { corpus, book, verses } = data;
+const { corpus, book, verses, grammar } = data;
 const books = corpus.books;
 const bookIndex = books.findIndex((item) => item.id === book.id);
 
@@ -56,6 +57,7 @@ if (chapterNumber < book.chapters) {
 }
 
 const showTransliteration = Astro.url.searchParams.get("translit") === "1";
+const showGrammar = Astro.url.searchParams.get("grammar") === "1";
 
 const corpusTabs = reader
   .listCorpora()
@@ -73,24 +75,27 @@ const corpusTabs = reader
         item.id,
         targetBook.id,
         matchingBook ? Math.min(chapterNumber, targetBook.chapters) : 1,
-        { transliteration: showTransliteration && item.hasTransliteration },
+        {
+          transliteration: showTransliteration && item.hasTransliteration,
+          grammar: showGrammar,
+        },
       ),
     };
   })
   .filter((item) => item !== null);
 
-const translitLang = `${corpus.language}-Latn`;
-const toggleParams = new URLSearchParams(Astro.url.searchParams);
-if (showTransliteration) {
-  toggleParams.delete("translit");
-} else {
-  toggleParams.set("translit", "1");
+function toggleHref(key: "translit" | "grammar"): string {
+  const params = new URLSearchParams(Astro.url.searchParams);
+  if (params.get(key) === "1") {
+    params.delete(key);
+  } else {
+    params.set(key, "1");
+  }
+  const query = params.toString();
+  return query ? `${Astro.url.pathname}?${query}` : Astro.url.pathname;
 }
-const toggleQuery = toggleParams.toString();
-const toggleHref = toggleQuery
-  ? `${Astro.url.pathname}?${toggleQuery}`
-  : Astro.url.pathname;
 
+const translitLang = `${corpus.language}-Latn`;
 const pageTitle = `${bookName(book.id)} ${chapterNumber} · ${corpus.title} — ${t.appName}`;
 const meta = `${corpus.version ? `${t.edition} ${corpus.version} · ` : ""}${verses.length} ${t.versesCount}`;
 ---
@@ -122,26 +127,57 @@ const meta = `${corpus.version ? `${t.edition} ${corpus.version} · ` : ""}${ver
         next={next}
         position="top"
         showTransliteration={showTransliteration}
+        showGrammar={showGrammar}
       />
 
       <div class="reading-tools">
-        <p class="reading-tools__hint">{t.grammarHint}</p>
-        {corpus.hasTransliteration ? (
-          <a class="tool-link" href={toggleHref}>
-            {showTransliteration
-              ? t.hideTransliteration
-              : t.showTransliteration}
+        <p class="reading-tools__hint">
+          {showGrammar ? t.grammarModeHint : t.grammarHint}
+        </p>
+        <div class="reading-tools__links">
+          <a
+            class:list={["tool-link", { "tool-link--active": showGrammar }]}
+            href={toggleHref("grammar")}
+          >
+            {showGrammar ? t.hideGrammar : t.showGrammar}
           </a>
-        ) : null}
+          {corpus.hasTransliteration ? (
+            <a
+              class:list={[
+                "tool-link",
+                { "tool-link--active": showTransliteration },
+              ]}
+              href={toggleHref("translit")}
+            >
+              {showTransliteration
+                ? t.hideTransliteration
+                : t.showTransliteration}
+            </a>
+          ) : null}
+        </div>
       </div>
 
-      <VerseList
-        verses={verses}
-        language={corpus.language}
-        direction={corpus.direction}
-        translitLang={translitLang}
-        showTransliteration={showTransliteration}
-      />
+      {showGrammar ? (
+        <GrammarView
+          verses={verses}
+          objects={grammar.objects}
+          levels={corpus.levels}
+          groups={corpus.groups}
+          language={corpus.language}
+          direction={corpus.direction}
+          translitLang={translitLang}
+          showTransliteration={showTransliteration}
+        />
+      ) : (
+        <VerseList
+          verses={verses}
+          language={corpus.language}
+          direction={corpus.direction}
+          translitLang={translitLang}
+          showTransliteration={showTransliteration}
+          groups={corpus.groups}
+        />
+      )}
 
       <ChapterNavigation
         corpus={corpus}
@@ -151,6 +187,7 @@ const meta = `${corpus.version ? `${t.edition} ${corpus.version} · ` : ""}${ver
         next={next}
         position="bottom"
         showTransliteration={showTransliteration}
+        showGrammar={showGrammar}
       />
     </div>
   </main>
