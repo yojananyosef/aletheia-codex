@@ -1,0 +1,29 @@
+# Dependencies
+node_modules/
+.pnpm-store/
+
+# Build output
+.astro/
+dist/
+build/
+*.tsbuildinfo
+
+# Local data
+data/corpora/*
+!data/corpora/.gitkeep
+data/lexicon/*
+!data/lexicon/.gitkeep
+.env
+.env.*
+!.env.example
+
+# Runtime
+coverage/
+playwright-report/
+test-results/
+.playwright-mcp/
+
+# OS and editor
+.DS_Store
+.idea/
+.vscode/

@@ -1,0 +1,121 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+import { t } from "../i18n";
+import { bookName } from "../lib/book-names";
+import { corpusSample } from "../lib/corpus-copy";
+import { getReader } from "../lib/reader";
+
+const reader = getReader();
+const corpora = reader.listCorpora();
+
+const cards = corpora.map((corpus) => {
+  const defaultBook =
+    corpus.books.find((book) => book.id === "Genesis") ??
+    corpus.books.find((book) => book.id === "Matthew") ??
+    corpus.books[0];
+
+  if (!defaultBook) {
+    throw new Error(`El corpus ${corpus.id} no tiene libros.`);
+  }
+
+  return {
+    ...corpus,
+    defaultBook,
+    sample: corpusSample(corpus.id),
+    directionLabel:
+      corpus.direction === "rtl" ? t.directionRtl : t.directionLtr,
+  };
+});
+---
+
+<BaseLayout>
+  <main id="main" class="page">
+    <div class="wrap">
+      <section class="hero">
+        <p class="eyebrow">{t.tagline}</p>
+        <h1>{t.homeTitle}</h1>
+        <p class="hero__intro">{t.homeIntro}</p>
+      </section>
+
+      <section class="corpora" aria-labelledby="corpora-title">
+        <div class="section-heading">
+          <h2 id="corpora-title">{t.corpusLabel}</h2>
+          <p>{t.corporaIntro}</p>
+        </div>
+
+        <div class="corpus-grid">
+          {cards.map((corpus) => (
+            <article class="corpus-card">
+              <header class="corpus-card__header">
+                <p class="corpus-card__meta">
+                  {corpus.languageName} · {corpus.directionLabel}
+                </p>
+                <div class="corpus-card__title-row">
+                  <h3>{corpus.title}</h3>
+                  {corpus.sample ? (
+                    <p
+                      class={`corpus-card__script ${corpus.sample.className}`}
+                      lang={corpus.sample.lang}
+                      dir={corpus.direction}
+                    >
+                      {corpus.sample.text}
+                    </p>
+                  ) : null}
+                </div>
+                <p class="corpus-card__count">
+                  {corpus.books.length} {t.booksCount} · {t.edition}{" "}
+                  {corpus.version}
+                </p>
+              </header>
+
+              <form class="corpus-form" action="/read" method="get">
+                <input type="hidden" name="corpus" value={corpus.id} />
+
+                <div class="field">
+                  <label for={`book-${corpus.id}`}>{t.bookLabel}</label>
+                  <select id={`book-${corpus.id}`} name="book">
+                    {corpus.books.map((book) => (
+                      <option
+                        value={book.id}
+                        selected={book.id === corpus.defaultBook.id}
+                      >
+                        {bookName(book.id)}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div class="field field--chapter">
+                  <label for={`chapter-${corpus.id}`}>{t.chapterLabel}</label>
+                  <input
+                    id={`chapter-${corpus.id}`}
+                    type="number"
+                    name="chapter"
+                    value="1"
+                    min="1"
+                    max="150"
+                    inputmode="numeric"
+                    required
+                  />
+                </div>
+
+                <button class="button button--primary" type="submit">
+                  {t.readButton}
+                  <span class="button__arrow" aria-hidden="true">
+                    →
+                  </span>
+                </button>
+              </form>
+
+              <p class="corpus-card__sample">
+                <a href={`/read/${corpus.id}/${corpus.defaultBook.id}/1`}>
+                  {t.openSample} {bookName(corpus.defaultBook.id)} 1
+                </a>
+              </p>
+            </article>
+          ))}
+        </div>
+      </section>
+    </div>
+  </main>
+</BaseLayout>

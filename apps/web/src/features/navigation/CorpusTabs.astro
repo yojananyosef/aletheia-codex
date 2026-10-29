@@ -1,0 +1,31 @@
+---
+import { t } from "../../i18n";
+
+interface CorpusTab {
+  id: string;
+  title: string;
+  languageName: string;
+  href: string;
+}
+
+interface Props {
+  items: CorpusTab[];
+  activeId: string;
+}
+
+const { items, activeId } = Astro.props;
+---
+
+<nav class="corpus-tabs" aria-label={t.corpusLabel}>
+  {items.map((item) => (
+    <a
+      class="corpus-tab"
+      href={item.href}
+      aria-current={item.id === activeId ? "page" : undefined}
+    >
+      <span class="corpus-tab__title">{item.title}</span>
+      <span class="corpus-tab__language">{item.languageName}</span>
+      <span class="corpus-tab__short">{item.languageName}</span>
+    </a>
+  ))}
+</nav>

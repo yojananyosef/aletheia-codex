@@ -1,0 +1,104 @@
+# BibleOL
+
+Aplicación de lectura bíblica en lenguas originales. El texto se sirve como HTML
+desde Astro SSR y se lee directamente de los corpus Emdros mediante SQLite de
+solo lectura. La interfaz está en español y funciona sin JavaScript.
+
+Este primer corte cubre la lectura de corpus, libros y capítulos: hebreo con
+transliteración, griego y latín, con lema y rasgos gramaticales por palabra.
+
+## Requisitos
+
+- Node.js >= 22.23.4
+- pnpm 12
+- Python 3.12 (solo para los scripts de datos)
+
+## Puesta en marcha
+
+```sh
+pnpm install
+pnpm data:sync
+pnpm dev
+```
+
+La aplicación queda en <http://localhost:4321>.
+
+`pnpm data:sync` descarga los corpus declarados en el catálogo versionado. Si
+quiere regenerar el catálogo desde el proyecto legacy:
+
+```sh
+pnpm data:import --legacy ../BibleOL
+pnpm data:verify
+```
+
+## Rutas
+
+- `/`: selección de corpus, libro y capítulo.
+- `/read/:corpus/:book/:chapter`: lectura del capítulo.
+- `/read?corpus=...&book=...&chapter=...`: redirección a la URL canónica.
+- `?translit=1`: muestra la transliteración cuando el corpus la ofrece.
+
+Las URL de lectura conservan `translit=1` al cambiar de capítulo, de libro o de
+corpus hebreo.
+
+## Scripts
+
+| Comando            | Descripción                                             |
+| ------------------ | ------------------------------------------------------- |
+| `pnpm dev`         | Servidor de desarrollo en el puerto 4321.               |
+| `pnpm build`       | Comprobación de tipos y compilación de producción.      |
+| `pnpm start`       | Servidor de producción (requiere `pnpm build`).         |
+| `pnpm check`       | Comprobación de tipos de todos los paquetes.            |
+| `pnpm test`        | Pruebas de integración del lector de corpus.            |
+| `pnpm test:e2e`    | Pruebas end-to-end sin JavaScript sobre la compilación. |
+| `pnpm data:sync`   | Descarga y verifica los corpus Emdros.                  |
+| `pnpm data:import` | Regenera `data/metadata/corpora.json` desde el legacy.  |
+| `pnpm data:verify` | Verifica archivos, checksums y metadatos.               |
+
+## Datos
+
+- `data/corpora/`: archivos Emdros (no se versionan).
+- `data/metadata/corpora.json`: catálogo normalizado (se versiona).
+- Los corpus actuales son ETCBC4 (hebreo), Nestlé 1904 (griego) y JVulgate
+  (latín).
+
+El lector usa `better-sqlite3` en modo de solo lectura y SQL explícito. No hay
+ORM ni una capa de repositorios genérica.
+
+## Pruebas
+
+`pnpm test` ejecuta las pruebas del paquete `@bibleol/corpus` contra los datos
+locales. Se omiten si los corpus no están descargados.
+
+`pnpm test:e2e` compila la aplicación, arranca el servidor de producción en el
+puerto 4323 y ejecuta Playwright con JavaScript desactivado en el navegador. Las
+pruebas cubren selección, lectura hebrea/griega/latina, transliteración, paneles
+gramaticales, navegación, redirecciones, 404 y vista móvil.
+
+Las pruebas usan Chromium. En macOS 12 el WebKit empaquetado por Playwright está
+congelado y no es compatible con la versión actual; en macOS 13 o superior se
+puede activar el proyecto WebKit con:
+
+```sh
+PLAYWRIGHT_WEBKIT=1 pnpm test:e2e
+```
+
+## Estructura
+
+- `apps/web`: Astro SSR, rutas, componentes e i18n.
+- `packages/contracts`: tipos compartidos.
+- `packages/corpus`: catálogo y lector Emdros de solo lectura.
+- `apps/web/e2e`: pruebas end-to-end.
+- `scripts`: importación, descarga y verificación de datos.
+
+Los componentes viven junto a la funcionalidad que los usa
+(`features/reading`, `features/navigation`). No hay un paquete de UI separado.
+
+## Principios
+
+- El HTML funciona sin JavaScript; las mejoras son progresivas.
+- Cero dependencias de navegador: sin framework cliente, CDN, fuentes externas
+  ni librerías de iconos.
+- Fuentes locales (Ezra SIL, Gentium Plus, Galatia SIL y Doulos SIL).
+- Soporte previsto: Safari 17 y Chrome actual en Android 8 o superior.
+- SQLite se consulta con SQL explícito y sentencias preparadas.

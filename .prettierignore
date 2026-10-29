@@ -1,0 +1,9 @@
+node_modules
+dist
+.astro
+data/corpora
+data/lexicon
+playwright-report
+test-results
+.playwright-mcp
+pnpm-lock.yaml

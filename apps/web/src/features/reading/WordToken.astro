@@ -1,0 +1,71 @@
+---
+import type { Word } from "@bibleol/contracts";
+import { t } from "../../i18n";
+import { featureValueLabel } from "../../lib/grammar-labels";
+
+interface Props {
+  word: Word;
+  lang: string;
+  translitLang: string;
+  showTransliteration: boolean;
+}
+
+const { word, lang, translitLang, showTransliteration } = Astro.props;
+const transliteration =
+  showTransliteration && word.transliteration ? word.transliteration : null;
+const hasDetails = Boolean(word.lemma) || word.features.length > 0;
+---
+
+{hasDetails ? (
+  <details class="word">
+    <summary class="word__summary">
+      <span class="word__surface" lang={lang}>
+        {word.text}
+      </span>
+      {transliteration ? (
+        <span class="word__translit" lang={translitLang} dir="ltr">
+          {transliteration}
+        </span>
+      ) : null}
+    </summary>
+    <div class="word__panel" lang="es" dir="ltr">
+      <p class="word__panel-title">
+        <span class="word__panel-word" lang={lang}>
+          {word.text}
+        </span>
+        <span class="word__panel-caption">{t.grammar}</span>
+      </p>
+      {word.lemma ? (
+        <p class="word__lemma">
+          <span class="word__label">{t.lemma}</span>{" "}
+          <bdi lang={lang}>{word.lemma}</bdi>
+        </p>
+      ) : null}
+      {word.features.length > 0 ? (
+        <dl class="word__features">
+          {word.features.map((feature) => (
+            <Fragment>
+              <dt>{feature.label}</dt>
+              <dd title={feature.value}>
+                {featureValueLabel(feature.enumName, feature.value)}
+              </dd>
+            </Fragment>
+          ))}
+        </dl>
+      ) : (
+        <p class="word__empty">{t.noFeatures}</p>
+      )}
+    </div>
+  </details>
+) : (
+  <span class="word word--plain">
+    <span class="word__surface" lang={lang}>
+      {word.text}
+    </span>
+    {transliteration ? (
+      <span class="word__translit" lang={translitLang} dir="ltr">
+        {transliteration}
+      </span>
+    ) : null}
+  </span>
+)}

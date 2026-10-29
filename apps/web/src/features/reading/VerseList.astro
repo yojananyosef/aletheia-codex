@@ -1,0 +1,48 @@
+---
+import type { TextDirection, Verse } from "@bibleol/contracts";
+import { t } from "../../i18n";
+import { scriptClass } from "../../lib/scripts";
+import WordToken from "./WordToken.astro";
+
+interface Props {
+  verses: Verse[];
+  language: string;
+  direction: TextDirection;
+  translitLang: string;
+  showTransliteration: boolean;
+}
+
+const { verses, language, direction, translitLang, showTransliteration } =
+  Astro.props;
+
+const verseScriptClass = scriptClass(language);
+---
+
+<ol class="verses" aria-label={t.readingLabel}>
+  {verses.map((verse) => (
+    <li class="verse" id={`v${verse.number}`}>
+      <a
+        class="verse__number"
+        href={`#v${verse.number}`}
+        aria-label={`${t.verse} ${verse.number}`}
+      >
+        {verse.number}
+      </a>
+      <div
+        class={`verse__text ${verseScriptClass}`}
+        dir={direction}
+        lang={language}
+        title={verse.label}
+      >
+        {verse.words.map((word) => (
+          <WordToken
+            word={word}
+            lang={language}
+            translitLang={translitLang}
+            showTransliteration={showTransliteration}
+          />
+        ))}
+      </div>
+    </li>
+  ))}
+</ol>

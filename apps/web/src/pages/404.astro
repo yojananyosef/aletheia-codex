@@ -1,0 +1,23 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+import { t } from "../i18n";
+
+Astro.response.status = 404;
+Astro.response.statusText = "No encontrado";
+---
+
+<BaseLayout
+  title={`${t.notFoundTitle} — ${t.appName}`}
+  description={t.notFoundText}
+>
+  <main id="main" class="page">
+    <div class="wrap not-found">
+      <p class="eyebrow">404</p>
+      <h1>{t.notFoundTitle}</h1>
+      <p class="not-found__text">{t.notFoundText}</p>
+      <a class="button button--primary" href="/">
+        {t.backToSelection}
+      </a>
+    </div>
+  </main>
+</BaseLayout>

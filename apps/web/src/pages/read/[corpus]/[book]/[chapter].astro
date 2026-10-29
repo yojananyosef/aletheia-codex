@@ -1,0 +1,157 @@
+---
+import { NotFoundError, type Book } from "@bibleol/contracts";
+import BaseLayout from "../../../../layouts/BaseLayout.astro";
+import CorpusTabs from "../../../../features/navigation/CorpusTabs.astro";
+import ChapterNavigation from "../../../../features/navigation/ChapterNavigation.astro";
+import VerseList from "../../../../features/reading/VerseList.astro";
+import { t } from "../../../../i18n";
+import { bookName } from "../../../../lib/book-names";
+import { getReader } from "../../../../lib/reader";
+import { chapterUrl } from "../../../../lib/urls";
+
+interface ChapterLink {
+  book: Book;
+  chapter: number;
+}
+
+const corpusId = Astro.params.corpus;
+const bookId = Astro.params.book;
+const chapterParam = Astro.params.chapter;
+
+if (!corpusId || !bookId || !chapterParam || !/^\d+$/.test(chapterParam)) {
+  return Astro.rewrite("/404");
+}
+
+const chapterNumber = Number(chapterParam);
+const reader = getReader();
+
+let data;
+try {
+  data = reader.getChapter(corpusId, bookId, chapterNumber);
+} catch (error) {
+  if (error instanceof NotFoundError) {
+    return Astro.rewrite("/404");
+  }
+  throw error;
+}
+
+const { corpus, book, verses } = data;
+const books = corpus.books;
+const bookIndex = books.findIndex((item) => item.id === book.id);
+
+let previous: ChapterLink | null = null;
+if (chapterNumber > 1) {
+  previous = { book, chapter: chapterNumber - 1 };
+} else if (bookIndex > 0) {
+  const previousBook = books[bookIndex - 1]!;
+  previous = { book: previousBook, chapter: previousBook.chapters };
+}
+
+let next: ChapterLink | null = null;
+if (chapterNumber < book.chapters) {
+  next = { book, chapter: chapterNumber + 1 };
+} else if (bookIndex >= 0 && bookIndex < books.length - 1) {
+  const nextBook = books[bookIndex + 1]!;
+  next = { book: nextBook, chapter: 1 };
+}
+
+const showTransliteration = Astro.url.searchParams.get("translit") === "1";
+
+const corpusTabs = reader
+  .listCorpora()
+  .map((item) => {
+    const matchingBook = item.books.find((entry) => entry.id === book.id);
+    const targetBook = matchingBook ?? item.books[0];
+    if (!targetBook) {
+      return null;
+    }
+    return {
+      id: item.id,
+      title: item.title,
+      languageName: item.languageName,
+      href: chapterUrl(
+        item.id,
+        targetBook.id,
+        matchingBook ? Math.min(chapterNumber, targetBook.chapters) : 1,
+        { transliteration: showTransliteration && item.hasTransliteration },
+      ),
+    };
+  })
+  .filter((item) => item !== null);
+
+const translitLang = `${corpus.language}-Latn`;
+const toggleParams = new URLSearchParams(Astro.url.searchParams);
+if (showTransliteration) {
+  toggleParams.delete("translit");
+} else {
+  toggleParams.set("translit", "1");
+}
+const toggleQuery = toggleParams.toString();
+const toggleHref = toggleQuery
+  ? `${Astro.url.pathname}?${toggleQuery}`
+  : Astro.url.pathname;
+
+const pageTitle = `${bookName(book.id)} ${chapterNumber} · ${corpus.title} — ${t.appName}`;
+const meta = `${corpus.version ? `${t.edition} ${corpus.version} · ` : ""}${verses.length} ${t.versesCount}`;
+---
+
+<BaseLayout
+  title={pageTitle}
+  description={`${bookName(book.id)} ${chapterNumber}, ${corpus.title}. ${t.grammarHint}`}
+>
+  <main id="main" class="reading-page">
+    <div class="wrap">
+      <CorpusTabs items={corpusTabs} activeId={corpus.id} />
+
+      <header class="reading-header">
+        <p class="eyebrow">
+          {corpus.title} · {corpus.languageName}
+        </p>
+        <h1 class="reading-title">
+          {bookName(book.id)}{" "}
+          <span class="reading-title__chapter">{chapterNumber}</span>
+        </h1>
+        <p class="reading-header__meta">{meta}</p>
+      </header>
+
+      <ChapterNavigation
+        corpus={corpus}
+        book={book}
+        chapter={chapterNumber}
+        previous={previous}
+        next={next}
+        position="top"
+        showTransliteration={showTransliteration}
+      />
+
+      <div class="reading-tools">
+        <p class="reading-tools__hint">{t.grammarHint}</p>
+        {corpus.hasTransliteration ? (
+          <a class="tool-link" href={toggleHref}>
+            {showTransliteration
+              ? t.hideTransliteration
+              : t.showTransliteration}
+          </a>
+        ) : null}
+      </div>
+
+      <VerseList
+        verses={verses}
+        language={corpus.language}
+        direction={corpus.direction}
+        translitLang={translitLang}
+        showTransliteration={showTransliteration}
+      />
+
+      <ChapterNavigation
+        corpus={corpus}
+        book={book}
+        chapter={chapterNumber}
+        previous={previous}
+        next={next}
+        position="bottom"
+        showTransliteration={showTransliteration}
+      />
+    </div>
+  </main>
+</BaseLayout>

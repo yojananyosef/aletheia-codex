@@ -1,0 +1,108 @@
+---
+import type { Book, CorpusSummary } from "@bibleol/contracts";
+import { t } from "../../i18n";
+import { bookName } from "../../lib/book-names";
+import { chapterUrl } from "../../lib/urls";
+
+interface ChapterLink {
+  book: Book;
+  chapter: number;
+}
+
+interface Props {
+  corpus: CorpusSummary;
+  book: Book;
+  chapter: number;
+  previous: ChapterLink | null;
+  next: ChapterLink | null;
+  position: "top" | "bottom";
+  showTransliteration: boolean;
+}
+
+const { corpus, book, chapter, previous, next, position, showTransliteration } =
+  Astro.props;
+const bookSelectId = `book-${position}`;
+const chapterInputId = `chapter-${position}`;
+const linkOptions = { transliteration: showTransliteration };
+---
+
+<nav class="chapter-nav" aria-label={t.chapterNavigation}>
+  <div class="chapter-nav__steps">
+    {previous ? (
+      <a
+        class="chapter-step"
+        href={chapterUrl(
+          corpus.id,
+          previous.book.id,
+          previous.chapter,
+          linkOptions,
+        )}
+        rel="prev"
+      >
+        <span class="chapter-step__arrow" aria-hidden="true">
+          ←
+        </span>
+        <span class="chapter-step__text">
+          <span class="chapter-step__label">{t.previous}</span>
+          <span class="chapter-step__ref">
+            {bookName(previous.book.id)} {previous.chapter}
+          </span>
+        </span>
+      </a>
+    ) : (
+      <span class="chapter-step chapter-step--empty" aria-hidden="true" />
+    )}
+    {next ? (
+      <a
+        class="chapter-step chapter-step--next"
+        href={chapterUrl(corpus.id, next.book.id, next.chapter, linkOptions)}
+        rel="next"
+      >
+        <span class="chapter-step__text">
+          <span class="chapter-step__label">{t.next}</span>
+          <span class="chapter-step__ref">
+            {bookName(next.book.id)} {next.chapter}
+          </span>
+        </span>
+        <span class="chapter-step__arrow" aria-hidden="true">
+          →
+        </span>
+      </a>
+    ) : (
+      <span class="chapter-step chapter-step--empty" aria-hidden="true" />
+    )}
+  </div>
+
+  <form class="chapter-jump" action="/read" method="get">
+    <input type="hidden" name="corpus" value={corpus.id} />
+    {showTransliteration ? (
+      <input type="hidden" name="translit" value="1" />
+    ) : null}
+    <label class="visually-hidden" for={bookSelectId}>
+      {t.bookLabel}
+    </label>
+    <select id={bookSelectId} name="book">
+      {corpus.books.map((item) => (
+        <option value={item.id} selected={item.id === book.id}>
+          {bookName(item.id)}
+        </option>
+      ))}
+    </select>
+    <label class="visually-hidden" for={chapterInputId}>
+      {t.chapterLabel}
+    </label>
+    <input
+      id={chapterInputId}
+      type="number"
+      name="chapter"
+      value={chapter}
+      min="1"
+      max="150"
+      inputmode="numeric"
+      required
+    />
+    <button class="button button--primary button--small" type="submit">
+      {t.goButton}
+    </button>
+  </form>
+</nav>
