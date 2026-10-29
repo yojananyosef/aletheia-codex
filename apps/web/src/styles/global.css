@@ -902,9 +902,13 @@ input[type="number"]:focus {
 }
 
 .grammar-node {
-  margin: 0.3rem 0 0.3rem var(--indent, 0);
-  padding: 0.12rem 0 0.12rem 0.55rem;
+  margin: 0.25rem 0;
+  padding: 0.12rem 0 0.12rem 0.75rem;
   border-left: 3px solid var(--level-color);
+}
+
+.grammar-node .grammar-node {
+  margin-left: 0.75rem;
 }
 
 .grammar-node__head {
@@ -950,10 +954,10 @@ input[type="number"]:focus {
 }
 
 .grammar-words {
-  margin: 0.15rem 0 0.2rem var(--indent, 0);
-  padding-left: 0.55rem;
-  /* The grammar tree is laid out left-to-right even for RTL corpora, so the
-     word line starts next to the tree labels while word order stays RTL. */
+  margin: 0.15rem 0 0.2rem 0;
+  padding-left: 0;
+  /* Words sit inside their deepest grammar box; word order stays RTL even
+     though the box borders stack left-to-right. */
   text-align: left;
 }
 
@@ -1015,26 +1019,26 @@ input[type="number"]:focus {
   white-space: nowrap;
 }
 
-@media (max-width: 1199px) {
-  .word[open] {
-    display: block;
-    width: 100%;
-    margin: 0.35rem 0;
-  }
-
-  .word__panel {
-    position: static;
-    width: auto;
-    max-width: 34rem;
-    max-height: none;
-    margin: 0.4rem 0 0.2rem;
-    overflow: visible;
-    transform: none;
-    box-shadow: 0 2px 10px rgba(24, 18, 10, 0.14);
-  }
+/* When a word panel is open, push surrounding content down instead of
+   overlapping it (matches the legacy panel behaviour). */
+.word[open] {
+  display: block;
+  width: 100%;
+  margin: 0.35rem 0;
 }
 
-@media (max-width: 760px) {
+.word[open] > .word__panel {
+  position: static;
+  width: auto;
+  max-width: 34rem;
+  max-height: none;
+  margin: 0.4rem 0 0.2rem;
+  overflow: visible;
+  transform: none;
+  box-shadow: 0 2px 10px rgba(24, 18, 10, 0.14);
+}
+
+@media (max-width: 1199px) {
   .wrap {
     padding-right: 1rem;
     padding-left: 1rem;

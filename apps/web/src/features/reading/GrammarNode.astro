@@ -1,0 +1,103 @@
+---
+import type {
+  GrammarGroupDefinition,
+  GrammarObject,
+  TextDirection,
+  Word,
+} from "@bibleol/contracts";
+import { t } from "../../i18n";
+import { featureValueLabel } from "../../lib/grammar-labels";
+import WordToken from "./WordToken.astro";
+import GrammarNode from "./GrammarNode.astro";
+
+interface Props {
+  node:
+    | {
+        kind: "object";
+        object: GrammarObject;
+        color: string | null;
+        children: GrammarNodeItem[];
+      }
+    | {
+        kind: "words";
+        words: Word[];
+      };
+  groups: GrammarGroupDefinition[];
+  language: string;
+  direction: TextDirection;
+  translitLang: string;
+  showTransliteration: boolean;
+  verseScriptClass: string;
+}
+
+type GrammarNodeItem = Props["node"];
+
+const {
+  node,
+  groups,
+  language,
+  direction,
+  translitLang,
+  showTransliteration,
+  verseScriptClass,
+} = Astro.props;
+
+function rangeLabel(object: GrammarObject): string {
+  if (object.verseStart === object.verseEnd) {
+    return `${t.verseShort} ${object.verseStart}`;
+  }
+  return `${t.versesShort} ${object.verseStart}–${object.verseEnd}`;
+}
+---
+
+{node.kind === "words" ? (
+  <div
+    class={`grammar-words ${verseScriptClass}`}
+    dir={direction}
+    lang={language}
+  >
+    {node.words.map((word) => (
+      <WordToken
+        word={word}
+        lang={language}
+        direction={direction}
+        translitLang={translitLang}
+        showTransliteration={showTransliteration}
+        groups={groups}
+      />
+    ))}
+  </div>
+) : (
+  <div
+    class={`grammar-node grammar-node--${node.object.level}`}
+    style={`--level-color: ${node.color ?? "var(--line-strong)"}`}
+    data-level={node.object.level}
+    data-object-id={node.object.id}
+  >
+    <p class="grammar-node__head">
+      <span class="grammar-node__badge">{node.object.label}</span>
+      <span class="grammar-node__ref">{rangeLabel(node.object)}</span>
+    </p>
+    {node.object.features.length > 0 ? (
+      <p class="grammar-node__features">
+        {node.object.features.map((feature) => (
+          <span class="grammar-node__feature">
+            <span class="grammar-node__feature-label">{feature.label}</span>{" "}
+            <bdi title={feature.value}>{featureValueLabel(feature)}</bdi>
+          </span>
+        ))}
+      </p>
+    ) : null}
+    {node.children.map((child) => (
+      <GrammarNode
+        node={child}
+        groups={groups}
+        language={language}
+        direction={direction}
+        translitLang={translitLang}
+        showTransliteration={showTransliteration}
+        verseScriptClass={verseScriptClass}
+      />
+    ))}
+  </div>
+)}

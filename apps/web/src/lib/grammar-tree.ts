@@ -5,24 +5,24 @@ import type {
   Word,
 } from "@bibleol/contracts";
 
-export interface GrammarObjectItem {
+export interface GrammarObjectNode {
   kind: "object";
   object: GrammarObject;
   color: string | null;
   depth: number;
+  children: GrammarTreeNode[];
 }
 
-export interface GrammarWordsItem {
+export interface GrammarWordsNode {
   kind: "words";
   words: Word[];
-  depth: number;
 }
 
-export type GrammarItem = GrammarObjectItem | GrammarWordsItem;
+export type GrammarTreeNode = GrammarObjectNode | GrammarWordsNode;
 
 export interface VerseGrammar {
   verse: Verse;
-  items: GrammarItem[];
+  items: GrammarTreeNode[];
 }
 
 interface WordGroup {
@@ -52,9 +52,10 @@ function containsMonad(object: GrammarObject, monad: number): boolean {
 }
 
 /**
- * Organise the flat grammar objects of a chapter into a readable structure for
- * every verse. Each word is attached to the deepest grammatical object that
- * contains it, and objects are rendered in reading order with their children.
+ * Organise the flat grammar objects of a chapter into a nested tree for every
+ * verse. Each object node contains its direct content (words and child objects)
+ * in reading order, so the UI can render nested boxes matching the legacy
+ * structure (oración contains cláusulas, cláusulas contain frases, etc.).
  */
 export function buildGrammarByVerse(
   verses: Verse[],
@@ -126,24 +127,12 @@ export function buildGrammarByVerse(
       }
     }
 
-    const items: GrammarItem[] = [];
-    const pushWords = (group: Word[], depth: number): void => {
-      if (group.length === 0) {
-        return;
-      }
-      items.push({ kind: "words", words: group, depth });
-    };
+    const items: GrammarTreeNode[] = [];
+    if (unassigned.length > 0) {
+      items.push({ kind: "words", words: unassigned });
+    }
 
-    pushWords(unassigned, 0);
-
-    const walk = (object: GrammarObject): void => {
-      items.push({
-        kind: "object",
-        object,
-        color: colors.get(object.level) ?? null,
-        depth: object.depth,
-      });
-
+    const walk = (object: GrammarObject): GrammarObjectNode => {
       const content: Array<ChildGroup | WordGroup> = [];
       for (const word of wordsByObject.get(object.id) ?? []) {
         content.push({ monad: word.monad, word });
@@ -153,24 +142,35 @@ export function buildGrammarByVerse(
       }
       content.sort((left, right) => left.monad - right.monad);
 
+      const nodeChildren: GrammarTreeNode[] = [];
       let buffer: Word[] = [];
       const flush = (): void => {
-        pushWords(buffer, object.depth + 1);
-        buffer = [];
+        if (buffer.length > 0) {
+          nodeChildren.push({ kind: "words", words: buffer });
+          buffer = [];
+        }
       };
       for (const entry of content) {
         if ("word" in entry) {
           buffer.push(entry.word);
         } else {
           flush();
-          walk(entry.object);
+          nodeChildren.push(walk(entry.object));
         }
       }
       flush();
+
+      return {
+        kind: "object",
+        object,
+        color: colors.get(object.level) ?? null,
+        depth: object.depth,
+        children: nodeChildren,
+      };
     };
 
     for (const root of roots) {
-      walk(root);
+      items.push(walk(root));
     }
 
     return { verse, items };
