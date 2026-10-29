@@ -306,6 +306,19 @@ test.describe("direcciones", () => {
     await page.goto("/read/ETCBC4/Genesis?translit=1");
     await expect(page).toHaveURL(/\/read\/ETCBC4\/Genesis\/1\?translit=1$/);
     await expect(page.locator(".word__translit").first()).toBeVisible();
+
+    await page.goto("/read/ETCBC4/Genesis?grammar=1");
+    await expect(page).toHaveURL(/\/read\/ETCBC4\/Genesis\/1\?grammar=1$/);
+    await expect(page.locator(".grammar")).toBeVisible();
+
+    await page.goto(
+      "/read?corpus=ETCBC4&book=Genesis&chapter=1&translit=1&grammar=1",
+    );
+    await expect(page).toHaveURL(
+      /\/read\/ETCBC4\/Genesis\/1\?translit=1&grammar=1$/,
+    );
+    await expect(page.locator(".grammar")).toBeVisible();
+    await expect(page.locator(".word__translit").first()).toBeVisible();
   });
 
   test("responde 404 en español para pasajes inexistentes", async ({
