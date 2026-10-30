@@ -31,7 +31,10 @@ const verseScriptClass = scriptClass(language);
 
 <ol class="verses" aria-label={t.readingLabel}>
   {verses.map((verse) => (
-    <li class="verse" id={`v${verse.number}`}>
+    <li
+      class={`verse ${direction === "rtl" ? "rtl" : ""}`}
+      id={`v${verse.number}`}
+    >
       <a
         class="verse__number"
         href={`#v${verse.number}`}

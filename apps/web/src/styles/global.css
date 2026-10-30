@@ -653,6 +653,10 @@ input[type="number"]:focus {
   border-bottom: 1px solid var(--line-soft);
 }
 
+.verse.rtl {
+  grid-template-columns: minmax(0, 1fr) 2.25rem;
+}
+
 .verse__number {
   grid-column: 1;
   padding-top: 1.05rem;
@@ -663,6 +667,12 @@ input[type="number"]:focus {
   text-decoration: none;
 }
 
+[dir="rtl"] .verse__number,
+.verse.rtl .verse__number {
+  grid-column: 2;
+  text-align: right;
+}
+
 .verse__number:hover {
   color: var(--accent);
 }
@@ -670,6 +680,12 @@ input[type="number"]:focus {
 .verse__text {
   grid-column: 2;
   min-width: 0;
+}
+
+[dir="rtl"] .verse__text,
+.verse.rtl .verse__text {
+  grid-column: 1;
+  text-align: right;
 }
 
 .script-hebrew {
@@ -703,6 +719,16 @@ input[type="number"]:focus {
   border-radius: 3px;
   cursor: pointer;
   list-style: none;
+}
+
+.word__translit {
+  margin-top: 0.15rem;
+  font-size: 0.75rem;
+  color: var(--muted);
+}
+
+span.word--plain {
+  margin: 0 0.07em;
 }
 
 .word__summary::-webkit-details-marker {
@@ -896,9 +922,23 @@ input[type="number"]:focus {
   border-bottom: 1px solid var(--line-soft);
 }
 
+.grammar-verse.rtl {
+  grid-template-columns: minmax(0, 1fr) 2.25rem;
+}
+
 .grammar-verse__body {
   grid-column: 2;
   min-width: 0;
+}
+
+[dir="rtl"] .grammar-verse__body,
+.grammar-verse.rtl .grammar-verse__body {
+  grid-column: 1;
+}
+
+[dir="rtl"] .grammar-verse .verse__number,
+.grammar-verse.rtl .verse__number {
+  text-align: right;
 }
 
 .grammar-node {
@@ -959,6 +999,11 @@ input[type="number"]:focus {
   /* Words sit inside their deepest grammar box; word order stays RTL even
      though the box borders stack left-to-right. */
   text-align: left;
+}
+
+[dir="rtl"] .grammar-words,
+.grammar-words.rtl {
+  text-align: right;
 }
 
 .grammar-words.script-hebrew {
@@ -1176,6 +1221,10 @@ input[type="number"]:focus {
 
   .verse__number {
     padding-top: 0.9rem;
+  }
+
+  .word__panel {
+    max-width: calc(100vw - 2rem);
   }
 }
 

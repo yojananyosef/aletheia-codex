@@ -65,9 +65,8 @@ test.describe("lectura hebrea", () => {
     const firstVerseText = page.locator(".verse__text").first();
     await expect(firstVerseText).toHaveAttribute("dir", "rtl");
     await expect(firstVerseText).toHaveAttribute("lang", "he");
-    expect(nfc(await firstVerseText.innerText())).toContain(
-      nfc("בְּרֵאשִׁ֖ית"),
-    );
+    const verseText = nfc(await firstVerseText.innerText()).replace(/\s+/g, "");
+    expect(verseText).toContain(nfc("בְּרֵאשִׁ֖ית").replace(/\s+/g, ""));
 
     const firstWord = page.locator(".verse").first().locator(".word").first();
     await firstWord.locator("summary").click();

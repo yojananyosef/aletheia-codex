@@ -54,7 +54,10 @@ const verseScriptClass = scriptClass(language);
 
   <ol class="grammar-verses" aria-label={t.grammarStructure}>
     {trees.map(({ verse, items }) => (
-      <li class="grammar-verse" id={`v${verse.number}`}>
+      <li
+        class={`grammar-verse ${direction === "rtl" ? "rtl" : ""}`}
+        id={`v${verse.number}`}
+      >
         <a
           class="verse__number"
           href={`#v${verse.number}`}
