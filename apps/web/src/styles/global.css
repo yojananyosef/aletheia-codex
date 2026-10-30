@@ -721,16 +721,6 @@ input[type="number"]:focus {
   list-style: none;
 }
 
-.word__translit {
-  margin-top: 0.15rem;
-  font-size: 0.75rem;
-  color: var(--muted);
-}
-
-span.word--plain {
-  margin: 0 0.07em;
-}
-
 .word__summary::-webkit-details-marker {
   display: none;
 }
@@ -749,12 +739,14 @@ span.word--plain {
 }
 
 .word__translit {
-  margin: 0 0.1em 0 0.18em;
+  display: block;
+  margin-top: 0.15rem;
+  font-size: 0.75rem;
   color: var(--muted);
-  font-family: var(--font-translit);
-  font-size: 0.6em;
-  vertical-align: 0.1em;
-  white-space: nowrap;
+}
+
+span.word--plain {
+  margin: 0 0.07em;
 }
 
 .word__panel {
