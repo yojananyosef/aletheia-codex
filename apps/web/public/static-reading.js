@@ -81,21 +81,11 @@
   }
 
   function syncRange(range) {
-    const form = document.querySelector(".range-form");
-    if (form) {
+    for (const form of document.querySelectorAll("form.chapter-jump")) {
       const fromInput = form.querySelector('input[name="from"]');
       const toInput = form.querySelector('input[name="to"]');
       if (fromInput) fromInput.value = range ? String(range.from) : "";
       if (toInput) toInput.value = range ? String(range.to) : "";
-    }
-
-    const allLink = document.querySelector("[data-show-all]");
-    if (allLink) {
-      allLink.hidden = !range;
-      const url = new URL(location.href);
-      url.searchParams.delete("from");
-      url.searchParams.delete("to");
-      allLink.setAttribute("href", `${url.pathname}${url.search}`);
     }
 
     const header = document.querySelector(".reading-header");
@@ -114,11 +104,7 @@
     const total = Number(header.dataset.total) || lastVerseNumber();
     const edition = meta?.dataset.edition || "";
     if (meta) {
-      meta.textContent = range
-        ? `${edition}${
-            range.from === range.to ? "v." : "vv."
-          } ${rangeReference} de ${total} versículos`
-        : `${edition}${total} versículos`;
+      meta.textContent = `${edition}${total} versículos`;
     }
 
     const reference = header.dataset.reference || baseChapter;
@@ -189,9 +175,7 @@
       link.setAttribute("href", `${url.pathname}${url.search}`);
     }
 
-    for (const form of document.querySelectorAll(
-      "form.chapter-jump, form.range-form",
-    )) {
+    for (const form of document.querySelectorAll("form.chapter-jump")) {
       for (const key of toggleNames) {
         let input = form.querySelector(`input[name="${key}"]`);
         if (state[key]) {

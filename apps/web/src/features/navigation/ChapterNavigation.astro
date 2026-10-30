@@ -3,6 +3,7 @@ import type { Book, CorpusSummary } from "@bibleol/contracts";
 import { t } from "../../i18n";
 import { bookName } from "../../lib/book-names";
 import { chapterUrl } from "../../lib/urls";
+import type { VerseRange } from "../../lib/verse-range";
 
 interface ChapterLink {
   book: Book;
@@ -19,6 +20,9 @@ interface Props {
   showTransliteration: boolean;
   showGrammar: boolean;
   showGloss: boolean;
+  withVerseRange?: boolean;
+  verseRange?: VerseRange | null;
+  lastVerse?: number;
 }
 
 const {
@@ -31,9 +35,15 @@ const {
   showTransliteration,
   showGrammar,
   showGloss,
+  withVerseRange = false,
+  verseRange = null,
+  lastVerse = 1,
 } = Astro.props;
 const bookSelectId = `book-${position}`;
 const chapterInputId = `chapter-${position}`;
+const fromInputId = `from-${position}`;
+const toInputId = `to-${position}`;
+const rangeLabelId = `range-label-${position}`;
 const linkOptions = {
   transliteration: showTransliteration,
   grammar: showGrammar,
@@ -42,51 +52,30 @@ const linkOptions = {
 ---
 
 <nav class="chapter-nav" aria-label={t.chapterNavigation}>
-  <div class="chapter-nav__steps">
-    {previous ? (
-      <a
-        class="chapter-step"
-        href={chapterUrl(
-          corpus.id,
-          previous.book.id,
-          previous.chapter,
-          linkOptions,
-        )}
-        rel="prev"
-      >
-        <span class="chapter-step__arrow" aria-hidden="true">
-          ←
+  {previous ? (
+    <a
+      class="chapter-step chapter-step--prev"
+      href={chapterUrl(
+        corpus.id,
+        previous.book.id,
+        previous.chapter,
+        linkOptions,
+      )}
+      rel="prev"
+    >
+      <span class="chapter-step__arrow" aria-hidden="true">
+        ←
+      </span>
+      <span class="chapter-step__text">
+        <span class="chapter-step__label">{t.previous}</span>
+        <span class="chapter-step__ref">
+          {bookName(previous.book.id)} {previous.chapter}
         </span>
-        <span class="chapter-step__text">
-          <span class="chapter-step__label">{t.previous}</span>
-          <span class="chapter-step__ref">
-            {bookName(previous.book.id)} {previous.chapter}
-          </span>
-        </span>
-      </a>
-    ) : (
-      <span class="chapter-step chapter-step--empty" aria-hidden="true" />
-    )}
-    {next ? (
-      <a
-        class="chapter-step chapter-step--next"
-        href={chapterUrl(corpus.id, next.book.id, next.chapter, linkOptions)}
-        rel="next"
-      >
-        <span class="chapter-step__text">
-          <span class="chapter-step__label">{t.next}</span>
-          <span class="chapter-step__ref">
-            {bookName(next.book.id)} {next.chapter}
-          </span>
-        </span>
-        <span class="chapter-step__arrow" aria-hidden="true">
-          →
-        </span>
-      </a>
-    ) : (
-      <span class="chapter-step chapter-step--empty" aria-hidden="true" />
-    )}
-  </div>
+      </span>
+    </a>
+  ) : (
+    <span class="chapter-step chapter-step--empty" aria-hidden="true" />
+  )}
 
   <form class="chapter-jump" action="/read" method="get">
     <input type="hidden" name="corpus" value={corpus.id} />
@@ -95,31 +84,99 @@ const linkOptions = {
     ) : null}
     {showGrammar ? <input type="hidden" name="grammar" value="1" /> : null}
     {showGloss ? <input type="hidden" name="gloss" value="1" /> : null}
-    <label class="visually-hidden" for={bookSelectId}>
-      {t.bookLabel}
-    </label>
-    <select id={bookSelectId} name="book">
-      {corpus.books.map((item) => (
-        <option value={item.id} selected={item.id === book.id}>
-          {bookName(item.id)}
-        </option>
-      ))}
-    </select>
-    <label class="visually-hidden" for={chapterInputId}>
-      {t.chapterLabel}
-    </label>
-    <input
-      id={chapterInputId}
-      type="number"
-      name="chapter"
-      value={chapter}
-      min="1"
-      max="150"
-      inputmode="numeric"
-      required
-    />
+
+    <div class="chapter-jump__field chapter-jump__book">
+      <label class="chapter-jump__label" for={bookSelectId}>
+        {t.bookLabel}
+      </label>
+      <select id={bookSelectId} name="book">
+        {corpus.books.map((item) => (
+          <option value={item.id} selected={item.id === book.id}>
+            {bookName(item.id)}
+          </option>
+        ))}
+      </select>
+    </div>
+
+    <div class="chapter-jump__field chapter-jump__chapter">
+      <label class="chapter-jump__label" for={chapterInputId}>
+        {t.chapterLabel}
+      </label>
+      <input
+        id={chapterInputId}
+        type="number"
+        name="chapter"
+        value={chapter}
+        min="1"
+        max="150"
+        inputmode="numeric"
+        required
+      />
+    </div>
+
+    {withVerseRange ? (
+      <div class="chapter-jump__field chapter-jump__verses">
+        <span class="chapter-jump__label" id={rangeLabelId}>
+          {t.verseRangeLabel}
+        </span>
+        <div
+          class="chapter-jump__range"
+          role="group"
+          aria-labelledby={rangeLabelId}
+        >
+          <label class="visually-hidden" for={fromInputId}>
+            {t.verseFromLabel}
+          </label>
+          <input
+            id={fromInputId}
+            type="number"
+            name="from"
+            value={verseRange ? String(verseRange.from) : undefined}
+            min="1"
+            max={lastVerse}
+            inputmode="numeric"
+            placeholder="1"
+          />
+          <span aria-hidden="true">–</span>
+          <label class="visually-hidden" for={toInputId}>
+            {t.verseToLabel}
+          </label>
+          <input
+            id={toInputId}
+            type="number"
+            name="to"
+            value={verseRange ? String(verseRange.to) : undefined}
+            min="1"
+            max={lastVerse}
+            inputmode="numeric"
+            placeholder={String(lastVerse)}
+          />
+        </div>
+      </div>
+    ) : null}
+
     <button class="button button--primary button--small" type="submit">
       {t.goButton}
     </button>
   </form>
+
+  {next ? (
+    <a
+      class="chapter-step chapter-step--next"
+      href={chapterUrl(corpus.id, next.book.id, next.chapter, linkOptions)}
+      rel="next"
+    >
+      <span class="chapter-step__text">
+        <span class="chapter-step__label">{t.next}</span>
+        <span class="chapter-step__ref">
+          {bookName(next.book.id)} {next.chapter}
+        </span>
+      </span>
+      <span class="chapter-step__arrow" aria-hidden="true">
+        →
+      </span>
+    </a>
+  ) : (
+    <span class="chapter-step chapter-step--empty" aria-hidden="true" />
+  )}
 </nav>

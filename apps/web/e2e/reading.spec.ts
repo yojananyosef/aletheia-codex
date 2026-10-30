@@ -68,10 +68,13 @@ test.describe("selección", () => {
     await expect(page.locator(".verse")).toHaveCount(3);
     await expect(page.locator(".verse").first()).toHaveAttribute("id", "v3");
     await expect(page.locator(".reading-header__meta")).toContainText(
-      "vv. 3–5 de 25 versículos",
+      "25 versículos",
     );
 
-    await page.getByRole("link", { name: "Todo el capítulo" }).click();
+    const nav = page.locator(".chapter-nav").first();
+    await nav.getByLabel("Desde").fill("");
+    await nav.getByLabel("Hasta").fill("");
+    await nav.getByRole("button", { name: "Ir" }).click();
     await expect(page).toHaveURL(/\/read\/ETCBC4\/Genesis\/2$/);
     await expect(page.getByRole("heading", { level: 1 })).toHaveText(
       "Génesis 2",
@@ -273,7 +276,7 @@ test.describe("lectura hebrea", () => {
     await expect(page.locator(".verse")).toHaveCount(1);
     await expect(page.locator(".verse").first()).toHaveAttribute("id", "v5");
     await expect(page.locator(".reading-header__meta")).toContainText(
-      "v. 5 de 176 versículos",
+      "176 versículos",
     );
 
     await page.goto("/read/ETCBC4/Psalmi/119?from=200");
@@ -300,20 +303,37 @@ test.describe("lectura hebrea", () => {
     await expect(page.locator(".verse").last()).toHaveAttribute("id", "v3");
   });
 
-  test("el formulario de rango conserva la vista y la navegación la descarta", async ({
+  test("integra el rango en el selector superior sin una barra aparte", async ({
+    page,
+  }) => {
+    await page.goto("/read/ETCBC4/Psalmi/119?from=5&to=10");
+
+    const nav = page.locator(".chapter-nav").first();
+    await expect(nav.getByLabel("Desde")).toHaveValue("5");
+    await expect(nav.getByLabel("Hasta")).toHaveValue("10");
+    await expect(nav.getByRole("button", { name: "Ir" })).toBeVisible();
+    await expect(page.getByLabel("Desde")).toHaveCount(1);
+    await expect(page.locator(".reading-range")).toHaveCount(0);
+    await expect(page.locator(".range-form")).toHaveCount(0);
+  });
+
+  test("el selector de versículos conserva la vista y la navegación la descarta", async ({
     page,
   }) => {
     await page.goto("/read/ETCBC4/Genesis/1");
 
-    await page.getByLabel("Desde").fill("2");
-    await page.getByLabel("Hasta").fill("4");
-    await page.getByRole("button", { name: "Ver" }).click();
+    const nav = page.locator(".chapter-nav").first();
+    await nav.getByLabel("Desde").fill("2");
+    await nav.getByLabel("Hasta").fill("4");
+    await nav.getByRole("button", { name: "Ir" }).click();
 
     await expect(page).toHaveURL(/\/read\/ETCBC4\/Genesis\/1\?from=2&to=4$/);
     await expect(page.getByRole("heading", { level: 1 })).toHaveText(
       "Génesis 1:2–4",
     );
     await expect(page.locator(".verse")).toHaveCount(3);
+    await expect(nav.getByLabel("Desde")).toHaveValue("2");
+    await expect(nav.getByLabel("Hasta")).toHaveValue("4");
 
     await page.getByRole("link", { name: "Mostrar glosa" }).click();
     await expect(page).toHaveURL(
@@ -338,7 +358,7 @@ test.describe("lectura hebrea", () => {
       "Génesis 1:2–3",
     );
     await expect(page.locator(".reading-header__meta")).toContainText(
-      "vv. 2–3 de 31 versículos",
+      "31 versículos",
     );
     await expect(page.locator(".grammar")).toBeVisible();
     await expect(page.locator(".grammar-verse")).toHaveCount(2);

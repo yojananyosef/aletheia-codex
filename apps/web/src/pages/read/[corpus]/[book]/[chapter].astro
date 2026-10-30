@@ -5,7 +5,6 @@ import CorpusTabs from "../../../../features/navigation/CorpusTabs.astro";
 import ChapterNavigation from "../../../../features/navigation/ChapterNavigation.astro";
 import GrammarView from "../../../../features/reading/GrammarView.astro";
 import VerseList from "../../../../features/reading/VerseList.astro";
-import VerseRangeForm from "../../../../features/reading/VerseRangeForm.astro";
 import { t } from "../../../../i18n";
 import { bookName } from "../../../../lib/book-names";
 import { getReader } from "../../../../lib/reader";
@@ -123,27 +122,12 @@ const rangeReference = verseRange
     ? String(verseRange.from)
     : `${verseRange.from}–${verseRange.to}`
   : null;
-const rangeLabel = verseRange
-  ? `${verseRange.from === verseRange.to ? t.verseShort : t.versesShort} ${rangeReference}`
-  : null;
-const meta = `${editionPrefix}${
-  rangeLabel
-    ? `${rangeLabel} ${t.of} ${allVerses.length} ${t.versesCount}`
-    : `${allVerses.length} ${t.versesCount}`
-}`;
+const meta = `${editionPrefix}${allVerses.length} ${t.versesCount}`;
 const chapterReference = `${bookName(book.id)} ${chapterNumber}`;
 const reference = rangeReference
   ? `${chapterReference}:${rangeReference}`
   : chapterReference;
 const pageTitle = `${reference} · ${corpus.title} — ${t.appName}`;
-
-const allParams = new URLSearchParams(Astro.url.searchParams);
-allParams.delete("from");
-allParams.delete("to");
-const allQuery = allParams.toString();
-const allHref = allQuery
-  ? `${Astro.url.pathname}?${allQuery}`
-  : Astro.url.pathname;
 ---
 
 <BaseLayout
@@ -160,9 +144,6 @@ const allHref = allQuery
         data-title-suffix={` · ${corpus.title} — ${t.appName}`}
         data-total={String(allVerses.length)}
       >
-        <p class="eyebrow">
-          {corpus.title} · {corpus.languageName}
-        </p>
         <h1 class="reading-title">
           {bookName(book.id)}{" "}
           <span
@@ -185,6 +166,9 @@ const allHref = allQuery
         showTransliteration={showTransliteration}
         showGrammar={showGrammar}
         showGloss={showGloss}
+        withVerseRange
+        verseRange={verseRange}
+        lastVerse={lastVerse}
       />
 
       <div class="reading-tools">
@@ -233,19 +217,6 @@ const allHref = allQuery
             </a>
           ) : null}
         </div>
-      </div>
-
-      <div class="reading-range">
-        <VerseRangeForm
-          action={Astro.url.pathname}
-          allHref={allHref}
-          from={verseRange?.from ?? null}
-          to={verseRange?.to ?? null}
-          max={lastVerse}
-          showTransliteration={showTransliteration}
-          showGrammar={showGrammar}
-          showGloss={showGloss}
-        />
       </div>
 
       {showGrammar ? (

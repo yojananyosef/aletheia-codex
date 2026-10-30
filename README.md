@@ -54,9 +54,10 @@ necesidad de MySQL.
 
 Los valores de `from` y `to` se intercambian si vienen al revés y se ajustan al
 último versículo real del capítulo. La selección de versículos está disponible
-en los formularios de la portada y en la barra de cada capítulo, y se conserva
-al activar o desactivar la transliteración, la glosa o la gramática. Al cambiar
-de capítulo, de libro o de corpus se vuelve a mostrar el capítulo completo.
+en el formulario de la portada y en el selector superior de cada capítulo, y se
+conserva al activar o desactivar la transliteración, la glosa o la gramática. Al
+cambiar de capítulo, de libro o de corpus se vuelve a mostrar el capítulo
+completo; dejar los dos campos vacíos también muestra todo el capítulo.
 
 Las URL de lectura conservan `translit=1`, `grammar=1`, `gloss=1`, `from` y
 `to` al cambiar de vista.
