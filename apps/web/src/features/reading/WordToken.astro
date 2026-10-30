@@ -199,12 +199,9 @@ function glossLanguageName(code: string): string {
       {word.text}
     </span>
     {transliteration ? (
-      <>
-        <br />
-        <span class="word__translit" lang={translitLang} dir="ltr">
-          {transliteration}
-        </span>
-      </>
+      <span class="word__translit" lang={translitLang} dir="ltr">
+        {transliteration}
+      </span>
     ) : null}
     {showGloss && word.gloss ? (
       <span class="word__gloss" lang={word.gloss.language} dir={glossDirection}>

@@ -137,13 +137,20 @@ const meta = `${corpus.version ? `${t.edition} ${corpus.version} · ` : ""}${ver
       />
 
       <div class="reading-tools">
-        <p class="reading-tools__hint">
+        <p
+          class="reading-tools__hint"
+          data-hint-reading={t.grammarHint}
+          data-hint-grammar={t.grammarModeHint}
+        >
           {showGrammar ? t.grammarModeHint : t.grammarHint}
         </p>
         <div class="reading-tools__links">
           <a
             class:list={["tool-link", { "tool-link--active": showGrammar }]}
             href={toggleHref("grammar")}
+            data-toggle="grammar"
+            data-show-label={t.showGrammar}
+            data-hide-label={t.hideGrammar}
           >
             {showGrammar ? t.hideGrammar : t.showGrammar}
           </a>
@@ -154,6 +161,9 @@ const meta = `${corpus.version ? `${t.edition} ${corpus.version} · ` : ""}${ver
                 { "tool-link--active": showTransliteration },
               ]}
               href={toggleHref("translit")}
+              data-toggle="translit"
+              data-show-label={t.showTransliteration}
+              data-hide-label={t.hideTransliteration}
             >
               {showTransliteration
                 ? t.hideTransliteration
@@ -164,6 +174,9 @@ const meta = `${corpus.version ? `${t.edition} ${corpus.version} · ` : ""}${ver
             <a
               class:list={["tool-link", { "tool-link--active": showGloss }]}
               href={toggleHref("gloss")}
+              data-toggle="gloss"
+              data-show-label={t.showGloss}
+              data-hide-label={t.hideGloss}
             >
               {showGloss ? t.hideGloss : t.showGloss}
             </a>

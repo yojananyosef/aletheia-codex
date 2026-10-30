@@ -1,0 +1,55 @@
+/*
+ * Static build helpers.
+ *
+ * GitHub Pages serves the reading pages without the Astro server, so the
+ * transliteration, gloss and grammar views are part of the same snapshot and
+ * are shown or hidden here from the URL query string.
+ */
+html.static-reading:not(.show-translit) .word__translit {
+  display: none;
+}
+
+html.static-reading:not(.show-gloss) .word__gloss {
+  display: none;
+}
+
+/*
+ * The gloss snapshot uses fixed-width flex cells. When the gloss is hidden the
+ * page goes back to the normal inline flow so words do not keep the wide grid.
+ */
+html.static-reading:not(.show-gloss) .verse__text--gloss,
+html.static-reading:not(.show-gloss) .grammar-words--gloss {
+  display: block;
+}
+
+html.static-reading:not(.show-gloss) .verse__text--gloss .word,
+html.static-reading:not(.show-gloss) .grammar-words--gloss .word {
+  width: auto;
+  margin: 0 0.55em;
+}
+
+html.static-reading:not(.show-gloss) .verse__text--gloss .word__summary,
+html.static-reading:not(.show-gloss) .grammar-words--gloss .word__summary {
+  margin: 0 -0.55em;
+  padding: 0.06em 0.55em;
+}
+
+html.static-reading.show-grammar .verses {
+  display: none;
+}
+
+.static-loading {
+  margin: 0.75rem 0;
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
+.word__panel--loading {
+  color: var(--muted);
+  font-family: var(--font-ui);
+  font-size: 0.8rem;
+}
+
+.grammar-slot {
+  margin-top: 0.35rem;
+}

@@ -2,7 +2,9 @@
 
 Aplicación de lectura bíblica en lenguas originales. El texto se sirve como HTML
 desde Astro SSR y se lee directamente de los corpus Emdros mediante SQLite de
-solo lectura. La interfaz está en español y funciona sin JavaScript.
+solo lectura. La interfaz está en español y funciona sin JavaScript en la
+versión SSR. La edición publicada en GitHub Pages es una instantánea estática
+que carga los paneles y la gramática bajo demanda con JavaScript.
 
 Este primer corte cubre la lectura de corpus, libros y capítulos: hebreo con
 transliteración, griego y latín, con la forma en el texto, el lexema, la
@@ -50,6 +52,31 @@ necesidad de MySQL.
 Las URL de lectura conservan `translit=1`, `grammar=1` y `gloss=1` al cambiar
 de capítulo, de libro o de corpus.
 
+## Publicación en GitHub Pages
+
+El flujo `.github/workflows/pages.yml` compila y publica la aplicación en
+<https://yojananyosef.github.io/bibleol-astro/> al hacer push a `main` (o al
+ejecutarlo manualmente). Como Pages solo sirve archivos estáticos, el flujo:
+
+1. descarga los corpus,
+2. compila la aplicación SSR,
+3. arranca el servidor y genera una instantánea de todos los capítulos,
+4. separa los paneles de palabra y la vista gramatical en archivos `.gz` que se
+   cargan bajo demanda.
+
+La instantánea final ocupa unos 263 MiB, por debajo del límite de 1 GB de Pages.
+El HTML contiene los versículos y las glosas; los paneles, la gramática y los
+cambios de vista necesitan JavaScript en esta edición.
+
+Para generarla localmente:
+
+```sh
+pnpm build
+node scripts/export-static.mjs --start-server --base /bibleol-astro
+```
+
+El resultado queda en `dist-static/`.
+
 En la vista gramatical, cada nivel (frase, cláusula y oración) aparece con el
 color del proyecto original. Las palabras se agrupan bajo el objeto gramatical
 más profundo que las contiene y siguen siendo desplegables para consultar todos
@@ -65,6 +92,7 @@ sus datos.
 | `pnpm check`         | Comprobación de tipos de todos los paquetes.            |
 | `pnpm test`          | Pruebas de integración del lector de corpus.            |
 | `pnpm test:e2e`      | Pruebas end-to-end sin JavaScript sobre la compilación. |
+| `pnpm export:static` | Genera la instantánea estática para GitHub Pages.       |
 | `pnpm data:sync`     | Descarga y verifica los corpus Emdros.                  |
 | `pnpm data:import`   | Regenera `data/metadata/corpora.json` desde el legacy.  |
 | `pnpm data:lexicons` | Regenera las glosas de `data/lexicon/` desde el legacy. |
@@ -122,7 +150,8 @@ Los componentes viven junto a la funcionalidad que los usa
 
 ## Principios
 
-- El HTML funciona sin JavaScript; las mejoras son progresivas.
+- La versión SSR funciona sin JavaScript; la instantánea de Pages usa
+  JavaScript solo para los paneles, la gramática y los conmutadores de vista.
 - Cero dependencias de navegador: sin framework cliente, CDN, fuentes externas
   ni librerías de iconos.
 - Fuentes locales (Ezra SIL, Gentium Plus, Galatia SIL y Doulos SIL).

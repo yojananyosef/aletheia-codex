@@ -12,6 +12,7 @@
     "build": "pnpm --filter @bibleol/web build",
     "start": "pnpm --filter @bibleol/web start",
     "preview": "pnpm --filter @bibleol/web preview",
+    "export:static": "node scripts/export-static.mjs --start-server --out dist-static",
     "check": "pnpm -r check",
     "lint": "eslint .",
     "format": "prettier --write .",

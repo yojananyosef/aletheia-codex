@@ -5,6 +5,8 @@ node_modules/
 # Build output
 .astro/
 dist/
+dist-static/
+dist-static-*/
 build/
 *.tsbuildinfo
 
