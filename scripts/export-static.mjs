@@ -588,6 +588,10 @@ async function main() {
             "<title>Capítulo no disponible — BibleOL</title>",
           )
           .replace(
+            '<p class="eyebrow">404</p>',
+            `<p class="eyebrow">${escapeAttribute(corpus.title)}</p>`,
+          )
+          .replace(
             "<h1>No encontramos ese pasaje</h1>",
             "<h1>Capítulo no disponible</h1>",
           )
