@@ -94,8 +94,18 @@ def import_hebrew(
                     continue
                 merge_stem_gloss(entry, stem, "es", row.get(column, ""))
                 merge_stem_gloss(entry, stem, "en", fallback.get(column, ""))
+            lexeme = row.get("Lexeme", "").strip()
+            document: dict[str, object] = {}
             if entry:
-                entries[f"{language}:{key}"] = {"glosses": entry}
+                document["glosses"] = entry
+            if lexeme:
+                # The legacy word panel shows the lexeme together with its
+                # Roman-numeral variant (for example "אָב I"). The Emdros
+                # corpus only stores the base lexeme, so keep the variant in
+                # the generated lexicon.
+                document["lexeme"] = lexeme
+            if document:
+                entries[f"{language}:{key}"] = document
 
 
 def import_greek(lexicon_dir: Path, entries: dict[str, dict]) -> None:

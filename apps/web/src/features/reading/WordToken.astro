@@ -1,5 +1,7 @@
 ---
 import type {
+  FeatureDefinition,
+  FeatureValue,
   GrammarGroupDefinition,
   TextDirection,
   Word,
@@ -13,55 +15,167 @@ interface Props {
   direction: TextDirection;
   translitLang: string;
   showTransliteration: boolean;
+  showGloss: boolean;
   groups: GrammarGroupDefinition[];
+  features: FeatureDefinition[];
 }
 
-const { word, lang, direction, translitLang, showTransliteration, groups } =
-  Astro.props;
+interface PanelRow {
+  label: string;
+  value: string;
+  raw: string;
+  present: boolean;
+}
+
+const {
+  word,
+  lang,
+  direction,
+  translitLang,
+  showTransliteration,
+  showGloss,
+  groups,
+  features,
+} = Astro.props;
 
 const transliteration =
   showTransliteration && word.transliteration ? word.transliteration : null;
 const featureByKey = new Map(
   word.features.map((feature) => [feature.key, feature]),
 );
+const definitionByKey = new Map(
+  features.map((feature) => [feature.key, feature]),
+);
+
+// The legacy panel prints a placeholder instead of hiding a feature that has
+// no value for the current word. These are the same conventions used by
+// BibleOL (the Hebrew stem uses Ø, tense/state use "Ninguno").
+const EMPTY_LABELS: Record<string, string> = {
+  verbal_stem_t: "Ø",
+  verbal_tense_t: "Ninguno",
+  state_t: "Ninguno",
+};
+
+const META_VALUE_LABELS: Record<string, Record<string, string>> = {
+  person_t: {
+    p1: "1",
+    p2: "2",
+    p3: "3",
+    first_person: "1",
+    second_person: "2",
+    third_person: "3",
+    unknown: "?",
+    absent: "-",
+    NA: "-",
+  },
+  gender_t: {
+    f: "F",
+    m: "M",
+    feminine: "F",
+    masculine: "M",
+    neuter: "N",
+    unknown: "?",
+    absent: "-",
+    NA: "-",
+  },
+  number_t: {
+    sg: "Sg",
+    pl: "Pl",
+    du: "Du",
+    singular: "Sg",
+    plural: "Pl",
+    unknown: "?",
+    absent: "-",
+    NA: "-",
+  },
+};
+
+function emptyFeatureLabel(definition: FeatureDefinition): string {
+  if (definition.kind === "enum" || definition.kind === "multi-enum") {
+    return EMPTY_LABELS[definition.enum] ?? "-";
+  }
+  return "-";
+}
+
+function metaValueLabel(feature: FeatureValue): string {
+  const labels = feature.enumName
+    ? META_VALUE_LABELS[feature.enumName]
+    : undefined;
+  return labels?.[feature.value] ?? featureValueLabel(feature);
+}
+
+function buildRow(key: string): PanelRow | null {
+  const definition = definitionByKey.get(key);
+  if (!definition) {
+    return null;
+  }
+  const feature = featureByKey.get(key);
+  return {
+    label: definition.label,
+    value: feature ? featureValueLabel(feature) : emptyFeatureLabel(definition),
+    raw: feature?.value ?? "",
+    present: feature !== undefined,
+  };
+}
+
+function buildMetaRow(
+  meta: GrammarGroupDefinition["metaFeatures"][number],
+): PanelRow {
+  const parts = meta.features.flatMap((key) => {
+    const feature = featureByKey.get(key);
+    return feature ? [feature] : [];
+  });
+
+  if (parts.length === 0) {
+    return { label: meta.label, value: "---", raw: "", present: false };
+  }
+
+  return {
+    label: meta.label,
+    value: meta.features
+      .map((key) => {
+        const feature = featureByKey.get(key);
+        return feature ? metaValueLabel(feature) : "-";
+      })
+      .join(""),
+    raw: parts.map((feature) => feature.value).join(", "),
+    present: true,
+  };
+}
+
+const lexeme = word.lexemeVariant ?? word.lemma;
+const lexemeLabel =
+  lang === "he" || lang === "arc" ? t.lexemeWithVariant : t.lemma;
 
 const displayGroups = groups
   .map((group) => {
-    const rows = group.features.flatMap((key) => {
-      const feature = featureByKey.get(key);
-      return feature
-        ? [
-            {
-              label: feature.label,
-              value: featureValueLabel(feature),
-              raw: feature.value,
-            },
-          ]
-        : [];
-    });
+    const rows: PanelRow[] = [];
+
+    if (group.key === "lexeme" && lexeme) {
+      rows.push({
+        label: lexemeLabel,
+        value: lexeme,
+        raw: lexeme,
+        present: true,
+      });
+    }
+
+    for (const key of group.features) {
+      const row = buildRow(key);
+      if (row) {
+        rows.push(row);
+      }
+    }
 
     for (const meta of group.metaFeatures) {
-      const parts = meta.features.flatMap((key) => {
-        const feature = featureByKey.get(key);
-        return feature ? [feature] : [];
-      });
-      if (parts.length > 0) {
-        rows.push({
-          label: meta.label,
-          value: parts.map((feature) => featureValueLabel(feature)).join(", "),
-          raw: parts.map((feature) => feature.value).join(", "),
-        });
-      }
+      rows.push(buildMetaRow(meta));
     }
 
     return { ...group, rows };
   })
-  .filter(
-    (group) => group.rows.length > 0 || (group.key === "glosses" && word.gloss),
+  .filter((group) =>
+    group.key === "glosses" ? Boolean(word.gloss) : group.rows.length > 0,
   );
-
-const hasDetails =
-  Boolean(word.lemma) || displayGroups.length > 0 || word.features.length > 0;
 
 const glossDirection: TextDirection =
   word.gloss?.language === "he" || word.gloss?.language === "arc"
@@ -79,73 +193,8 @@ function glossLanguageName(code: string): string {
 }
 ---
 
-{hasDetails ? (
-  <details class="word" data-monad={word.monad}>
-    <summary class="word__summary">
-      <span class="word__surface" lang={lang} dir={direction}>
-        {word.text}
-      </span>
-      {transliteration ? (
-        <>
-          <br />
-          <span class="word__translit" lang={translitLang} dir="ltr">
-            {transliteration}
-          </span>
-        </>
-      ) : null}
-    </summary>
-    <div class="word__panel" lang="es" dir="ltr">
-      <p class="word__panel-title">
-        <span class="word__panel-word" lang={lang} dir={direction}>
-          {word.text}
-        </span>
-        <span class="word__panel-caption">{t.grammar}</span>
-      </p>
-
-      {word.lemma ? (
-        <p class="word__lemma">
-          <span class="word__label">{t.lemma}</span>{" "}
-          <bdi lang={lang} dir={direction}>
-            {word.lemma}
-          </bdi>
-        </p>
-      ) : null}
-
-      {displayGroups.map((group) => (
-        <section class="word__group">
-          <p class="word__group-title">{group.label}</p>
-          <dl class="word__features">
-            {group.key === "glosses" && word.gloss ? (
-              <Fragment>
-                <dt>{t.gloss}</dt>
-                <dd>
-                  <bdi lang={word.gloss.language} dir={glossDirection}>
-                    {word.gloss.text}
-                  </bdi>{" "}
-                  <span class="word__gloss-language">
-                    {glossLanguageName(word.gloss.language)}
-                  </span>
-                </dd>
-              </Fragment>
-            ) : (
-              group.rows.map((row) => (
-                <Fragment>
-                  <dt>{row.label}</dt>
-                  <dd title={row.raw}>{row.value}</dd>
-                </Fragment>
-              ))
-            )}
-          </dl>
-        </section>
-      ))}
-
-      {displayGroups.length === 0 && word.features.length === 0 ? (
-        <p class="word__empty">{t.noFeatures}</p>
-      ) : null}
-    </div>
-  </details>
-) : (
-  <span class="word word--plain" data-monad={word.monad}>
+<details class="word" data-monad={word.monad}>
+  <summary class="word__summary">
     <span class="word__surface" lang={lang} dir={direction}>
       {word.text}
     </span>
@@ -157,5 +206,62 @@ function glossLanguageName(code: string): string {
         </span>
       </>
     ) : null}
-  </span>
-)}
+    {showGloss && word.gloss ? (
+      <span class="word__gloss" lang={word.gloss.language} dir={glossDirection}>
+        {word.gloss.text}
+      </span>
+    ) : null}
+  </summary>
+  <div class="word__panel" lang="es" dir="ltr">
+    <p class="word__panel-title">
+      <span class="word__panel-word" lang={lang} dir={direction}>
+        {word.text}
+      </span>
+      <span class="word__panel-caption">{t.grammar}</span>
+    </p>
+
+    <dl class="word__features word__features--head">
+      <dt>{t.text}</dt>
+      <dd>
+        <bdi lang={lang} dir={direction}>
+          {word.text}
+        </bdi>
+      </dd>
+      {word.transliteration ? (
+        <Fragment>
+          <dt>{t.transliteration}</dt>
+          <dd>
+            <bdi lang={translitLang} dir="ltr">
+              {word.transliteration}
+            </bdi>
+          </dd>
+        </Fragment>
+      ) : null}
+    </dl>
+
+    {displayGroups.map((group) => (
+      <section class="word__group">
+        <p class="word__group-title">{group.label}</p>
+        <dl class="word__features">
+          {group.key === "glosses" && word.gloss ? (
+            <Fragment>
+              <dt>{glossLanguageName(word.gloss.language)}</dt>
+              <dd>
+                <bdi lang={word.gloss.language} dir={glossDirection}>
+                  {word.gloss.text}
+                </bdi>
+              </dd>
+            </Fragment>
+          ) : (
+            group.rows.map((row) => (
+              <Fragment>
+                <dt>{row.label}</dt>
+                <dd title={row.raw || undefined}>{row.value}</dd>
+              </Fragment>
+            ))
+          )}
+        </dl>
+      </section>
+    ))}
+  </div>
+</details>

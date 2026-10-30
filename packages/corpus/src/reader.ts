@@ -46,7 +46,8 @@ interface ObjectRow {
 }
 
 interface LexiconEntry {
-  glosses: Record<string, Record<string, string>>;
+  glosses?: Record<string, Record<string, string>>;
+  lexeme?: string;
 }
 
 interface LexiconDocument {
@@ -400,9 +401,46 @@ export class CorpusReader {
       text,
       transliteration: row.translit?.trim() || null,
       lemma,
+      lexemeVariant: this.#resolveLexeme(corpus, lemma, values, lexicon),
       gloss: this.#resolveGloss(corpus, lemma, values, lexicon),
       features,
     };
+  }
+
+  #lexiconKey(
+    corpus: CorpusMetadata,
+    lemma: string | null,
+    values: Map<string, string>,
+  ): string | null {
+    const config = corpus.gloss;
+    if (!config) {
+      return null;
+    }
+
+    if (config.strategy === "stem") {
+      const language = values.get("language");
+      const lex = values.get("lex");
+      return language && lex ? `${language.toLowerCase()}:${lex}` : null;
+    }
+    if (config.strategy === "strongs") {
+      const strongs = values.get("strongs");
+      return lemma && strongs ? `${lemma}|${strongs}` : null;
+    }
+    const partOfSpeech = values.get("psp");
+    return lemma && partOfSpeech ? `${lemma}|${partOfSpeech}` : null;
+  }
+
+  #resolveLexeme(
+    corpus: CorpusMetadata,
+    lemma: string | null,
+    values: Map<string, string>,
+    lexicon: LexiconDocument | null,
+  ): string | null {
+    if (!lexicon) {
+      return null;
+    }
+    const key = this.#lexiconKey(corpus, lemma, values);
+    return key ? lexicon.entries[key]?.lexeme?.trim() || null : null;
   }
 
   #resolveGloss(
@@ -416,30 +454,12 @@ export class CorpusReader {
       return null;
     }
 
-    let key: string | null = null;
-    if (config.strategy === "stem") {
-      const language = values.get("language");
-      const lex = values.get("lex");
-      if (language && lex) {
-        key = `${language.toLowerCase()}:${lex}`;
-      }
-    } else if (config.strategy === "strongs") {
-      const strongs = values.get("strongs");
-      if (lemma && strongs) {
-        key = `${lemma}|${strongs}`;
-      }
-    } else {
-      const partOfSpeech = values.get("psp");
-      if (lemma && partOfSpeech) {
-        key = `${lemma}|${partOfSpeech}`;
-      }
-    }
-
+    const key = this.#lexiconKey(corpus, lemma, values);
     if (!key) {
       return null;
     }
     const entry = lexicon.entries[key];
-    if (!entry) {
+    if (!entry?.glosses) {
       return null;
     }
 

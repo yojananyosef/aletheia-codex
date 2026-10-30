@@ -1,5 +1,6 @@
 ---
 import type {
+  FeatureDefinition,
   GrammarGroupDefinition,
   TextDirection,
   Verse,
@@ -14,7 +15,9 @@ interface Props {
   direction: TextDirection;
   translitLang: string;
   showTransliteration: boolean;
+  showGloss: boolean;
   groups: GrammarGroupDefinition[];
+  features: FeatureDefinition[];
 }
 
 const {
@@ -23,7 +26,9 @@ const {
   direction,
   translitLang,
   showTransliteration,
+  showGloss,
   groups,
+  features,
 } = Astro.props;
 
 const verseScriptClass = scriptClass(language);
@@ -43,7 +48,11 @@ const verseScriptClass = scriptClass(language);
         {verse.number}
       </a>
       <div
-        class={`verse__text ${verseScriptClass}`}
+        class:list={[
+          "verse__text",
+          verseScriptClass,
+          { "verse__text--gloss": showGloss },
+        ]}
         dir={direction}
         lang={language}
         title={verse.label}
@@ -55,7 +64,9 @@ const verseScriptClass = scriptClass(language);
             direction={direction}
             translitLang={translitLang}
             showTransliteration={showTransliteration}
+            showGloss={showGloss}
             groups={groups}
+            features={features}
           />
         ))}
       </div>

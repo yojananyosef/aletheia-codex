@@ -74,13 +74,19 @@ test.describe("lectura hebrea", () => {
     const panel = firstWord.locator(".word__panel");
     await expect(panel).toBeVisible();
     await expect(panel.getByText("Gramática", { exact: true })).toBeVisible();
-    await expect(panel.getByText("Lema", { exact: true })).toBeVisible();
-    await expect(panel.locator("dt", { hasText: "Categoría" })).toBeVisible();
     await expect(
-      panel.locator("dd", { hasText: "preposición" }).first(),
+      panel.getByText("Lexema (con variante)", { exact: true }),
     ).toBeVisible();
     await expect(
-      panel.locator("dd", { hasText: "hebreo" }).first(),
+      panel.locator("dt", { hasText: "Parte del discurso" }),
+    ).toBeVisible();
+    await expect(panel.locator("dt", { hasText: "Texto" })).toBeVisible();
+    await expect(
+      panel.locator("dt", { hasText: "Transliteración" }),
+    ).toBeVisible();
+    await expect(panel.locator("dt", { hasText: "Idioma" })).toHaveCount(0);
+    await expect(
+      panel.locator("dd", { hasText: "preposición" }).first(),
     ).toBeVisible();
     await expect(
       panel.locator(".word__group-title", { hasText: "Forma en el texto" }),
@@ -102,9 +108,35 @@ test.describe("lectura hebrea", () => {
     await expect(
       secondPanel.getByText("Persona, género, número", { exact: true }),
     ).toBeVisible();
-    await expect(
-      secondPanel.locator("dd", { hasText: "femenino, singular" }),
-    ).toBeVisible();
+    await expect(secondPanel.locator("dd", { hasText: "-FSg" })).toBeVisible();
+  });
+
+  test("muestra la glosa española bajo la palabra y la conserva al navegar", async ({
+    page,
+  }) => {
+    await page.goto("/read/ETCBC4/Genesis/1");
+
+    await expect(page.locator(".word__gloss")).toHaveCount(0);
+
+    await page.getByRole("link", { name: "Mostrar glosa" }).click();
+    await expect(page).toHaveURL(/\/Genesis\/1\?gloss=1$/);
+
+    const firstGloss = page.locator(".word__gloss").first();
+    await expect(firstGloss).toBeVisible();
+    await expect(firstGloss).toHaveAttribute("lang", "es");
+    await expect(firstGloss).toContainText("en, a (hora, lugar)");
+
+    await page
+      .locator(".chapter-nav")
+      .first()
+      .locator(".chapter-step--next")
+      .click();
+    await expect(page).toHaveURL(/\/Genesis\/2\?gloss=1$/);
+    await expect(page.locator(".word__gloss").first()).toBeVisible();
+
+    await page.getByRole("link", { name: "Ocultar glosa" }).click();
+    await expect(page).not.toHaveURL(/gloss=1/);
+    await expect(page.locator(".word__gloss")).toHaveCount(0);
   });
 
   test("muestra la estructura gramatical y la conserva al navegar", async ({
@@ -129,6 +161,13 @@ test.describe("lectura hebrea", () => {
       grammar.locator('[data-level="phrase"]').first(),
     ).toContainText("PP fr. preposicional");
     expect(nfc(await grammar.innerText())).toContain(nfc("בְּ"));
+
+    const rtlNode = grammar.locator(".grammar-verse.rtl .grammar-node").first();
+    await expect(rtlNode).toHaveCSS("border-right-width", "3px");
+    await expect(rtlNode).toHaveCSS("border-left-width", "0px");
+    await expect(
+      grammar.locator(".grammar-verse.rtl .grammar-words").first(),
+    ).toHaveCSS("text-align", "right");
 
     await page
       .locator(".chapter-nav")
@@ -248,7 +287,7 @@ test.describe("lectura griega y latina", () => {
     await expect(panel.locator("dd", { hasText: "libro" })).toBeVisible();
     await expect(panel.getByText("español", { exact: true })).toBeVisible();
     await expect(panel.locator("dd", { hasText: "nominativo" })).toBeVisible();
-    await expect(panel.locator("dd", { hasText: "femenino" })).toBeVisible();
+    await expect(panel.locator("dd", { hasText: "-FSg" })).toBeVisible();
 
     await page.goto("/read/nestle1904/Matthew/1?grammar=1");
     const grammar = page.locator(".grammar");
@@ -277,7 +316,7 @@ test.describe("lectura griega y latina", () => {
     const panel = firstWord.locator(".word__panel");
     await expect(panel).toBeVisible();
     await expect(panel.locator("dd", { hasText: "sustantivo" })).toBeVisible();
-    await expect(panel.locator("dd", { hasText: "masculino" })).toBeVisible();
+    await expect(panel.locator("dd", { hasText: "-MSg" })).toBeVisible();
     await expect(
       panel.locator(".word__group-title", { hasText: "Morfología" }),
     ).toBeVisible();

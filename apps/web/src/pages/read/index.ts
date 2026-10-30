@@ -42,9 +42,10 @@ export const GET: APIRoute = (context) => {
 
   const transliteration = params.get("translit") === "1";
   const grammar = params.get("grammar") === "1";
+  const gloss = params.get("gloss") === "1" && corpus.gloss !== null;
 
   return context.redirect(
-    chapterUrl(corpus.id, bookId, chapter, { transliteration, grammar }),
+    chapterUrl(corpus.id, bookId, chapter, { transliteration, grammar, gloss }),
     302,
   );
 };

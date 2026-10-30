@@ -709,14 +709,15 @@ input[type="number"]:focus {
 .word {
   position: relative;
   display: inline-block;
-  margin: 0 0.4em;
+  margin: 0 0.55em;
+  text-align: center;
 }
 
 .word__summary {
   display: inline-block;
-  margin: 0 -0.4em;
-  padding: 0 0.4em;
-  border-radius: 3px;
+  margin: 0 -0.55em;
+  padding: 0.06em 0.55em;
+  border-radius: 4px;
   cursor: pointer;
   list-style: none;
   text-align: center;
@@ -745,6 +746,45 @@ input[type="number"]:focus {
   width: fit-content;
   font-size: 0.75rem;
   color: var(--muted);
+}
+
+.word__gloss {
+  display: block;
+  margin: 0.12rem auto 0;
+  max-width: 11rem;
+  font-family: var(--font-ui);
+  font-size: 0.68rem;
+  line-height: 1.35;
+  color: var(--muted);
+  overflow-wrap: break-word;
+}
+
+/* Gloss mode lays words out on a stable grid. Without a fixed cell the width
+   of a long gloss changes the position of the Hebrew word and neighbouring
+   words, which makes the verse jump as glosses are shown. */
+.verse__text--gloss,
+.grammar-words--gloss {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 0.9rem 0.75rem;
+}
+
+.verse__text--gloss .word,
+.grammar-words--gloss .word {
+  width: 8rem;
+  margin: 0;
+}
+
+.verse__text--gloss .word__summary,
+.grammar-words--gloss .word__summary {
+  margin: 0;
+  padding: 0.06em 0.35em;
+}
+
+.verse__text--gloss .word__gloss,
+.grammar-words--gloss .word__gloss {
+  max-width: 100%;
 }
 
 span.word--plain {
@@ -823,6 +863,12 @@ span.word--plain {
   grid-template-columns: max-content minmax(0, 1fr);
   gap: 0.28rem 0.65rem;
   margin: 0;
+}
+
+.word__features--head {
+  margin-bottom: 0.6rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid var(--line);
 }
 
 .word__features dt {
@@ -945,6 +991,24 @@ span.word--plain {
   margin-left: 0.75rem;
 }
 
+.grammar-verse.rtl .grammar-node {
+  padding: 0.12rem 0.75rem 0.12rem 0;
+  border-right: 3px solid var(--level-color);
+  border-left: 0;
+  text-align: right;
+}
+
+.grammar-verse.rtl .grammar-node .grammar-node {
+  margin-right: 0.75rem;
+  margin-left: 0;
+}
+
+.grammar-verse.rtl .grammar-node__head,
+.grammar-verse.rtl .grammar-node__features {
+  justify-content: flex-end;
+  text-align: right;
+}
+
 .grammar-node__head {
   display: flex;
   flex-wrap: wrap;
@@ -996,6 +1060,7 @@ span.word--plain {
 }
 
 [dir="rtl"] .grammar-words,
+.grammar-words[dir="rtl"],
 .grammar-words.rtl {
   text-align: right;
 }

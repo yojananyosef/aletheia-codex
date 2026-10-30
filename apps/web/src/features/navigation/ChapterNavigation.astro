@@ -18,6 +18,7 @@ interface Props {
   position: "top" | "bottom";
   showTransliteration: boolean;
   showGrammar: boolean;
+  showGloss: boolean;
 }
 
 const {
@@ -29,12 +30,14 @@ const {
   position,
   showTransliteration,
   showGrammar,
+  showGloss,
 } = Astro.props;
 const bookSelectId = `book-${position}`;
 const chapterInputId = `chapter-${position}`;
 const linkOptions = {
   transliteration: showTransliteration,
   grammar: showGrammar,
+  gloss: showGloss,
 };
 ---
 
@@ -91,6 +94,7 @@ const linkOptions = {
       <input type="hidden" name="translit" value="1" />
     ) : null}
     {showGrammar ? <input type="hidden" name="grammar" value="1" /> : null}
+    {showGloss ? <input type="hidden" name="gloss" value="1" /> : null}
     <label class="visually-hidden" for={bookSelectId}>
       {t.bookLabel}
     </label>

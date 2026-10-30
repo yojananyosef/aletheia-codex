@@ -45,9 +45,10 @@ necesidad de MySQL.
 - `/read?corpus=...&book=...&chapter=...`: redirección a la URL canónica.
 - `?translit=1`: muestra la transliteración cuando el corpus la ofrece.
 - `?grammar=1`: muestra la estructura gramatical por versículo.
+- `?gloss=1`: muestra la glosa española debajo de cada palabra.
 
-Las URL de lectura conservan `translit=1` y `grammar=1` al cambiar de capítulo,
-de libro o de corpus.
+Las URL de lectura conservan `translit=1`, `grammar=1` y `gloss=1` al cambiar
+de capítulo, de libro o de corpus.
 
 En la vista gramatical, cada nivel (frase, cláusula y oración) aparece con el
 color del proyecto original. Las palabras se agrupan bajo el objeto gramatical
@@ -97,8 +98,8 @@ locales. Se omiten si los corpus no están descargados.
 `pnpm test:e2e` compila la aplicación, arranca el servidor de producción en el
 puerto 4323 y ejecuta Playwright con JavaScript desactivado en el navegador. Las
 pruebas cubren selección, lectura hebrea/griega/latina, transliteración, paneles
-de palabra con glosas, vista gramatical, navegación, redirecciones, 404 y vista
-móvil.
+de palabra con glosas, glosa bajo la palabra, vista gramatical, navegación,
+redirecciones, 404 y vista móvil.
 
 Las pruebas usan Chromium. En macOS 12 el WebKit empaquetado por Playwright está
 congelado y no es compatible con la versión actual; en macOS 13 o superior se

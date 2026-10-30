@@ -1,5 +1,6 @@
 ---
 import type {
+  FeatureDefinition,
   GrammarGroupDefinition,
   GrammarObject,
   TextDirection,
@@ -23,10 +24,12 @@ interface Props {
         words: Word[];
       };
   groups: GrammarGroupDefinition[];
+  features: FeatureDefinition[];
   language: string;
   direction: TextDirection;
   translitLang: string;
   showTransliteration: boolean;
+  showGloss: boolean;
   verseScriptClass: string;
 }
 
@@ -35,10 +38,12 @@ type GrammarNodeItem = Props["node"];
 const {
   node,
   groups,
+  features,
   language,
   direction,
   translitLang,
   showTransliteration,
+  showGloss,
   verseScriptClass,
 } = Astro.props;
 
@@ -52,7 +57,11 @@ function rangeLabel(object: GrammarObject): string {
 
 {node.kind === "words" ? (
   <div
-    class={`grammar-words ${verseScriptClass}`}
+    class:list={[
+      "grammar-words",
+      verseScriptClass,
+      { "grammar-words--gloss": showGloss },
+    ]}
     dir={direction}
     lang={language}
   >
@@ -63,7 +72,9 @@ function rangeLabel(object: GrammarObject): string {
         direction={direction}
         translitLang={translitLang}
         showTransliteration={showTransliteration}
+        showGloss={showGloss}
         groups={groups}
+        features={features}
       />
     ))}
   </div>
@@ -92,10 +103,12 @@ function rangeLabel(object: GrammarObject): string {
       <GrammarNode
         node={child}
         groups={groups}
+        features={features}
         language={language}
         direction={direction}
         translitLang={translitLang}
         showTransliteration={showTransliteration}
+        showGloss={showGloss}
         verseScriptClass={verseScriptClass}
       />
     ))}

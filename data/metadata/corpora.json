@@ -30,7 +30,7 @@
       "features": [
         {
           "key": "sp",
-          "label": "Categoría",
+          "label": "Parte del discurso",
           "kind": "enum",
           "enum": "part_of_speech_t",
           "values": {
@@ -52,7 +52,7 @@
         },
         {
           "key": "pdp",
-          "label": "Parte dependiente del discurso",
+          "label": "Frase parte dependiente del discurso",
           "kind": "enum",
           "enum": "part_of_speech_t",
           "values": {
@@ -379,25 +379,36 @@
             "sp",
             "pdp",
             "ls",
-            "verb_class",
-            "language"
+            "verb_class"
           ],
           "metaFeatures": []
         },
         {
           "key": "morphology",
           "label": "Morfología",
-          "features": ["vs", "vt", "st"],
+          "features": [
+            "vs",
+            "vt",
+            "st"
+          ],
           "metaFeatures": [
             {
               "key": "pgn",
               "label": "Persona, género, número",
-              "features": ["ps", "gn", "nu"]
+              "features": [
+                "ps",
+                "gn",
+                "nu"
+              ]
             },
             {
               "key": "suffix_pgn",
               "label": "Sufijo: persona, género, número",
-              "features": ["suffix_person", "suffix_gender", "suffix_number"]
+              "features": [
+                "suffix_person",
+                "suffix_gender",
+                "suffix_number"
+              ]
             }
           ]
         },
@@ -418,7 +429,7 @@
           "features": [
             {
               "key": "sp",
-              "label": "Categoría",
+              "label": "Parte del discurso",
               "kind": "enum",
               "enum": "part_of_speech_t",
               "values": {
@@ -440,7 +451,7 @@
             },
             {
               "key": "pdp",
-              "label": "Parte dependiente del discurso",
+              "label": "Frase parte dependiente del discurso",
               "kind": "enum",
               "enum": "part_of_speech_t",
               "values": {
@@ -949,7 +960,10 @@
       ],
       "gloss": {
         "file": "ETCBC4.json",
-        "languages": ["es", "en"],
+        "languages": [
+          "es",
+          "en"
+        ],
         "strategy": "stem"
       },
       "books": [
@@ -998,193 +1012,193 @@
         {
           "id": "Samuel_I",
           "name": "Samuel_I",
-          "number": 8,
+          "number": 9,
           "chapters": 31
         },
         {
           "id": "Samuel_II",
           "name": "Samuel_II",
-          "number": 9,
+          "number": 10,
           "chapters": 24
         },
         {
           "id": "Reges_I",
           "name": "Reges_I",
-          "number": 10,
+          "number": 11,
           "chapters": 22
         },
         {
           "id": "Reges_II",
           "name": "Reges_II",
-          "number": 11,
+          "number": 12,
           "chapters": 25
         },
         {
           "id": "Jesaia",
           "name": "Jesaia",
-          "number": 12,
+          "number": 23,
           "chapters": 66
         },
         {
           "id": "Jeremia",
           "name": "Jeremia",
-          "number": 13,
+          "number": 24,
           "chapters": 52
         },
         {
           "id": "Ezechiel",
           "name": "Ezechiel",
-          "number": 14,
+          "number": 26,
           "chapters": 48
         },
         {
           "id": "Hosea",
           "name": "Hosea",
-          "number": 15,
+          "number": 28,
           "chapters": 14
         },
         {
           "id": "Joel",
           "name": "Joel",
-          "number": 16,
+          "number": 29,
           "chapters": 4
         },
         {
           "id": "Amos",
           "name": "Amos",
-          "number": 17,
+          "number": 30,
           "chapters": 9
         },
         {
           "id": "Obadia",
           "name": "Obadia",
-          "number": 18,
+          "number": 31,
           "chapters": 1
         },
         {
           "id": "Jona",
           "name": "Jona",
-          "number": 19,
+          "number": 32,
           "chapters": 4
         },
         {
           "id": "Micha",
           "name": "Micha",
-          "number": 20,
+          "number": 33,
           "chapters": 7
         },
         {
           "id": "Nahum",
           "name": "Nahum",
-          "number": 21,
+          "number": 34,
           "chapters": 3
         },
         {
           "id": "Habakuk",
           "name": "Habakuk",
-          "number": 22,
+          "number": 35,
           "chapters": 3
         },
         {
           "id": "Zephania",
           "name": "Zephania",
-          "number": 23,
+          "number": 36,
           "chapters": 3
         },
         {
           "id": "Haggai",
           "name": "Haggai",
-          "number": 24,
+          "number": 37,
           "chapters": 2
         },
         {
           "id": "Sacharia",
           "name": "Sacharia",
-          "number": 25,
+          "number": 38,
           "chapters": 14
         },
         {
           "id": "Maleachi",
           "name": "Maleachi",
-          "number": 26,
+          "number": 39,
           "chapters": 3
         },
         {
           "id": "Psalmi",
           "name": "Psalmi",
-          "number": 27,
+          "number": 19,
           "chapters": 150
         },
         {
           "id": "Iob",
           "name": "Iob",
-          "number": 28,
+          "number": 18,
           "chapters": 42
         },
         {
           "id": "Proverbia",
           "name": "Proverbia",
-          "number": 29,
+          "number": 20,
           "chapters": 31
         },
         {
           "id": "Ruth",
           "name": "Ruth",
-          "number": 30,
+          "number": 8,
           "chapters": 4
         },
         {
           "id": "Canticum",
           "name": "Canticum",
-          "number": 31,
+          "number": 22,
           "chapters": 8
         },
         {
           "id": "Ecclesiastes",
           "name": "Ecclesiastes",
-          "number": 32,
+          "number": 21,
           "chapters": 12
         },
         {
           "id": "Threni",
           "name": "Threni",
-          "number": 33,
+          "number": 25,
           "chapters": 5
         },
         {
           "id": "Esther",
           "name": "Esther",
-          "number": 34,
+          "number": 17,
           "chapters": 10
         },
         {
           "id": "Daniel",
           "name": "Daniel",
-          "number": 35,
+          "number": 27,
           "chapters": 12
         },
         {
           "id": "Esra",
           "name": "Esra",
-          "number": 36,
+          "number": 15,
           "chapters": 10
         },
         {
           "id": "Nehemia",
           "name": "Nehemia",
-          "number": 37,
+          "number": 16,
           "chapters": 13
         },
         {
           "id": "Chronica_I",
           "name": "Chronica_I",
-          "number": 38,
+          "number": 13,
           "chapters": 29
         },
         {
           "id": "Chronica_II",
           "name": "Chronica_II",
-          "number": 39,
+          "number": 14,
           "chapters": 36
         }
       ]
@@ -1214,7 +1228,7 @@
       "features": [
         {
           "key": "psp",
-          "label": "Categoría",
+          "label": "Parte del discurso",
           "kind": "enum",
           "enum": "psp_t",
           "values": {
@@ -1513,7 +1527,11 @@
             {
               "key": "pgn",
               "label": "Persona, género, número",
-              "features": ["person", "gender", "number"]
+              "features": [
+                "person",
+                "gender",
+                "number"
+              ]
             }
           ]
         },
@@ -1534,7 +1552,7 @@
           "features": [
             {
               "key": "psp",
-              "label": "Categoría",
+              "label": "Parte del discurso",
               "kind": "enum",
               "enum": "psp_t",
               "values": {
@@ -1866,7 +1884,10 @@
       ],
       "gloss": {
         "file": "nestle1904.json",
-        "languages": ["es", "en"],
+        "languages": [
+          "es",
+          "en"
+        ],
         "strategy": "strongs"
       },
       "books": [
@@ -2059,7 +2080,7 @@
       "features": [
         {
           "key": "psp",
-          "label": "Categoría",
+          "label": "Parte del discurso",
           "kind": "enum",
           "enum": "psp_t",
           "values": {
@@ -2285,12 +2306,22 @@
         {
           "key": "morphology",
           "label": "Morfología",
-          "features": ["case", "tense", "mood", "voice", "degree"],
+          "features": [
+            "case",
+            "tense",
+            "mood",
+            "voice",
+            "degree"
+          ],
           "metaFeatures": [
             {
               "key": "pgn",
               "label": "Persona, género, número",
-              "features": ["person", "gender", "number"]
+              "features": [
+                "person",
+                "gender",
+                "number"
+              ]
             }
           ]
         },
@@ -2311,7 +2342,7 @@
           "features": [
             {
               "key": "psp",
-              "label": "Categoría",
+              "label": "Parte del discurso",
               "kind": "enum",
               "enum": "psp_t",
               "values": {
@@ -2532,7 +2563,10 @@
       ],
       "gloss": {
         "file": "jvulgate.json",
-        "languages": ["en", "es"],
+        "languages": [
+          "en",
+          "es"
+        ],
         "strategy": "lemma-pos"
       },
       "books": [

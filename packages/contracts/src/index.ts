@@ -140,6 +140,8 @@ export interface Word {
   text: string;
   transliteration: string | null;
   lemma: string | null;
+  /** Lexeme as shown in the legacy word panel, including its variant (e.g. "אָב I"). */
+  lexemeVariant: string | null;
   gloss: WordGloss | null;
   features: FeatureValue[];
 }

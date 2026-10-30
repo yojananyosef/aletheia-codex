@@ -1,5 +1,6 @@
 ---
 import type {
+  FeatureDefinition,
   GrammarGroupDefinition,
   GrammarLevelDefinition,
   GrammarObject,
@@ -16,10 +17,12 @@ interface Props {
   objects: GrammarObject[];
   levels: GrammarLevelDefinition[];
   groups: GrammarGroupDefinition[];
+  features: FeatureDefinition[];
   language: string;
   direction: TextDirection;
   translitLang: string;
   showTransliteration: boolean;
+  showGloss: boolean;
 }
 
 const {
@@ -27,10 +30,12 @@ const {
   objects,
   levels,
   groups,
+  features,
   language,
   direction,
   translitLang,
   showTransliteration,
+  showGloss,
 } = Astro.props;
 
 const trees = buildGrammarByVerse(verses, objects, levels);
@@ -70,10 +75,12 @@ const verseScriptClass = scriptClass(language);
             <GrammarNode
               node={item}
               groups={groups}
+              features={features}
               language={language}
               direction={direction}
               translitLang={translitLang}
               showTransliteration={showTransliteration}
+              showGloss={showGloss}
               verseScriptClass={verseScriptClass}
             />
           ))}

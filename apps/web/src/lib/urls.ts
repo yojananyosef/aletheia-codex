@@ -5,6 +5,7 @@ function segment(value: string): string {
 export interface ChapterUrlOptions {
   transliteration?: boolean;
   grammar?: boolean;
+  gloss?: boolean;
 }
 
 export function chapterUrl(
@@ -20,6 +21,9 @@ export function chapterUrl(
   }
   if (options.grammar) {
     params.set("grammar", "1");
+  }
+  if (options.gloss) {
+    params.set("gloss", "1");
   }
   const query = params.toString();
   return query ? `${path}?${query}` : path;

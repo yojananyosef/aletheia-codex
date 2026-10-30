@@ -41,8 +41,8 @@ CORPORA = {
 # Each entry is (key, Spanish label, kind, enum name).
 WORD_FEATURES = {
     "ETCBC4": [
-        ("sp", "Categoría", "enum", "part_of_speech_t"),
-        ("pdp", "Parte dependiente del discurso", "enum", "part_of_speech_t"),
+        ("sp", "Parte del discurso", "enum", "part_of_speech_t"),
+        ("pdp", "Frase parte dependiente del discurso", "enum", "part_of_speech_t"),
         ("ls", "Conjunto lexical", "enum", "lexical_set_t"),
         ("verb_class", "Clase verbal", "multi-enum", "verb_class_t"),
         ("vs", "Raíz", "enum", "verbal_stem_t"),
@@ -69,7 +69,7 @@ WORD_FEATURES = {
         ("lex", "Código de lexema", "string", None),
     ],
     "nestle1904": [
-        ("psp", "Categoría", "enum", "psp_t"),
+        ("psp", "Parte del discurso", "enum", "psp_t"),
         ("case", "Caso", "enum", "case_t"),
         ("number", "Número", "enum", "number_t"),
         ("gender", "Género", "enum", "gender_t"),
@@ -88,7 +88,7 @@ WORD_FEATURES = {
         ("frequency_rank", "Rango de frecuencia", "number", None),
     ],
     "jvulgate": [
-        ("psp", "Categoría", "enum", "psp_t"),
+        ("psp", "Parte del discurso", "enum", "psp_t"),
         ("case", "Caso", "enum", "case_t"),
         ("number", "Número", "enum", "number_t"),
         ("gender", "Género", "enum", "gender_t"),
@@ -170,7 +170,6 @@ WORD_GROUPS = {
                 "pdp",
                 "ls",
                 "verb_class",
-                "language",
             ],
             "metaFeatures": [],
         },
@@ -416,7 +415,23 @@ def validate_groups(corpus_id: str, features: list[dict], groups: list[dict]) ->
                     )
 
 
-def parse_bookorder(path: Path) -> list[dict]:
+def parse_bookorder(path: Path, connection: sqlite3.Connection) -> list[dict]:
+    # The .bookorder file defines the display order and chapter ranges, but its
+    # line numbers are not the database book numbers. Emdros numbers books in
+    # its own canonical order (e.g. Psalmi is 19 in ETCBC4, not 27), so the
+    # metadata must use the book_name_t enumeration values.
+    book_numbers = {
+        name: value
+        for name, value in connection.execute(
+            """
+            SELECT enum_value_name, value
+            FROM enumeration_constants
+            WHERE enum_id = (
+                SELECT enum_id FROM enumerations WHERE enum_name = 'book_name_t'
+            )
+            """
+        )
+    }
     books: list[dict] = []
     for index, raw_line in enumerate(path.read_text(encoding="utf-8").splitlines(), 1):
         line = raw_line.strip()
@@ -434,7 +449,7 @@ def parse_bookorder(path: Path) -> list[dict]:
             {
                 "id": name,
                 "name": name,
-                "number": index,
+                "number": book_numbers.get(name, index),
                 "chapters": last,
             }
         )
@@ -491,7 +506,7 @@ def build_corpus(
         groups = WORD_GROUPS[corpus_id]
         validate_groups(corpus_id, features, groups)
         levels = build_levels(connection, corpus_id, features)
-        books = parse_bookorder(db_path / f"{corpus_id}.bookorder")
+        books = parse_bookorder(db_path / f"{corpus_id}.bookorder", connection)
 
         return {
             "id": corpus_id,

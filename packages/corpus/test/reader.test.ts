@@ -72,6 +72,7 @@ describe.skipIf(!available)("CorpusReader", () => {
     expect(nfc(firstWord.text)).toContain(nfc("בְּ"));
     expect(firstWord.transliteration).toBe("bᵊ");
     expect(nfc(firstWord.lemma!)).toBe(nfc("בְּ"));
+    expect(nfc(firstWord.lexemeVariant!)).toBe(nfc("בְּ"));
     expect(firstWord.gloss).toEqual({
       text: "en, a (hora, lugar); con; por; por medio de",
       language: "es",
@@ -80,7 +81,10 @@ describe.skipIf(!available)("CorpusReader", () => {
     const partOfSpeech = firstWord.features.find(
       (feature) => feature.enumName === "part_of_speech_t",
     );
-    expect(partOfSpeech).toMatchObject({ value: "prep", label: "Categoría" });
+    expect(partOfSpeech).toMatchObject({
+      value: "prep",
+      label: "Parte del discurso",
+    });
     const language = firstWord.features.find(
       (feature) => feature.enumName === "language_t",
     );
@@ -140,7 +144,7 @@ describe.skipIf(!available)("CorpusReader", () => {
       expect.arrayContaining([
         expect.objectContaining({
           key: "psp",
-          label: "Categoría",
+          label: "Parte del discurso",
           value: "noun",
         }),
         expect.objectContaining({ key: "case", value: "nominative" }),
@@ -179,6 +183,12 @@ describe.skipIf(!available)("CorpusReader", () => {
         (object) => object.level === "sentence" && object.parentId === null,
       ),
     ).toBe(true);
+  });
+
+  it("uses the database book numbers instead of the display order", () => {
+    const psalms = reader.getChapter("ETCBC4", "Psalmi", 119);
+    expect(psalms.book.number).toBe(19);
+    expect(psalms.verses).toHaveLength(176);
   });
 
   it("accepts the last chapter and rejects the next one", () => {
