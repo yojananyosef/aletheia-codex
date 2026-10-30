@@ -2,6 +2,7 @@ import { NotFoundError } from "@bibleol/contracts";
 import type { APIRoute } from "astro";
 import { getReader } from "../../../../lib/reader";
 import { chapterUrl } from "../../../../lib/urls";
+import { requestedVerseRange } from "../../../../lib/verse-range";
 
 export const GET: APIRoute = (context) => {
   const corpusId = context.params.corpus;
@@ -23,9 +24,15 @@ export const GET: APIRoute = (context) => {
   const transliteration = context.url.searchParams.get("translit") === "1";
   const grammar = context.url.searchParams.get("grammar") === "1";
   const gloss = context.url.searchParams.get("gloss") === "1";
+  const verseRange = requestedVerseRange(context.url.searchParams);
 
   return context.redirect(
-    chapterUrl(corpusId, bookId, 1, { transliteration, grammar, gloss }),
+    chapterUrl(corpusId, bookId, 1, {
+      transliteration,
+      grammar,
+      gloss,
+      verseRange,
+    }),
     302,
   );
 };

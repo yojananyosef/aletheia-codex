@@ -48,6 +48,36 @@ test.describe("selección", () => {
     await expect(page).toHaveURL(/\/read\/nestle1904\/Matthew\/1$/);
     await expect(page.getByRole("heading", { level: 1 })).toHaveText("Mateo 1");
   });
+
+  test("abre un rango de versículos desde el formulario", async ({ page }) => {
+    await page.goto("/");
+    const card = page
+      .locator(".corpus-card")
+      .filter({ hasText: "Biblia hebrea" });
+
+    await card.getByLabel("Libro").selectOption("Genesis");
+    await card.getByLabel("Capítulo").fill("2");
+    await card.getByLabel("Desde").fill("3");
+    await card.getByLabel("Hasta").fill("5");
+    await card.getByRole("button", { name: "Leer" }).click();
+
+    await expect(page).toHaveURL(/\/read\/ETCBC4\/Genesis\/2\?from=3&to=5$/);
+    await expect(page.getByRole("heading", { level: 1 })).toHaveText(
+      "Génesis 2:3–5",
+    );
+    await expect(page.locator(".verse")).toHaveCount(3);
+    await expect(page.locator(".verse").first()).toHaveAttribute("id", "v3");
+    await expect(page.locator(".reading-header__meta")).toContainText(
+      "vv. 3–5 de 25 versículos",
+    );
+
+    await page.getByRole("link", { name: "Todo el capítulo" }).click();
+    await expect(page).toHaveURL(/\/read\/ETCBC4\/Genesis\/2$/);
+    await expect(page.getByRole("heading", { level: 1 })).toHaveText(
+      "Génesis 2",
+    );
+    await expect(page.locator(".verse")).toHaveCount(25);
+  });
 });
 
 test.describe("lectura hebrea", () => {
@@ -234,6 +264,94 @@ test.describe("lectura hebrea", () => {
     await expect(page.locator(".word__translit")).toHaveCount(0);
   });
 
+  test("limita la lectura a un versículo o a un rango", async ({ page }) => {
+    await page.goto("/read/ETCBC4/Psalmi/119?from=5");
+    await expect(page).toHaveTitle("Salmos 119:5 · Biblia hebrea — BibleOL");
+    await expect(page.getByRole("heading", { level: 1 })).toHaveText(
+      "Salmos 119:5",
+    );
+    await expect(page.locator(".verse")).toHaveCount(1);
+    await expect(page.locator(".verse").first()).toHaveAttribute("id", "v5");
+    await expect(page.locator(".reading-header__meta")).toContainText(
+      "v. 5 de 176 versículos",
+    );
+
+    await page.goto("/read/ETCBC4/Psalmi/119?from=200");
+    await expect(page.getByRole("heading", { level: 1 })).toHaveText(
+      "Salmos 119:176",
+    );
+    await expect(page.locator(".verse")).toHaveCount(1);
+    await expect(page.locator(".verse").first()).toHaveAttribute("id", "v176");
+
+    await page.goto("/read/ETCBC4/Genesis/1?from=5&to=3");
+    await expect(page.getByRole("heading", { level: 1 })).toHaveText(
+      "Génesis 1:3–5",
+    );
+    await expect(page.locator(".verse")).toHaveCount(3);
+    await expect(page.locator(".verse").first()).toHaveAttribute("id", "v3");
+    await expect(page.getByLabel("Desde")).toHaveValue("3");
+    await expect(page.getByLabel("Hasta")).toHaveValue("5");
+
+    await page.goto("/read/ETCBC4/Genesis/1?to=3");
+    await expect(page.getByRole("heading", { level: 1 })).toHaveText(
+      "Génesis 1:1–3",
+    );
+    await expect(page.locator(".verse")).toHaveCount(3);
+    await expect(page.locator(".verse").last()).toHaveAttribute("id", "v3");
+  });
+
+  test("el formulario de rango conserva la vista y la navegación la descarta", async ({
+    page,
+  }) => {
+    await page.goto("/read/ETCBC4/Genesis/1");
+
+    await page.getByLabel("Desde").fill("2");
+    await page.getByLabel("Hasta").fill("4");
+    await page.getByRole("button", { name: "Ver" }).click();
+
+    await expect(page).toHaveURL(/\/read\/ETCBC4\/Genesis\/1\?from=2&to=4$/);
+    await expect(page.getByRole("heading", { level: 1 })).toHaveText(
+      "Génesis 1:2–4",
+    );
+    await expect(page.locator(".verse")).toHaveCount(3);
+
+    await page.getByRole("link", { name: "Mostrar glosa" }).click();
+    await expect(page).toHaveURL(
+      /\/read\/ETCBC4\/Genesis\/1\?from=2&to=4&gloss=1$/,
+    );
+    await expect(page.locator(".verse")).toHaveCount(3);
+    await expect(page.locator(".word__gloss").first()).toBeVisible();
+
+    await page
+      .locator(".chapter-nav")
+      .first()
+      .locator(".chapter-step--next")
+      .click();
+    await expect(page).toHaveURL(/\/read\/ETCBC4\/Genesis\/2\?gloss=1$/);
+    await expect(page.locator(".verse")).toHaveCount(25);
+  });
+
+  test("muestra solo el rango en la vista gramatical", async ({ page }) => {
+    await page.goto("/read/ETCBC4/Genesis/1?grammar=1&from=2&to=3");
+
+    await expect(page.getByRole("heading", { level: 1 })).toHaveText(
+      "Génesis 1:2–3",
+    );
+    await expect(page.locator(".reading-header__meta")).toContainText(
+      "vv. 2–3 de 31 versículos",
+    );
+    await expect(page.locator(".grammar")).toBeVisible();
+    await expect(page.locator(".grammar-verse")).toHaveCount(2);
+    await expect(page.locator(".grammar-verse").first()).toHaveAttribute(
+      "id",
+      "v2",
+    );
+    await expect(page.locator(".grammar-verse").last()).toHaveAttribute(
+      "id",
+      "v3",
+    );
+  });
+
   test("navega entre capítulos y libros", async ({ page }) => {
     await page.goto("/read/ETCBC4/Genesis/1");
     const topNav = page.locator(".chapter-nav").first();
@@ -357,6 +475,26 @@ test.describe("direcciones", () => {
     );
     await expect(page.locator(".grammar")).toBeVisible();
     await expect(page.locator(".word__translit").first()).toBeVisible();
+  });
+
+  test("conserva el rango en las redirecciones", async ({ page }) => {
+    await page.goto(
+      "/read?corpus=ETCBC4&book=Genesis&chapter=1&from=2&to=4&gloss=1",
+    );
+    await expect(page).toHaveURL(
+      /\/read\/ETCBC4\/Genesis\/1\?gloss=1&from=2&to=4$/,
+    );
+    await expect(page.getByRole("heading", { level: 1 })).toHaveText(
+      "Génesis 1:2–4",
+    );
+    await expect(page.locator(".verse")).toHaveCount(3);
+
+    await page.goto("/read/ETCBC4/Genesis?from=3");
+    await expect(page).toHaveURL(/\/read\/ETCBC4\/Genesis\/1\?from=3$/);
+    await expect(page.getByRole("heading", { level: 1 })).toHaveText(
+      "Génesis 1:3",
+    );
+    await expect(page.locator(".verse")).toHaveCount(1);
   });
 
   test("responde 404 en español para pasajes inexistentes", async ({

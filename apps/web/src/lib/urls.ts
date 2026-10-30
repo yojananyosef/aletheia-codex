@@ -1,3 +1,5 @@
+import type { VerseRange } from "./verse-range";
+
 function segment(value: string): string {
   return encodeURIComponent(value);
 }
@@ -6,6 +8,7 @@ export interface ChapterUrlOptions {
   transliteration?: boolean;
   grammar?: boolean;
   gloss?: boolean;
+  verseRange?: VerseRange | null;
 }
 
 export function chapterUrl(
@@ -24,6 +27,12 @@ export function chapterUrl(
   }
   if (options.gloss) {
     params.set("gloss", "1");
+  }
+  if (options.verseRange) {
+    params.set("from", String(options.verseRange.from));
+    if (options.verseRange.to !== options.verseRange.from) {
+      params.set("to", String(options.verseRange.to));
+    }
   }
   const query = params.toString();
   return query ? `${path}?${query}` : path;

@@ -99,6 +99,10 @@ main {
   flex: 1 0 auto;
 }
 
+[hidden] {
+  display: none !important;
+}
+
 h1,
 h2,
 h3 {
@@ -352,6 +356,40 @@ a:hover {
 .corpus-form .field--chapter {
   width: 5.25rem;
   padding-right: 0;
+}
+
+.corpus-form__range {
+  margin-top: 0.7rem;
+  padding-top: 0.65rem;
+  border-top: 1px dashed var(--line);
+}
+
+.corpus-form__range-label {
+  margin: 0 0 0.3rem;
+  color: var(--muted);
+  font-size: 0.63rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.corpus-form__range-fields {
+  display: flex;
+  align-items: flex-end;
+  gap: 0.5rem;
+}
+
+.corpus-form__range-fields .field {
+  display: block;
+  flex: 1 1 0;
+  width: auto;
+  padding-right: 0;
+}
+
+.corpus-form__dash {
+  padding-bottom: 0.55rem;
+  color: var(--muted);
+  font-size: 0.85rem;
 }
 
 select,
@@ -637,6 +675,65 @@ input[type="number"]:focus {
   display: flex;
   flex-wrap: wrap;
   gap: 0.4rem;
+}
+
+.reading-range {
+  margin-bottom: 1rem;
+}
+
+.range-form {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 0.45rem 0.7rem;
+  padding: 0.6rem 0.8rem;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 4px;
+}
+
+.range-form__label {
+  align-self: center;
+  color: var(--muted);
+  font-size: 0.63rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.range-form__field {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  color: var(--muted);
+  font-size: 0.78rem;
+}
+
+.range-form__field input {
+  width: 4.5rem;
+  padding: 0.36rem 0.45rem;
+  font-size: 0.85rem;
+}
+
+.range-form__dash {
+  align-self: flex-end;
+  padding-bottom: 0.45rem;
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
+.range-form__all {
+  align-self: center;
+  margin-left: auto;
+  color: var(--muted);
+  font-size: 0.76rem;
+  text-decoration: none;
+  border-bottom: 1px solid var(--line-strong);
+}
+
+.range-form__all:hover {
+  color: var(--accent);
+  border-bottom-color: var(--accent);
 }
 
 .verses {
@@ -1287,12 +1384,39 @@ span.word--plain {
   }
 }
 
+@media (max-width: 600px) {
+  .range-form {
+    align-items: stretch;
+  }
+
+  .range-form__label {
+    align-self: auto;
+    width: 100%;
+  }
+
+  .range-form__field {
+    flex: 1 1 auto;
+  }
+
+  .range-form__field input {
+    flex: 1 1 auto;
+    width: auto;
+    min-width: 0;
+  }
+
+  .range-form__all {
+    align-self: center;
+    margin-left: 0;
+  }
+}
+
 @media print {
   .site-header,
   .site-footer,
   .corpus-tabs,
   .chapter-nav,
   .reading-tools,
+  .reading-range,
   .skip-link {
     display: none;
   }

@@ -310,6 +310,7 @@ function readRedirectPage(corpora) {
   const script = `!function(){
     var base=${JSON.stringify(base)},catalogue=${JSON.stringify(catalogue)},defaultCorpus=${JSON.stringify(defaultCorpus)};
     var p=new URLSearchParams(location.search);
+    function positiveInt(v){if(!/^\\d+$/.test(v||""))return null;var n=Number(v);return Number.isSafeInteger(n)&&n>0?n:null}
     var corpus=p.get("corpus")||defaultCorpus;
     var info=catalogue[corpus];
     var book=p.get("book")||(info&&info.defaultBook);
@@ -318,6 +319,13 @@ function readRedirectPage(corpora) {
     if(!ok){location.replace(base+"/404.html");return}
     var q=new URLSearchParams();
     ["translit","grammar","gloss"].forEach(function(k){if(p.get(k)==="1")q.set(k,"1")});
+    var from=positiveInt(p.get("from")),to=positiveInt(p.get("to"));
+    if(from!==null||to!==null){
+      var a=from===null?1:from,b=to===null?a:to;
+      if(a>b){var swap=a;a=b;b=swap}
+      q.set("from",String(a));
+      if(b!==a)q.set("to",String(b))
+    }
     var path=base+"/read/"+encodeURIComponent(corpus)+"/"+encodeURIComponent(book)+"/"+chapter+"/";
     location.replace(path+(q.toString()?"?"+q:""))
   }();`;
@@ -338,7 +346,15 @@ function bookRedirectPage(corpusId, bookId, corpora) {
   const script = `!function(){
     var base=${JSON.stringify(base)},corpus=${JSON.stringify(corpusId)},book=${JSON.stringify(bookId)};
     var p=new URLSearchParams(location.search),q=new URLSearchParams();
+    function positiveInt(v){if(!/^\\d+$/.test(v||""))return null;var n=Number(v);return Number.isSafeInteger(n)&&n>0?n:null}
     ["translit","grammar","gloss"].forEach(function(k){if(p.get(k)==="1")q.set(k,"1")});
+    var from=positiveInt(p.get("from")),to=positiveInt(p.get("to"));
+    if(from!==null||to!==null){
+      var a=from===null?1:from,b=to===null?a:to;
+      if(a>b){var swap=a;a=b;b=swap}
+      q.set("from",String(a));
+      if(b!==a)q.set("to",String(b))
+    }
     var path=base+"/read/"+encodeURIComponent(corpus)+"/"+encodeURIComponent(book)+"/1/";
     location.replace(path+(q.toString()?"?"+q:""));
   }();`;

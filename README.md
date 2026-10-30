@@ -48,9 +48,18 @@ necesidad de MySQL.
 - `?translit=1`: muestra la transliteración cuando el corpus la ofrece.
 - `?grammar=1`: muestra la estructura gramatical por versículo.
 - `?gloss=1`: muestra la glosa española debajo de cada palabra.
+- `?from=5`: limita la lectura al versículo 5.
+- `?from=5&to=10`: limita la lectura del versículo 5 al 10.
+- `?to=10`: limita la lectura del versículo 1 al 10.
 
-Las URL de lectura conservan `translit=1`, `grammar=1` y `gloss=1` al cambiar
-de capítulo, de libro o de corpus.
+Los valores de `from` y `to` se intercambian si vienen al revés y se ajustan al
+último versículo real del capítulo. La selección de versículos está disponible
+en los formularios de la portada y en la barra de cada capítulo, y se conserva
+al activar o desactivar la transliteración, la glosa o la gramática. Al cambiar
+de capítulo, de libro o de corpus se vuelve a mostrar el capítulo completo.
+
+Las URL de lectura conservan `translit=1`, `grammar=1`, `gloss=1`, `from` y
+`to` al cambiar de vista.
 
 ## Publicación en GitHub Pages
 
@@ -65,8 +74,10 @@ ejecutarlo manualmente). Como Pages solo sirve archivos estáticos, el flujo:
    cargan bajo demanda.
 
 La instantánea final ocupa unos 263 MiB, por debajo del límite de 1 GB de Pages.
-El HTML contiene los versículos y las glosas; los paneles, la gramática y los
-cambios de vista necesitan JavaScript en esta edición.
+El HTML contiene los versículos y las glosas; los paneles, la gramática, los
+cambios de vista y el filtro de versículos necesitan JavaScript en esta
+edición. El filtro se aplica sobre el HTML ya exportado y sobre el fragmento
+gramatical cuando se carga, sin generar una página por cada rango posible.
 
 Para generarla localmente:
 
@@ -125,9 +136,9 @@ locales. Se omiten si los corpus no están descargados.
 
 `pnpm test:e2e` compila la aplicación, arranca el servidor de producción en el
 puerto 4323 y ejecuta Playwright con JavaScript desactivado en el navegador. Las
-pruebas cubren selección, lectura hebrea/griega/latina, transliteración, paneles
-de palabra con glosas, glosa bajo la palabra, vista gramatical, navegación,
-redirecciones, 404 y vista móvil.
+pruebas cubren selección, rangos de versículos, lectura hebrea/griega/latina,
+transliteración, paneles de palabra con glosas, glosa bajo la palabra, vista
+gramatical, navegación, redirecciones, 404 y vista móvil.
 
 Las pruebas usan Chromium. En macOS 12 el WebKit empaquetado por Playwright está
 congelado y no es compatible con la versión actual; en macOS 13 o superior se

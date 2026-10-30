@@ -5,10 +5,12 @@ import CorpusTabs from "../../../../features/navigation/CorpusTabs.astro";
 import ChapterNavigation from "../../../../features/navigation/ChapterNavigation.astro";
 import GrammarView from "../../../../features/reading/GrammarView.astro";
 import VerseList from "../../../../features/reading/VerseList.astro";
+import VerseRangeForm from "../../../../features/reading/VerseRangeForm.astro";
 import { t } from "../../../../i18n";
 import { bookName } from "../../../../lib/book-names";
 import { getReader } from "../../../../lib/reader";
 import { chapterUrl } from "../../../../lib/urls";
+import { parseVerseRange } from "../../../../lib/verse-range";
 
 interface ChapterLink {
   book: Book;
@@ -36,9 +38,23 @@ try {
   throw error;
 }
 
-const { corpus, book, verses, grammar } = data;
+const { corpus, book, verses: allVerses, grammar } = data;
 const books = corpus.books;
 const bookIndex = books.findIndex((item) => item.id === book.id);
+const lastVerse = allVerses.at(-1)?.number ?? 1;
+
+const parsedRange = parseVerseRange(Astro.url.searchParams, lastVerse);
+let verseRange = parsedRange;
+let verses = parsedRange
+  ? allVerses.filter(
+      (verse) =>
+        verse.number >= parsedRange.from && verse.number <= parsedRange.to,
+    )
+  : allVerses;
+if (verseRange && verses.length === 0) {
+  verseRange = null;
+  verses = allVerses;
+}
 
 let previous: ChapterLink | null = null;
 if (chapterNumber > 1) {
@@ -101,27 +117,62 @@ function toggleHref(key: "translit" | "grammar" | "gloss"): string {
 const wordFeatures =
   corpus.levels.find((level) => level.key === "word")?.features ?? [];
 const translitLang = `${corpus.language}-Latn`;
-const pageTitle = `${bookName(book.id)} ${chapterNumber} · ${corpus.title} — ${t.appName}`;
-const meta = `${corpus.version ? `${t.edition} ${corpus.version} · ` : ""}${verses.length} ${t.versesCount}`;
+const editionPrefix = corpus.version ? `${t.edition} ${corpus.version} · ` : "";
+const rangeReference = verseRange
+  ? verseRange.from === verseRange.to
+    ? String(verseRange.from)
+    : `${verseRange.from}–${verseRange.to}`
+  : null;
+const rangeLabel = verseRange
+  ? `${verseRange.from === verseRange.to ? t.verseShort : t.versesShort} ${rangeReference}`
+  : null;
+const meta = `${editionPrefix}${
+  rangeLabel
+    ? `${rangeLabel} ${t.of} ${allVerses.length} ${t.versesCount}`
+    : `${allVerses.length} ${t.versesCount}`
+}`;
+const chapterReference = `${bookName(book.id)} ${chapterNumber}`;
+const reference = rangeReference
+  ? `${chapterReference}:${rangeReference}`
+  : chapterReference;
+const pageTitle = `${reference} · ${corpus.title} — ${t.appName}`;
+
+const allParams = new URLSearchParams(Astro.url.searchParams);
+allParams.delete("from");
+allParams.delete("to");
+const allQuery = allParams.toString();
+const allHref = allQuery
+  ? `${Astro.url.pathname}?${allQuery}`
+  : Astro.url.pathname;
 ---
 
 <BaseLayout
   title={pageTitle}
-  description={`${bookName(book.id)} ${chapterNumber}, ${corpus.title}. ${t.grammarHint}`}
+  description={`${reference}, ${corpus.title}. ${t.grammarHint}`}
 >
   <main id="main" class="reading-page">
     <div class="wrap">
       <CorpusTabs items={corpusTabs} activeId={corpus.id} />
 
-      <header class="reading-header">
+      <header
+        class="reading-header"
+        data-reference={chapterReference}
+        data-title-suffix={` · ${corpus.title} — ${t.appName}`}
+        data-total={String(allVerses.length)}
+      >
         <p class="eyebrow">
           {corpus.title} · {corpus.languageName}
         </p>
         <h1 class="reading-title">
           {bookName(book.id)}{" "}
-          <span class="reading-title__chapter">{chapterNumber}</span>
+          <span
+            class="reading-title__chapter"
+            data-chapter={String(chapterNumber)}
+          >{`${chapterNumber}${rangeReference ? `:${rangeReference}` : ""}`}</span>
         </h1>
-        <p class="reading-header__meta">{meta}</p>
+        <p class="reading-header__meta" data-edition={editionPrefix}>
+          {meta}
+        </p>
       </header>
 
       <ChapterNavigation
@@ -182,6 +233,19 @@ const meta = `${corpus.version ? `${t.edition} ${corpus.version} · ` : ""}${ver
             </a>
           ) : null}
         </div>
+      </div>
+
+      <div class="reading-range">
+        <VerseRangeForm
+          action={Astro.url.pathname}
+          allHref={allHref}
+          from={verseRange?.from ?? null}
+          to={verseRange?.to ?? null}
+          max={lastVerse}
+          showTransliteration={showTransliteration}
+          showGrammar={showGrammar}
+          showGloss={showGloss}
+        />
       </div>
 
       {showGrammar ? (

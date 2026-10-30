@@ -29,6 +29,105 @@
   };
   const toggleNames = ["translit", "gloss", "grammar"];
 
+  function positiveInteger(value) {
+    if (value === null) return null;
+    const text = value.trim();
+    if (!/^\d+$/.test(text)) return null;
+    const number = Number(text);
+    return Number.isSafeInteger(number) && number > 0 ? number : null;
+  }
+
+  function lastVerseNumber() {
+    let last = 0;
+    for (const verse of document.querySelectorAll(".verse[id^='v']")) {
+      const number = Number(verse.id.slice(1));
+      if (Number.isSafeInteger(number) && number > last) last = number;
+    }
+    return last;
+  }
+
+  function readRange() {
+    const from = positiveInteger(params.get("from"));
+    const to = positiveInteger(params.get("to"));
+    if (from === null && to === null) return null;
+
+    const last = lastVerseNumber();
+    if (last < 1) return null;
+
+    let start = from ?? 1;
+    let end = to ?? start;
+    if (start > end) [start, end] = [end, start];
+    start = Math.min(Math.max(start, 1), last);
+    end = Math.min(Math.max(end, 1), last);
+    if (start > end) [start, end] = [end, start];
+    return { from: start, to: end };
+  }
+
+  function referenceOf(range) {
+    if (!range) return null;
+    return range.from === range.to
+      ? String(range.from)
+      : `${range.from}–${range.to}`;
+  }
+
+  function applyRange(range) {
+    for (const verse of document.querySelectorAll(
+      ".verse[id^='v'], .grammar-verse[id^='v']",
+    )) {
+      const number = Number(verse.id.slice(1));
+      verse.hidden =
+        range !== null && (number < range.from || number > range.to || !number);
+    }
+  }
+
+  function syncRange(range) {
+    const form = document.querySelector(".range-form");
+    if (form) {
+      const fromInput = form.querySelector('input[name="from"]');
+      const toInput = form.querySelector('input[name="to"]');
+      if (fromInput) fromInput.value = range ? String(range.from) : "";
+      if (toInput) toInput.value = range ? String(range.to) : "";
+    }
+
+    const allLink = document.querySelector("[data-show-all]");
+    if (allLink) {
+      allLink.hidden = !range;
+      const url = new URL(location.href);
+      url.searchParams.delete("from");
+      url.searchParams.delete("to");
+      allLink.setAttribute("href", `${url.pathname}${url.search}`);
+    }
+
+    const header = document.querySelector(".reading-header");
+    if (!header) return;
+
+    const chapterSpan = header.querySelector(".reading-title__chapter");
+    const baseChapter = chapterSpan?.dataset.chapter || chapter;
+    const rangeReference = referenceOf(range);
+    if (chapterSpan) {
+      chapterSpan.textContent = rangeReference
+        ? `${baseChapter}:${rangeReference}`
+        : baseChapter;
+    }
+
+    const meta = header.querySelector(".reading-header__meta");
+    const total = Number(header.dataset.total) || lastVerseNumber();
+    const edition = meta?.dataset.edition || "";
+    if (meta) {
+      meta.textContent = range
+        ? `${edition}${
+            range.from === range.to ? "v." : "vv."
+          } ${rangeReference} de ${total} versículos`
+        : `${edition}${total} versículos`;
+    }
+
+    const reference = header.dataset.reference || baseChapter;
+    const suffix = header.dataset.titleSuffix || "";
+    document.title = range
+      ? `${reference}:${rangeReference}${suffix}`
+      : `${reference}${suffix}`;
+  }
+
   function setToggle(url, key, on) {
     if (on) {
       url.searchParams.set(key, "1");
@@ -90,7 +189,9 @@
       link.setAttribute("href", `${url.pathname}${url.search}`);
     }
 
-    for (const form of document.querySelectorAll("form.chapter-jump")) {
+    for (const form of document.querySelectorAll(
+      "form.chapter-jump, form.range-form",
+    )) {
       for (const key of toggleNames) {
         let input = form.querySelector(`input[name="${key}"]`);
         if (state[key]) {
@@ -209,7 +310,7 @@
   );
 
   let grammarPromise = null;
-  function loadGrammar() {
+  function loadGrammar(range) {
     if (grammarPromise) return grammarPromise;
 
     const verses = document.querySelector(".verses");
@@ -228,6 +329,7 @@
         slot.innerHTML = markup;
         verses.insertAdjacentElement("beforebegin", slot);
         verses.hidden = true;
+        applyRange(range);
       })
       .catch((error) => {
         console.error(error);
@@ -240,9 +342,12 @@
     return grammarPromise;
   }
 
+  const range = readRange();
   syncChrome();
+  applyRange(range);
+  syncRange(range);
 
   if (state.grammar) {
-    loadGrammar();
+    loadGrammar(range);
   }
 })();

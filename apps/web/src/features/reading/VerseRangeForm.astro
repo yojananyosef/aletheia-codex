@@ -1,0 +1,72 @@
+---
+import { t } from "../../i18n";
+
+interface Props {
+  action: string;
+  allHref: string;
+  from: number | null;
+  to: number | null;
+  max: number;
+  showTransliteration: boolean;
+  showGrammar: boolean;
+  showGloss: boolean;
+}
+
+const {
+  action,
+  allHref,
+  from,
+  to,
+  max,
+  showTransliteration,
+  showGrammar,
+  showGloss,
+} = Astro.props;
+---
+
+<form class="range-form" action={action} method="get">
+  <span class="range-form__label">{t.verseRangeLabel}</span>
+  <label class="range-form__field">
+    <span>{t.verseFromLabel}</span>
+    <input
+      type="number"
+      name="from"
+      value={from !== null ? String(from) : undefined}
+      min="1"
+      max={max}
+      inputmode="numeric"
+      placeholder="1"
+    />
+  </label>
+  <span class="range-form__dash" aria-hidden="true">
+    –
+  </span>
+  <label class="range-form__field">
+    <span>{t.verseToLabel}</span>
+    <input
+      type="number"
+      name="to"
+      value={to !== null ? String(to) : undefined}
+      min="1"
+      max={max}
+      inputmode="numeric"
+      placeholder={String(max)}
+    />
+  </label>
+  <button class="button button--primary button--small" type="submit">
+    {t.viewRangeButton}
+  </button>
+  <a
+    class="range-form__all"
+    href={allHref}
+    data-show-all
+    hidden={from === null}
+  >
+    {t.wholeChapter}
+  </a>
+  {showTransliteration ? (
+    <input type="hidden" name="translit" value="1" />
+  ) : null}
+  {showGrammar ? <input type="hidden" name="grammar" value="1" /> : null}
+  {showGloss ? <input type="hidden" name="gloss" value="1" /> : null}
+</form>
