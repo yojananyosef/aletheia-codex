@@ -709,16 +709,17 @@ input[type="number"]:focus {
 .word {
   position: relative;
   display: inline-block;
-  margin: 0 0.07em;
+  margin: 0 0.4em;
 }
 
 .word__summary {
   display: inline-block;
-  margin: 0 -0.07em;
-  padding: 0 0.07em;
+  margin: 0 -0.4em;
+  padding: 0 0.4em;
   border-radius: 3px;
   cursor: pointer;
   list-style: none;
+  text-align: center;
 }
 
 .word__summary::-webkit-details-marker {
@@ -729,24 +730,25 @@ input[type="number"]:focus {
   content: "";
 }
 
-.word__summary:hover,
+.word__surface:hover,
 .word[open] > .word__summary {
   background: var(--wash);
 }
 
-.word[open] > .word__summary {
+.word[open] > .word__surface {
   color: var(--accent-strong);
 }
 
 .word__translit {
   display: block;
-  margin-top: 0.15rem;
+  margin: 0.15rem auto 0;
+  width: fit-content;
   font-size: 0.75rem;
   color: var(--muted);
 }
 
 span.word--plain {
-  margin: 0 0.07em;
+  margin: 0 0.4em;
 }
 
 .word__panel {
