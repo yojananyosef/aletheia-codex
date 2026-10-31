@@ -12,7 +12,7 @@ permissions:
 
 concurrency:
   group: pages
-  cancel-in-progress: false
+  cancel-in-progress: true
 
 jobs:
   build:
@@ -42,6 +42,12 @@ jobs:
       - name: Descargar corpus
         run: pnpm data:sync
 
+      - name: Restaurar páginas exportadas
+        uses: actions/cache@v4
+        with:
+          path: dist-static
+          key: pages-${{ github.event.repository.name }}-${{ hashFiles('apps/web/src/**', '!apps/web/src/styles/**', 'packages/**', 'data/metadata/**', 'apps/web/astro.config.mjs', 'scripts/export-static.mjs', 'package.json', 'apps/web/package.json') }}
+
       - name: Compilar la aplicación
         run: pnpm build
 
@@ -49,8 +55,10 @@ jobs:
         run: >-
           node scripts/export-static.mjs
           --start-server
+          --resume
           --base "/${{ github.event.repository.name }}"
           --out dist-static
+          --servers 2
           --concurrency 6
 
       - name: Publicar el artefacto

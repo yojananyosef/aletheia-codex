@@ -30,6 +30,7 @@ interface Props {
   translitLang: string;
   showTransliteration: boolean;
   showGloss: boolean;
+  showPanel?: boolean;
   verseScriptClass: string;
 }
 
@@ -44,6 +45,7 @@ const {
   translitLang,
   showTransliteration,
   showGloss,
+  showPanel = true,
   verseScriptClass,
 } = Astro.props;
 
@@ -73,6 +75,7 @@ function rangeLabel(object: GrammarObject): string {
         translitLang={translitLang}
         showTransliteration={showTransliteration}
         showGloss={showGloss}
+        showPanel={showPanel}
         groups={groups}
         features={features}
       />
@@ -109,6 +112,7 @@ function rangeLabel(object: GrammarObject): string {
         translitLang={translitLang}
         showTransliteration={showTransliteration}
         showGloss={showGloss}
+        showPanel={showPanel}
         verseScriptClass={verseScriptClass}
       />
     ))}

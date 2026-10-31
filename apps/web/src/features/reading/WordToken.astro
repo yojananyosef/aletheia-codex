@@ -18,6 +18,7 @@ interface Props {
   showGloss: boolean;
   groups: GrammarGroupDefinition[];
   features: FeatureDefinition[];
+  showPanel?: boolean;
 }
 
 interface PanelRow {
@@ -36,6 +37,7 @@ const {
   showGloss,
   groups,
   features,
+  showPanel = true,
 } = Astro.props;
 
 const transliteration =
@@ -209,56 +211,58 @@ function glossLanguageName(code: string): string {
       </span>
     ) : null}
   </summary>
-  <div class="word__panel" lang="es" dir="ltr">
-    <p class="word__panel-title">
-      <span class="word__panel-word" lang={lang} dir={direction}>
-        {word.text}
-      </span>
-      <span class="word__panel-caption">{t.grammar}</span>
-    </p>
-
-    <dl class="word__features word__features--head">
-      <dt>{t.text}</dt>
-      <dd>
-        <bdi lang={lang} dir={direction}>
+  {showPanel ? (
+    <div class="word__panel" lang="es" dir="ltr">
+      <p class="word__panel-title">
+        <span class="word__panel-word" lang={lang} dir={direction}>
           {word.text}
-        </bdi>
-      </dd>
-      {word.transliteration ? (
-        <Fragment>
-          <dt>{t.transliteration}</dt>
-          <dd>
-            <bdi lang={translitLang} dir="ltr">
-              {word.transliteration}
-            </bdi>
-          </dd>
-        </Fragment>
-      ) : null}
-    </dl>
+        </span>
+        <span class="word__panel-caption">{t.grammar}</span>
+      </p>
 
-    {displayGroups.map((group) => (
-      <section class="word__group">
-        <p class="word__group-title">{group.label}</p>
-        <dl class="word__features">
-          {group.key === "glosses" && word.gloss ? (
-            <Fragment>
-              <dt>{glossLanguageName(word.gloss.language)}</dt>
-              <dd>
-                <bdi lang={word.gloss.language} dir={glossDirection}>
-                  {word.gloss.text}
-                </bdi>
-              </dd>
-            </Fragment>
-          ) : (
-            group.rows.map((row) => (
+      <dl class="word__features word__features--head">
+        <dt>{t.text}</dt>
+        <dd>
+          <bdi lang={lang} dir={direction}>
+            {word.text}
+          </bdi>
+        </dd>
+        {word.transliteration ? (
+          <Fragment>
+            <dt>{t.transliteration}</dt>
+            <dd>
+              <bdi lang={translitLang} dir="ltr">
+                {word.transliteration}
+              </bdi>
+            </dd>
+          </Fragment>
+        ) : null}
+      </dl>
+
+      {displayGroups.map((group) => (
+        <section class="word__group">
+          <p class="word__group-title">{group.label}</p>
+          <dl class="word__features">
+            {group.key === "glosses" && word.gloss ? (
               <Fragment>
-                <dt>{row.label}</dt>
-                <dd title={row.raw || undefined}>{row.value}</dd>
+                <dt>{glossLanguageName(word.gloss.language)}</dt>
+                <dd>
+                  <bdi lang={word.gloss.language} dir={glossDirection}>
+                    {word.gloss.text}
+                  </bdi>
+                </dd>
               </Fragment>
-            ))
-          )}
-        </dl>
-      </section>
-    ))}
-  </div>
+            ) : (
+              group.rows.map((row) => (
+                <Fragment>
+                  <dt>{row.label}</dt>
+                  <dd title={row.raw || undefined}>{row.value}</dd>
+                </Fragment>
+              ))
+            )}
+          </dl>
+        </section>
+      ))}
+    </div>
+  ) : null}
 </details>

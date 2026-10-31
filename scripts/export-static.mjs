@@ -22,6 +22,7 @@ import {
   mkdir,
   readFile,
   readdir,
+  rename,
   rm,
   stat,
   writeFile,
@@ -63,9 +64,14 @@ const outDir = resolve(repoRoot, args.get("out") ?? "dist-static");
 const startServer = args.has("start-server");
 const resume = args.has("resume");
 const port = Number(args.get("port") ?? process.env.EXPORT_PORT ?? 4399);
-const serverUrl = normalizeUrl(
-  args.get("url") ?? process.env.EXPORT_URL ?? `http://127.0.0.1:${port}`,
+const explicitServerUrl = args.get("url") ?? process.env.EXPORT_URL;
+const serverCount = explicitServerUrl
+  ? 1
+  : Math.max(1, Number(args.get("servers") ?? 1));
+const serverUrls = Array.from({ length: serverCount }, (_, index) =>
+  normalizeUrl(explicitServerUrl ?? `http://127.0.0.1:${port + index}`),
 );
+let serverCursor = 0;
 const concurrency = Math.max(1, Number(args.get("concurrency") ?? 6));
 const cataloguePath = join(repoRoot, "data", "metadata", "corpora.json");
 
@@ -105,30 +111,62 @@ function findMatchingElementEnd(html, start, tagName) {
   return null;
 }
 
-const PANEL_OPEN = /<div\b[^>]*\bclass="[^"]*\bword__panel\b[^"]*"[^>]*>/g;
+const PANEL_TOKEN =
+  /<details\b[^>]*\bdata-monad="(\d+)"[^>]*>|<div\b[^>]*\bclass="[^"]*\bword__panel\b[^"]*"[^>]*>/g;
+const DIV_TAG = /<div\b[^>]*>|<\/div\s*>/gi;
+
+function findDivEnd(html, start) {
+  DIV_TAG.lastIndex = start;
+  let depth = 0;
+  let match;
+  while ((match = DIV_TAG.exec(html))) {
+    if (match[0].startsWith("</")) {
+      depth -= 1;
+      if (depth === 0) return DIV_TAG.lastIndex;
+    } else if (!match[0].endsWith("/>")) {
+      depth += 1;
+    }
+  }
+  return null;
+}
 
 function extractPanels(html) {
   const ranges = [];
-  PANEL_OPEN.lastIndex = 0;
+  let lastMonad = null;
   let match;
-  while ((match = PANEL_OPEN.exec(html))) {
-    const start = match.index;
-    const end = findMatchingElementEnd(html, start, "div");
-    if (end === null) continue;
-    const before = html.slice(0, start);
-    const monads = [...before.matchAll(/<details\b[^>]*\bdata-monad="(\d+)"/g)];
-    const monad = monads.at(-1)?.[1];
-    if (monad) {
-      ranges.push({ start, end, monad, markup: html.slice(start, end) });
+  PANEL_TOKEN.lastIndex = 0;
+  while ((match = PANEL_TOKEN.exec(html))) {
+    if (match[1] !== undefined) {
+      lastMonad = match[1];
+      continue;
     }
-    PANEL_OPEN.lastIndex = end;
+
+    const start = match.index;
+    const end = findDivEnd(html, start);
+    if (end === null) {
+      PANEL_TOKEN.lastIndex = start + 1;
+      continue;
+    }
+    if (lastMonad) {
+      ranges.push({
+        start,
+        end,
+        monad: lastMonad,
+        markup: html.slice(start, end),
+      });
+    }
+    // Panels are not nested, so skip the whole block instead of rescanning it.
+    PANEL_TOKEN.lastIndex = end;
   }
 
-  let slim = html;
-  for (const range of [...ranges].sort((a, b) => b.start - a.start)) {
-    slim = slim.slice(0, range.start) + slim.slice(range.end);
+  const parts = [];
+  let cursor = 0;
+  for (const range of ranges) {
+    parts.push(html.slice(cursor, range.start));
+    cursor = range.end;
   }
-  return { html: slim, panels: ranges };
+  parts.push(html.slice(cursor));
+  return { html: parts.join(""), panels: ranges };
 }
 
 function extractGrammar(html) {
@@ -145,8 +183,42 @@ function prefixRootUrls(html) {
     .replace(/\b(href|src|action|poster)='\/(?!\/)/g, `$1='${base}/`);
 }
 
+/*
+ * Astro names the CSS after its content hash. The snapshot is cached across
+ * deployments, so every page must point at one stable file name; otherwise a
+ * one-line style change would invalidate all 1.4k pages.
+ */
+function useStableStyles(html) {
+  return html.replace(
+    /\b(href|src)=(["'])\/_astro\/[^"']+\.css\2/g,
+    "$1=$2/_astro/app.css$2",
+  );
+}
+
+async function installStyles(outDir) {
+  const astroDir = join(outDir, "_astro");
+  let entries;
+  try {
+    entries = await readdir(astroDir);
+  } catch {
+    return;
+  }
+  const files = entries.filter((name) => name.endsWith(".css")).sort();
+  if (files.length === 0) return;
+  if (files.length === 1) {
+    await rename(join(astroDir, files[0]), join(astroDir, "app.css"));
+    return;
+  }
+  const parts = [];
+  for (const file of files) {
+    parts.push(await readFile(join(astroDir, file), "utf8"));
+  }
+  await writeFile(join(astroDir, "app.css"), parts.join("\n"));
+  await Promise.all(files.map((file) => rm(join(astroDir, file))));
+}
+
 function decorateChapter(html, corpusId, bookId, chapter) {
-  let output = prefixRootUrls(html);
+  let output = prefixRootUrls(useStableStyles(html));
   output = output.replace(
     /<html\b([^>]*)>/,
     `<html$1 class="static-reading" data-base="${escapeAttribute(base)}" data-corpus="${escapeAttribute(corpusId)}" data-book="${escapeAttribute(bookId)}" data-chapter="${chapter}">`,
@@ -171,6 +243,8 @@ async function fetchPage(
   let lastError;
   for (let attempt = 1; attempt <= 3; attempt += 1) {
     try {
+      const serverUrl = serverUrls[serverCursor % serverUrls.length];
+      serverCursor += 1;
       const response = await fetch(`${serverUrl}${path}`, {
         headers: { accept: "text/html" },
       });
@@ -398,46 +472,53 @@ async function main() {
   console.log(`Exportando ${selectedChapters.length} capítulos a ${outDir}`);
   console.log(`Base pública: ${base || "/"}`);
 
-  let server;
+  const servers = [];
   try {
     if (startServer) {
-      console.log(`Iniciando el servidor SSR en ${serverUrl}…`);
-      server = spawn(process.execPath, [serverEntry], {
-        cwd: repoRoot,
-        env: {
-          ...process.env,
-          HOST: "127.0.0.1",
-          PORT: String(port),
-          NODE_ENV: "production",
-        },
-        stdio: ["ignore", "pipe", "pipe"],
-      });
-      let serverLog = "";
-      server.stdout.on("data", (chunk) => {
-        serverLog += chunk;
-        serverLog = serverLog.slice(-4000);
-      });
-      server.stderr.on("data", (chunk) => {
-        serverLog += chunk;
-        serverLog = serverLog.slice(-4000);
-      });
-      server.on("exit", (code) => {
-        if (code !== 0 && code !== null) {
-          console.error(
-            `El servidor SSR terminó con código ${code}:\n${serverLog}`,
-          );
-        }
-      });
-      await waitForServer(serverUrl);
-    } else {
-      await waitForServer(serverUrl);
+      console.log(
+        serverUrls.length === 1
+          ? `Iniciando el servidor SSR en ${serverUrls[0]}…`
+          : `Iniciando ${serverUrls.length} servidores SSR en ${serverUrls.join(", ")}…`,
+      );
+      for (const url of serverUrls) {
+        const server = spawn(process.execPath, [serverEntry], {
+          cwd: repoRoot,
+          env: {
+            ...process.env,
+            HOST: "127.0.0.1",
+            PORT: new URL(url).port || String(port),
+            NODE_ENV: "production",
+            STATIC_EXPORT: "1",
+          },
+          stdio: ["ignore", "pipe", "pipe"],
+        });
+        let serverLog = "";
+        server.stdout.on("data", (chunk) => {
+          serverLog = `${serverLog}${chunk}`.slice(-4000);
+        });
+        server.stderr.on("data", (chunk) => {
+          serverLog = `${serverLog}${chunk}`.slice(-4000);
+        });
+        server.on("exit", (code) => {
+          if (code !== 0 && code !== null) {
+            console.error(
+              `El servidor SSR (${url}) terminó con código ${code}:\n${serverLog}`,
+            );
+          }
+        });
+        servers.push(server);
+      }
     }
+    await Promise.all(serverUrls.map((url) => waitForServer(url)));
 
     if (!resume) {
       await rm(outDir, { recursive: true, force: true });
     }
     await mkdir(outDir, { recursive: true });
+    // Replace the previous client assets; cached pages keep their data.
+    await rm(join(outDir, "_astro"), { recursive: true, force: true });
     await cp(clientDir, outDir, { recursive: true, force: true });
+    await installStyles(outDir);
     await writeFile(join(outDir, ".nojekyll"), "");
 
     let completed = 0;
@@ -486,7 +567,7 @@ async function main() {
           fetchPage(`${path}?translit=1&gloss=1`, {
             returnNullOnNotFound: true,
           }),
-          fetchPage(`${path}?translit=1&gloss=1&grammar=1`, {
+          fetchPage(`${path}?translit=1&gloss=1&grammar=1&panels=0`, {
             returnNullOnNotFound: true,
           }),
         ]);
@@ -542,10 +623,13 @@ async function main() {
     }
 
     const home = await fetchPage("/");
-    await writeFile(join(outDir, "index.html"), prefixRootUrls(home));
+    await writeFile(
+      join(outDir, "index.html"),
+      prefixRootUrls(useStableStyles(home)),
+    );
 
     const notFound = prefixRootUrls(
-      await fetchPage("/404", { allowNotFound: true }),
+      useStableStyles(await fetchPage("/404", { allowNotFound: true })),
     );
     await writeFile(join(outDir, "404.html"), notFound);
 
@@ -664,7 +748,7 @@ async function main() {
       );
     }
   } finally {
-    if (server) {
+    for (const server of servers) {
       server.kill("SIGTERM");
     }
   }

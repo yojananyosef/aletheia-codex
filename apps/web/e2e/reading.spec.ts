@@ -315,6 +315,13 @@ test.describe("lectura hebrea", () => {
     await expect(page.getByLabel("Desde")).toHaveCount(1);
     await expect(page.locator(".reading-range")).toHaveCount(0);
     await expect(page.locator(".range-form")).toHaveCount(0);
+    await expect(page.locator(".chapter-nav")).toHaveCount(1);
+    await expect(page.locator("a.to-top")).toHaveCount(1);
+    await expect(page.locator("a.to-top")).toHaveAttribute("href", "#top");
+    await expect(page.locator("a.to-top")).toHaveAttribute(
+      "aria-label",
+      "Volver arriba",
+    );
   });
 
   test("el selector de versículos conserva la vista y la navegación la descarta", async ({

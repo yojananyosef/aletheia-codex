@@ -16,7 +16,6 @@ interface Props {
   chapter: number;
   previous: ChapterLink | null;
   next: ChapterLink | null;
-  position: "top" | "bottom";
   showTransliteration: boolean;
   showGrammar: boolean;
   showGloss: boolean;
@@ -31,7 +30,6 @@ const {
   chapter,
   previous,
   next,
-  position,
   showTransliteration,
   showGrammar,
   showGloss,
@@ -39,11 +37,11 @@ const {
   verseRange = null,
   lastVerse = 1,
 } = Astro.props;
-const bookSelectId = `book-${position}`;
-const chapterInputId = `chapter-${position}`;
-const fromInputId = `from-${position}`;
-const toInputId = `to-${position}`;
-const rangeLabelId = `range-label-${position}`;
+const bookSelectId = "chapter-nav-book";
+const chapterInputId = "chapter-nav-chapter";
+const fromInputId = "chapter-nav-from";
+const toInputId = "chapter-nav-to";
+const rangeLabelId = "chapter-nav-verses";
 const linkOptions = {
   transliteration: showTransliteration,
   grammar: showGrammar,

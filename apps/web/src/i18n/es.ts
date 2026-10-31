@@ -12,6 +12,7 @@ export const es = {
   goButton: "Ir",
   previous: "Anterior",
   next: "Siguiente",
+  backToTop: "Volver arriba",
   chapterShort: "cap.",
   showTransliteration: "Mostrar transliteración",
   hideTransliteration: "Ocultar transliteración",

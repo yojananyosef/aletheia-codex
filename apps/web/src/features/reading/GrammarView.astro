@@ -23,6 +23,7 @@ interface Props {
   translitLang: string;
   showTransliteration: boolean;
   showGloss: boolean;
+  showWordPanels?: boolean;
 }
 
 const {
@@ -36,6 +37,7 @@ const {
   translitLang,
   showTransliteration,
   showGloss,
+  showWordPanels = true,
 } = Astro.props;
 
 const trees = buildGrammarByVerse(verses, objects, levels);
@@ -81,6 +83,7 @@ const verseScriptClass = scriptClass(language);
               translitLang={translitLang}
               showTransliteration={showTransliteration}
               showGloss={showGloss}
+              showPanel={showWordPanels}
               verseScriptClass={verseScriptClass}
             />
           ))}

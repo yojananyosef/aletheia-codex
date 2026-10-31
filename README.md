@@ -87,7 +87,13 @@ pnpm build
 node scripts/export-static.mjs --start-server --base /bibleol-astro
 ```
 
-El resultado queda en `dist-static/`.
+El resultado queda en `dist-static/`. En máquinas con varios núcleos conviene
+repartir las peticiones entre varios servidores SSR (`--servers 2`) y, para
+repetir una exportación interrumpida sin rehacer todo el trabajo, usar
+`--resume`. La publicación en GitHub Pages guarda `dist-static` en la caché de
+Actions y solo vuelve a generar las páginas cuando cambia el marcado o los
+datos; los cambios puramente visuales reutilizan el HTML y sustituyen el CSS
+estable `_astro/app.css`.
 
 En la vista gramatical, cada nivel (frase, cláusula y oración) aparece con el
 color del proyecto original. Las palabras se agrupan bajo el objeto gramatical

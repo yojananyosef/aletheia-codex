@@ -75,6 +75,9 @@ const showTransliteration = Astro.url.searchParams.get("translit") === "1";
 const showGrammar = Astro.url.searchParams.get("grammar") === "1";
 const showGloss =
   corpus.gloss !== null && Astro.url.searchParams.get("gloss") === "1";
+const omitPanels =
+  process.env.STATIC_EXPORT === "1" &&
+  Astro.url.searchParams.get("panels") === "0";
 
 const corpusTabs = reader
   .listCorpora()
@@ -162,7 +165,6 @@ const pageTitle = `${reference} · ${corpus.title} — ${t.appName}`;
         chapter={chapterNumber}
         previous={previous}
         next={next}
-        position="top"
         showTransliteration={showTransliteration}
         showGrammar={showGrammar}
         showGloss={showGloss}
@@ -231,6 +233,7 @@ const pageTitle = `${reference} · ${corpus.title} — ${t.appName}`;
           translitLang={translitLang}
           showTransliteration={showTransliteration}
           showGloss={showGloss}
+          showWordPanels={!omitPanels}
         />
       ) : (
         <VerseList
@@ -245,17 +248,9 @@ const pageTitle = `${reference} · ${corpus.title} — ${t.appName}`;
         />
       )}
 
-      <ChapterNavigation
-        corpus={corpus}
-        book={book}
-        chapter={chapterNumber}
-        previous={previous}
-        next={next}
-        position="bottom"
-        showTransliteration={showTransliteration}
-        showGrammar={showGrammar}
-        showGloss={showGloss}
-      />
+      <a class="to-top" href="#top" aria-label={t.backToTop}>
+        <span aria-hidden="true">↑</span>
+      </a>
     </div>
   </main>
 </BaseLayout>
