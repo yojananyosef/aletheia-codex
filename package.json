@@ -3,9 +3,9 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "packageManager": "pnpm@12.16.1",
+  "packageManager": "pnpm@12.18.0",
   "engines": {
-    "node": ">=22.23.4"
+    "node": ">=26"
   },
   "scripts": {
     "dev": "pnpm --filter @bibleol/web dev",
@@ -14,7 +14,8 @@
     "preview": "pnpm --filter @bibleol/web preview",
     "export:static": "node scripts/export-static.mjs --start-server --out dist-static",
     "check": "pnpm -r check",
-    "lint": "eslint .",
+    "lint": "biome lint .",
+    "lint:fix": "biome lint --write .",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "test": "pnpm -r test",
@@ -25,12 +26,10 @@
     "data:verify": "python3 scripts/verify_corpora.py"
   },
   "devDependencies": {
-    "@playwright/test": "1.57.0",
-    "eslint": "^10.13.0",
-    "eslint-plugin-astro": "^3.2.1",
+    "@biomejs/biome": "2.6.6",
+    "@playwright/test": "1.65.0",
     "prettier": "^3.9.10",
     "prettier-plugin-astro": "^1.1.2",
-    "typescript": "5.9.3",
-    "typescript-eslint": "^8.72.1"
+    "typescript": "7.0.2"
   }
 }

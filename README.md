@@ -13,7 +13,7 @@ oraciones) de cada palabra.
 
 ## Requisitos
 
-- Node.js >= 22.23.4
+- Node.js >= 26
 - pnpm 12
 - Python 3.12 (solo para los scripts de datos)
 

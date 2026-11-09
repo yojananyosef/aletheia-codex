@@ -27,7 +27,7 @@ if (!corpusId || !bookId || !chapterParam || !/^\d+$/.test(chapterParam)) {
 const chapterNumber = Number(chapterParam);
 const reader = getReader();
 
-let data;
+let data: ReturnType<typeof reader.getChapter>;
 try {
   data = reader.getChapter(corpusId, bookId, chapterNumber);
 } catch (error) {

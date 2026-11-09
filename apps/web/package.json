@@ -5,23 +5,22 @@
   "type": "module",
   "scripts": {
     "dev": "astro dev",
-    "build": "astro check && astro build",
+    "build": "astro build",
     "preview": "astro preview",
     "start": "node ./dist/server/entry.mjs",
-    "check": "astro check",
+    "check": "astro sync && tsc --noEmit",
     "test:e2e": "playwright test"
   },
   "dependencies": {
-    "@astrojs/node": "^11.1.9",
+    "@astrojs/node": "^11.1.11",
     "@bibleol/contracts": "workspace:*",
     "@bibleol/corpus": "workspace:*",
-    "astro": "^7.4.4",
+    "astro": "^7.4.7",
     "better-sqlite3": "^13.0.3"
   },
   "devDependencies": {
-    "@astrojs/check": "^0.9.12",
-    "@playwright/test": "1.57.0",
+    "@playwright/test": "1.65.0",
     "@types/node": "^26.6.6",
-    "typescript": "5.9.3"
+    "typescript": "7.0.2"
   }
 }
