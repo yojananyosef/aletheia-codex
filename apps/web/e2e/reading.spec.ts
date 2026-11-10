@@ -1,6 +1,11 @@
-import { expect, test } from "@playwright/test";
+import { devices, expect, test, type Locator } from "@playwright/test";
 
 const nfc = (value: string) => value.normalize("NFC");
+
+// `innerText` is intentional here: the verse text must exclude the hidden word
+// panels that `textContent` would include.
+// biome-ignore lint/performance/useDomNodeTextContent: se comprueba el texto visible
+const visibleText = (locator: Locator) => locator.innerText();
 
 test.describe("selección", () => {
   test("abre un capítulo desde el formulario sin JavaScript", async ({
@@ -84,6 +89,51 @@ test.describe("selección", () => {
 });
 
 test.describe("lectura hebrea", () => {
+  test("muestra el panel al pasar el cursor sin fijarlo con un clic", async ({
+    page,
+  }) => {
+    await page.goto("/read/ETCBC4/Genesis/1");
+
+    const firstWord = page.locator(".verse").first().locator(".word").first();
+    const trigger = firstWord.locator(".word__trigger");
+    const panel = firstWord.locator(".word__panel");
+
+    await expect(panel).toBeHidden();
+    const rail = page.locator(".word-inspector");
+    await expect(rail).toBeVisible();
+    await trigger.hover();
+    await expect(panel).toBeVisible();
+    await expect(
+      panel.locator(".word__group-title", { hasText: "Forma en el texto" }),
+    ).toBeVisible();
+
+    const viewport = page.viewportSize();
+    const sheetBox = await page.locator(".verses").boundingBox();
+    const railBox = await rail.boundingBox();
+    const panelBox = await panel.boundingBox();
+    if (!viewport || !sheetBox || !railBox || !panelBox) {
+      throw new Error("No se pudo medir el panel de la palabra.");
+    }
+    expect(panelBox.x).toBeGreaterThanOrEqual(sheetBox.x + sheetBox.width);
+    expect(panelBox.x).toBeCloseTo(railBox.x, 0);
+    expect(panelBox.y).toBeGreaterThanOrEqual(0);
+    expect(panelBox.y + panelBox.height).toBeLessThanOrEqual(viewport.height);
+    expect(
+      await panel.evaluate(
+        (element) => element.scrollHeight - element.clientHeight,
+      ),
+    ).toBeLessThanOrEqual(1);
+
+    await page.mouse.move(0, 0);
+    await expect(panel).toBeHidden();
+
+    // The card is a preview only: a click must not pin a second copy or
+    // leave the panel open once the pointer leaves the word.
+    await trigger.click();
+    await page.mouse.move(0, 0);
+    await expect(panel).toBeHidden();
+  });
+
   test("muestra el texto RTL y los detalles gramaticales en español", async ({
     page,
   }) => {
@@ -98,11 +148,14 @@ test.describe("lectura hebrea", () => {
     const firstVerseText = page.locator(".verse__text").first();
     await expect(firstVerseText).toHaveAttribute("dir", "rtl");
     await expect(firstVerseText).toHaveAttribute("lang", "he");
-    const verseText = nfc(await firstVerseText.innerText()).replace(/\s+/g, "");
+    const verseText = nfc(await visibleText(firstVerseText)).replace(
+      /\s+/g,
+      "",
+    );
     expect(verseText).toContain(nfc("בְּרֵאשִׁ֖ית").replace(/\s+/g, ""));
 
     const firstWord = page.locator(".verse").first().locator(".word").first();
-    await firstWord.locator("summary").click();
+    await firstWord.locator(".word__trigger").hover();
 
     const panel = firstWord.locator(".word__panel");
     await expect(panel).toBeVisible();
@@ -110,17 +163,16 @@ test.describe("lectura hebrea", () => {
     await expect(
       panel.getByText("Lexema (con variante)", { exact: true }),
     ).toBeVisible();
+    // The preview is compact: the long lexeme statistics stay out of the card.
+    await expect(panel.locator('[data-group="lexeme"]')).toBeHidden();
     await expect(
       panel.locator("dt", { hasText: "Parte del discurso" }),
-    ).toBeVisible();
+    ).toBeHidden();
     await expect(panel.locator("dt", { hasText: "Texto" })).toBeVisible();
     await expect(
       panel.locator("dt", { hasText: "Transliteración" }),
     ).toBeVisible();
     await expect(panel.locator("dt", { hasText: "Idioma" })).toHaveCount(0);
-    await expect(
-      panel.locator("dd", { hasText: "preposición" }).first(),
-    ).toBeVisible();
     await expect(
       panel.locator(".word__group-title", { hasText: "Forma en el texto" }),
     ).toBeVisible();
@@ -133,7 +185,7 @@ test.describe("lectura hebrea", () => {
     await expect(panel.getByText("español", { exact: true })).toBeVisible();
 
     const secondWord = page.locator(".verse").first().locator(".word").nth(1);
-    await secondWord.locator("summary").click();
+    await secondWord.locator(".word__trigger").hover();
     const secondPanel = secondWord.locator(".word__panel");
     await expect(
       secondPanel.locator(".word__group-title", { hasText: "Morfología" }),
@@ -193,7 +245,7 @@ test.describe("lectura hebrea", () => {
     await expect(
       grammar.locator('[data-level="phrase"]').first(),
     ).toContainText("PP fr. preposicional");
-    expect(nfc(await grammar.innerText())).toContain(nfc("בְּ"));
+    expect(nfc(await visibleText(grammar))).toContain(nfc("בְּ"));
 
     const rtlNode = grammar.locator(".grammar-verse.rtl .grammar-node").first();
     await expect(rtlNode).toHaveCSS("border-right-width", "3px");
@@ -239,9 +291,9 @@ test.describe("lectura hebrea", () => {
 
     await expect(page).toHaveURL(/\?translit=1$/);
     await expect(page.locator(".word__translit").first()).toBeVisible();
-    expect(nfc(await page.locator(".word__translit").first().innerText())).toBe(
-      nfc("bᵊ"),
-    );
+    expect(
+      nfc(await visibleText(page.locator(".word__translit").first())),
+    ).toBe(nfc("bᵊ"));
     await expect(
       page.getByRole("link", { name: "Ocultar transliteración" }),
     ).toBeVisible();
@@ -417,13 +469,13 @@ test.describe("lectura griega y latina", () => {
     const text = page.locator(".verse__text").first();
     await expect(text).toHaveAttribute("dir", "ltr");
     await expect(text).toHaveAttribute("lang", "grc");
-    expect(nfc(await text.innerText())).toContain(nfc("Βίβλος"));
+    expect(nfc(await visibleText(text))).toContain(nfc("Βίβλος"));
     await expect(
       page.getByRole("link", { name: /transliteración/i }),
     ).toHaveCount(0);
 
     const firstWord = page.locator(".verse").first().locator(".word").first();
-    await firstWord.locator("summary").click();
+    await firstWord.locator(".word__trigger").hover();
     const panel = firstWord.locator(".word__panel");
     await expect(panel).toBeVisible();
     await expect(
@@ -444,7 +496,7 @@ test.describe("lectura griega y latina", () => {
     await expect(
       grammar.locator('[data-level="clause1"]').first(),
     ).toContainText("Cláusula nivel 1");
-    expect(nfc(await grammar.innerText())).toContain(nfc("Βίβλος"));
+    expect(nfc(await visibleText(grammar))).toContain(nfc("Βίβλος"));
   });
 
   test("el latín se muestra LTR con gramática", async ({ page }) => {
@@ -454,13 +506,13 @@ test.describe("lectura griega y latina", () => {
     const text = page.locator(".verse__text").first();
     await expect(text).toHaveAttribute("dir", "ltr");
     await expect(text).toHaveAttribute("lang", "la");
-    expect(await text.innerText()).toContain("liber");
+    expect(await visibleText(text)).toContain("liber");
 
     const firstWord = page.locator(".verse").first().locator(".word").first();
-    await firstWord.locator("summary").click();
+    await firstWord.locator(".word__trigger").hover();
     const panel = firstWord.locator(".word__panel");
     await expect(panel).toBeVisible();
-    await expect(panel.locator("dd", { hasText: "sustantivo" })).toBeVisible();
+    await expect(panel.locator('[data-group="lexeme"]')).toBeHidden();
     await expect(panel.locator("dd", { hasText: "-MSg" })).toBeVisible();
     await expect(
       panel.locator(".word__group-title", { hasText: "Morfología" }),
@@ -558,8 +610,32 @@ test.describe("producción", () => {
   });
 });
 
+test.describe("asistente de IA", () => {
+  test("queda oculto y sin ruta cuando no hay clave", async ({
+    page,
+    request,
+  }) => {
+    await page.goto("/read/ETCBC4/Genesis/1");
+
+    await expect(page.locator(".ai-panel")).toHaveCount(0);
+    await expect(page.getByRole("link", { name: "Asistente IA" })).toHaveCount(
+      0,
+    );
+
+    const response = await request.get(
+      "/read/ETCBC4/Genesis/1/explain?generate=1",
+    );
+    expect(response.status()).toBe(404);
+  });
+});
+
 test.describe("móvil", () => {
-  test.use({ viewport: { width: 390, height: 844 } });
+  test.use({
+    viewport: { width: 390, height: 844 },
+    hasTouch: true,
+    isMobile: true,
+    deviceScaleFactor: devices["iPhone 13"].deviceScaleFactor,
+  });
 
   test("las pestañas compactas y el panel caben en 390 px", async ({
     page,
@@ -570,7 +646,7 @@ test.describe("móvil", () => {
     await expect(page.locator(".corpus-tab__title").first()).toBeHidden();
 
     const firstWord = page.locator(".verse").first().locator(".word").first();
-    await firstWord.locator("summary").click();
+    await firstWord.locator(".word__trigger").tap();
     await expect(firstWord.locator(".word__panel")).toBeVisible();
 
     const overflow = await page.evaluate(
@@ -581,7 +657,7 @@ test.describe("móvil", () => {
     await page.goto("/read/ETCBC4/Genesis/1?grammar=1");
     await expect(page.locator(".grammar")).toBeVisible();
     const grammarWord = page.locator(".grammar .word").first();
-    await grammarWord.locator("summary").click();
+    await grammarWord.locator(".word__trigger").tap();
     await expect(grammarWord.locator(".word__panel")).toBeVisible();
 
     const grammarOverflow = await page.evaluate(
@@ -600,7 +676,7 @@ test.describe("tableta", () => {
     await page.goto("/read/ETCBC4/Genesis/1");
 
     const firstWord = page.locator(".verse").first().locator(".word").first();
-    await firstWord.locator("summary").click();
+    await firstWord.locator(".word__trigger").hover();
     await expect(firstWord.locator(".word__panel")).toBeVisible();
 
     let overflow = await page.evaluate(
@@ -610,7 +686,7 @@ test.describe("tableta", () => {
 
     await page.goto("/read/ETCBC4/Genesis/1?grammar=1");
     const grammarWord = page.locator(".grammar .word").first();
-    await grammarWord.locator("summary").click();
+    await grammarWord.locator(".word__trigger").hover();
     await expect(grammarWord.locator(".word__panel")).toBeVisible();
 
     overflow = await page.evaluate(

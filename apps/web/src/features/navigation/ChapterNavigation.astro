@@ -1,5 +1,7 @@
 ---
 import type { Book, CorpusSummary } from "@bibleol/contracts";
+import Button from "../../components/ui/Button.astro";
+import Icon from "../../components/ui/Icon.astro";
 import { t } from "../../i18n";
 import { bookName } from "../../lib/book-names";
 import { chapterUrl } from "../../lib/urls";
@@ -62,7 +64,7 @@ const linkOptions = {
       rel="prev"
     >
       <span class="chapter-step__arrow" aria-hidden="true">
-        ←
+        <Icon name="chevron-left" size={18} />
       </span>
       <span class="chapter-step__text">
         <span class="chapter-step__label">{t.previous}</span>
@@ -153,11 +155,10 @@ const linkOptions = {
       </div>
     ) : null}
 
-    <button class="button button--primary button--small" type="submit">
+    <Button type="submit" size="sm">
       {t.goButton}
-    </button>
+    </Button>
   </form>
-
   {next ? (
     <a
       class="chapter-step chapter-step--next"
@@ -171,7 +172,7 @@ const linkOptions = {
         </span>
       </span>
       <span class="chapter-step__arrow" aria-hidden="true">
-        →
+        <Icon name="chevron-right" size={18} />
       </span>
     </a>
   ) : (

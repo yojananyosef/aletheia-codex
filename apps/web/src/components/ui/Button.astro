@@ -1,0 +1,67 @@
+---
+import { cn } from "../../lib/cn";
+
+type Variant =
+  | "default"
+  | "secondary"
+  | "outline"
+  | "ghost"
+  | "destructive"
+  | "link"
+  | "inverse";
+type Size = "default" | "sm" | "lg" | "icon";
+
+interface Props {
+  variant?: Variant;
+  size?: Size;
+  href?: string;
+  type?: "button" | "submit" | "reset";
+  class?: string;
+  [key: string]: unknown;
+}
+
+const {
+  variant = "default",
+  size = "default",
+  href,
+  type = "button",
+  class: className,
+  ...rest
+} = Astro.props;
+
+const base =
+  "ui-button group/button inline-flex shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-md border border-transparent text-sm font-medium outline-none transition-[background-color,border-color,color,box-shadow,transform] duration-150 select-none focus-visible:ring-2 focus-visible:ring-ring/35 focus-visible:ring-offset-2 focus-visible:ring-offset-background active:translate-y-px disabled:pointer-events-none disabled:opacity-50";
+
+const variants: Record<Variant, string> = {
+  default:
+    "bg-primary text-primary-foreground shadow-[0_1px_0_rgba(0,0,0,0.08)] hover:bg-primary/90",
+  secondary: "bg-secondary text-secondary-foreground hover:bg-secondary/75",
+  outline:
+    "border-border bg-card text-foreground hover:border-primary/35 hover:bg-accent hover:text-accent-foreground",
+  ghost: "text-foreground hover:bg-accent hover:text-accent-foreground",
+  destructive:
+    "bg-destructive text-white shadow-[0_1px_0_rgba(0,0,0,0.08)] hover:bg-destructive/90",
+  link: "text-primary underline-offset-4 hover:underline",
+  inverse:
+    "bg-white text-[#151922] shadow-[0_1px_0_rgba(0,0,0,0.18)] hover:bg-white/90",
+};
+
+const sizes: Record<Size, string> = {
+  default: "h-11 px-5",
+  sm: "h-9 rounded-[calc(var(--radius)-2px)] px-3.5 text-xs",
+  lg: "h-12 px-6 text-[0.95rem]",
+  icon: "size-11",
+};
+
+const classes = cn(base, variants[variant], sizes[size], className);
+---
+
+{href ? (
+  <a href={href} class={classes} {...rest}>
+    <slot />
+  </a>
+) : (
+  <button type={type} class={classes} {...rest}>
+    <slot />
+  </button>
+)}

@@ -1,0 +1,69 @@
+---
+import type { Book, CorpusSummary } from "@bibleol/contracts";
+import Icon from "../../components/ui/Icon.astro";
+import { t } from "../../i18n";
+import { AI_MODES } from "../../lib/ai/types";
+import { modeCopy } from "../../lib/ai/labels";
+import { explainUrl } from "../../lib/urls";
+import type { VerseRange } from "../../lib/verse-range";
+
+interface Props {
+  corpus: CorpusSummary;
+  book: Book;
+  chapter: number;
+  verseRange: VerseRange | null;
+  showTransliteration: boolean;
+  showGrammar: boolean;
+  showGloss: boolean;
+}
+
+const {
+  corpus,
+  book,
+  chapter,
+  verseRange,
+  showTransliteration,
+  showGrammar,
+  showGloss,
+} = Astro.props;
+
+const options = {
+  transliteration: showTransliteration,
+  grammar: showGrammar,
+  gloss: showGloss,
+  verseRange,
+};
+
+const MODE_ICONS = {
+  resumen: "scan-text",
+  explicacion: "pen-line",
+  gramatica: "layers",
+} as const;
+---
+
+<section class="ai-panel" id="ai" aria-labelledby="ai-panel-title">
+  <div class="ai-panel__text">
+    <p class="ai-panel__eyebrow">{t.aiLabel}</p>
+    <h2 id="ai-panel-title">{t.aiPanelTitle}</h2>
+    <p class="ai-panel__intro">{t.aiPanelIntro}</p>
+  </div>
+  <div class="ai-panel__modes">
+    {AI_MODES.map((mode) => (
+      <a
+        class="ai-mode"
+        href={explainUrl(corpus.id, book.id, chapter, { ...options, mode })}
+        rel="nofollow"
+        title={modeCopy(mode).hint}
+        data-ai-mode={mode}
+      >
+        <span class="ai-mode__top">
+          <span class="ai-mode__icon">
+            <Icon name={MODE_ICONS[mode]} size={15} />
+          </span>
+          <span class="ai-mode__label">{modeCopy(mode).label}</span>
+        </span>
+        <span class="ai-mode__hint">{modeCopy(mode).hint}</span>
+      </a>
+    ))}
+  </div>
+</section>

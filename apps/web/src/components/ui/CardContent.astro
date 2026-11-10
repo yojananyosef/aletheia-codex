@@ -1,0 +1,14 @@
+---
+import { cn } from "../../lib/cn";
+
+interface Props {
+  class?: string;
+  [key: string]: unknown;
+}
+
+const { class: className, ...rest } = Astro.props;
+---
+
+<div class={cn("px-5 pb-5", className)} {...rest}>
+  <slot />
+</div>

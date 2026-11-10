@@ -148,19 +148,15 @@ function buildMetaRow(
 const lexeme = word.lexemeVariant ?? word.lemma;
 const lexemeLabel =
   lang === "he" || lang === "arc" ? t.lexemeWithVariant : t.lemma;
+const panelId = `word-panel-${word.monad}`;
+// The static exporter strips the panels from the HTML and loads them on
+// demand, so a server-only description would point at a missing node.
+const describedBy =
+  showPanel && process.env.STATIC_EXPORT !== "1" ? panelId : undefined;
 
 const displayGroups = groups
   .map((group) => {
     const rows: PanelRow[] = [];
-
-    if (group.key === "lexeme" && lexeme) {
-      rows.push({
-        label: lexemeLabel,
-        value: lexeme,
-        raw: lexeme,
-        present: true,
-      });
-    }
 
     for (const key of group.features) {
       const row = buildRow(key);
@@ -195,8 +191,17 @@ function glossLanguageName(code: string): string {
 }
 ---
 
-<details class="word" data-monad={word.monad}>
-  <summary class="word__summary">
+<div
+  class="word"
+  style={`--word-anchor: --w${word.monad}`}
+  data-monad={word.monad}
+>
+  <span
+    class="word__trigger"
+    tabindex="0"
+    data-monad={word.monad}
+    aria-describedby={describedBy}
+  >
     <span class="word__surface" lang={lang} dir={direction}>
       {word.text}
     </span>
@@ -210,9 +215,16 @@ function glossLanguageName(code: string): string {
         {word.gloss.text}
       </span>
     ) : null}
-  </summary>
+  </span>
   {showPanel ? (
-    <div class="word__panel" lang="es" dir="ltr">
+    <div
+      class="word__panel"
+      id={panelId}
+      lang="es"
+      dir="ltr"
+      tabindex="-1"
+      data-word-panel={word.monad}
+    >
       <p class="word__panel-title">
         <span class="word__panel-word" lang={lang} dir={direction}>
           {word.text}
@@ -237,10 +249,16 @@ function glossLanguageName(code: string): string {
             </dd>
           </Fragment>
         ) : null}
+        <dt class="word__head-lexeme-label">{lexemeLabel}</dt>
+        <dd class="word__head-lexeme-value">
+          <bdi lang={lang} dir={direction}>
+            {lexeme}
+          </bdi>
+        </dd>
       </dl>
 
       {displayGroups.map((group) => (
-        <section class="word__group">
+        <section class="word__group" data-group={group.key}>
           <p class="word__group-title">{group.label}</p>
           <dl class="word__features">
             {group.key === "glosses" && word.gloss ? (
@@ -265,4 +283,4 @@ function glossLanguageName(code: string): string {
       ))}
     </div>
   ) : null}
-</details>
+</div>

@@ -1,3 +1,4 @@
+import tailwindcss from "@tailwindcss/vite";
 import node from "@astrojs/node";
 import { defineConfig } from "astro/config";
 
@@ -9,6 +10,7 @@ export default defineConfig({
     port: 4321,
   },
   vite: {
+    plugins: [tailwindcss()],
     ssr: {
       external: ["better-sqlite3"],
     },

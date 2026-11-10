@@ -1,0 +1,29 @@
+---
+import { cn } from "../../lib/cn";
+
+interface Props {
+  name: string;
+  value: string;
+  label: string;
+  hint?: string;
+  checked?: boolean;
+  class?: string;
+  [key: string]: unknown;
+}
+
+const {
+  name,
+  value,
+  label,
+  hint,
+  checked = false,
+  class: className,
+  ...rest
+} = Astro.props;
+---
+
+<label class={cn("ai-mode-option", className)}>
+  <input type="radio" name={name} value={value} checked={checked} {...rest} />
+  <span class="ai-mode-option__label">{label}</span>
+  {hint ? <span class="ai-mode-option__hint">{hint}</span> : null}
+</label>

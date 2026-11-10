@@ -111,8 +111,7 @@ function findMatchingElementEnd(html, start, tagName) {
   return null;
 }
 
-const PANEL_TOKEN =
-  /<details\b[^>]*\bdata-monad="(\d+)"[^>]*>|<div\b[^>]*\bclass="[^"]*\bword__panel\b[^"]*"[^>]*>/g;
+const PANEL_TOKEN = /<div\b[^>]*\bdata-word-panel="(\d+)"[^>]*>/g;
 const DIV_TAG = /<div\b[^>]*>|<\/div\s*>/gi;
 
 function findDivEnd(html, start) {
@@ -132,29 +131,21 @@ function findDivEnd(html, start) {
 
 function extractPanels(html) {
   const ranges = [];
-  let lastMonad = null;
   let match;
   PANEL_TOKEN.lastIndex = 0;
   while ((match = PANEL_TOKEN.exec(html))) {
-    if (match[1] !== undefined) {
-      lastMonad = match[1];
-      continue;
-    }
-
     const start = match.index;
     const end = findDivEnd(html, start);
     if (end === null) {
       PANEL_TOKEN.lastIndex = start + 1;
       continue;
     }
-    if (lastMonad) {
-      ranges.push({
-        start,
-        end,
-        monad: lastMonad,
-        markup: html.slice(start, end),
-      });
-    }
+    ranges.push({
+      start,
+      end,
+      monad: match[1],
+      markup: html.slice(start, end),
+    });
     // Panels are not nested, so skip the whole block instead of rescanning it.
     PANEL_TOKEN.lastIndex = end;
   }
@@ -300,7 +291,7 @@ async function rewriteCss(directory) {
     } else if (entry.isFile() && extname(entry.name) === ".css") {
       const original = await readFile(path, "utf8");
       const updated = base
-        ? original.replace(/url\(\s*(['"]?)\/(?!\/)/g, (match, quote) => {
+        ? original.replace(/url\(\s*(['"]?)\/(?!\/)/g, (_match, quote) => {
             return `url(${quote}${base}/`;
           })
         : original;
@@ -682,7 +673,7 @@ async function main() {
         }
 
         const message = `El corpus ${corpus.title} no incluye este capítulo. Puede continuar en ${nearestTitle}.`;
-        let page = notFound
+        const page = notFound
           .replace(
             "<title>No encontramos ese pasaje — BibleOL</title>",
             "<title>Capítulo no disponible — BibleOL</title>",

@@ -18,6 +18,7 @@ function findDataDir(start: string): string | null {
 }
 
 export interface DataPaths {
+  dataDir: string;
   cataloguePath: string;
   corporaDir: string;
   lexiconDir: string;
@@ -34,6 +35,7 @@ export function getDataPaths(): DataPaths {
   }
 
   return {
+    dataDir,
     cataloguePath: join(dataDir, "metadata", "corpora.json"),
     corporaDir: join(dataDir, "corpora"),
     lexiconDir: join(dataDir, "lexicon"),

@@ -9,6 +9,7 @@
  *  - keeps chapter links, corpus tabs and the chapter form in sync.
  */
 (() => {
+  // biome-ignore lint/suspicious/noRedundantUseStrict: classic script, not a module
   "use strict";
 
   const html = document.documentElement;
@@ -154,7 +155,14 @@
       const label = state[key]
         ? link.dataset.hideLabel
         : link.dataset.showLabel;
-      if (label) link.textContent = label;
+      if (label) {
+        const labelNode = link.querySelector(".tool-link__label");
+        if (labelNode) {
+          labelNode.textContent = label;
+        } else {
+          link.textContent = label;
+        }
+      }
       link.setAttribute("href", toggleHref(key));
     }
 
@@ -217,19 +225,30 @@
     return panelsPromise;
   }
 
-  function openPanel(details) {
-    const monad = details.dataset.monad;
+  function panelFor(word) {
+    return word.querySelector(":scope > .word__panel");
+  }
+
+  function ensurePanel(word) {
+    const monad = word.dataset.monad;
     if (!monad) return;
 
-    let panel = details.querySelector(":scope > .word__panel");
-    if (panel && panel.dataset.loading !== "1") return;
-    if (!panel) {
-      panel = document.createElement("div");
-      panel.className = "word__panel word__panel--loading";
-      panel.dataset.loading = "1";
-      panel.textContent = "Cargando…";
-      details.append(panel);
-    }
+    const existing = panelFor(word);
+    if (existing) return;
+
+    const panel = document.createElement("div");
+    panel.className = "word__panel word__panel--loading";
+    panel.id = `word-panel-${monad}`;
+    panel.dataset.loading = "1";
+    panel.dataset.wordPanel = monad;
+    panel.lang = "es";
+    panel.dir = "ltr";
+    panel.tabIndex = -1;
+    panel.textContent = "Cargando…";
+    word.append(panel);
+    word
+      .querySelector(":scope > .word__trigger")
+      ?.setAttribute("aria-describedby", panel.id);
 
     loadPanels()
       .then((map) => {
@@ -249,49 +268,25 @@
       })
       .catch((error) => {
         console.error(error);
-        panel.textContent = "No se pudieron cargar los datos de esta palabra.";
-        panel.classList.remove("word__panel--loading");
-        delete panel.dataset.loading;
+        panel.remove();
       });
   }
 
   document.addEventListener(
-    "toggle",
+    "pointerover",
     (event) => {
-      const target = event.target;
-      if (
-        target instanceof HTMLDetailsElement &&
-        target.classList.contains("word") &&
-        target.open
-      ) {
-        openPanel(target);
-      }
+      if (!(event.target instanceof Element)) return;
+      const word = event.target.closest(".word");
+      if (word instanceof HTMLElement) ensurePanel(word);
     },
-    true,
+    { passive: true },
   );
 
-  const prefetchPanels = () => {
-    loadPanels().catch(() => {});
-  };
-  document.addEventListener(
-    "pointerenter",
-    (event) => {
-      const target = event.target;
-      if (target instanceof Element && target.closest(".word")) {
-        prefetchPanels();
-      }
-    },
-    { capture: true, once: true },
-  );
-  document.addEventListener(
-    "focusin",
-    (event) => {
-      if (event.target instanceof Element && event.target.closest(".word")) {
-        prefetchPanels();
-      }
-    },
-    { once: true },
-  );
+  document.addEventListener("focusin", (event) => {
+    if (!(event.target instanceof Element)) return;
+    const word = event.target.closest(".word");
+    if (word instanceof HTMLElement) ensurePanel(word);
+  });
 
   let grammarPromise = null;
   function loadGrammar(range) {

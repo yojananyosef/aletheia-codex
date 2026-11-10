@@ -1,0 +1,41 @@
+---
+import { cn } from "../../lib/cn";
+
+type Variant = "default" | "destructive" | "warning" | "success";
+
+interface Props {
+  variant?: Variant;
+  class?: string;
+  role?: string;
+  [key: string]: unknown;
+}
+
+const {
+  variant = "default",
+  class: className,
+  role = "alert",
+  ...rest
+} = Astro.props;
+
+const variants: Record<Variant, string> = {
+  default: "border-border bg-card text-card-foreground",
+  destructive:
+    "border-destructive/30 bg-destructive/5 text-foreground [&_[data-alert-title]]:text-destructive",
+  warning:
+    "border-amber-500/35 bg-amber-500/5 text-foreground [&_[data-alert-title]]:text-amber-700 dark:[&_[data-alert-title]]:text-amber-300",
+  success:
+    "border-emerald-600/30 bg-emerald-600/5 text-foreground [&_[data-alert-title]]:text-emerald-700 dark:[&_[data-alert-title]]:text-emerald-300",
+};
+---
+
+<div
+  class={cn(
+    "relative flex w-full items-start gap-3 rounded-lg border px-4 py-3.5 text-sm",
+    variants[variant],
+    className,
+  )}
+  role={role}
+  {...rest}
+>
+  <slot />
+</div>

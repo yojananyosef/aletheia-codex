@@ -1,0 +1,114 @@
+---
+import type { Book, CorpusSummary } from "@bibleol/contracts";
+import Button from "../../components/ui/Button.astro";
+import Field from "../../components/ui/Field.astro";
+import Icon from "../../components/ui/Icon.astro";
+import Input from "../../components/ui/Input.astro";
+import RadioGroup from "../../components/ui/RadioGroup.astro";
+import RadioGroupItem from "../../components/ui/RadioGroupItem.astro";
+import Separator from "../../components/ui/Separator.astro";
+import Spinner from "../../components/ui/Spinner.astro";
+import { t } from "../../i18n";
+import { AI_MODES, modeCopy, type AiMode } from "../../lib/ai";
+import { explainUrl } from "../../lib/urls";
+import type { VerseRange } from "../../lib/verse-range";
+
+interface Props {
+  corpus: CorpusSummary;
+  book: Book;
+  chapter: number;
+  verseRange: VerseRange | null;
+  lastVerse: number;
+  mode: AiMode;
+  showTransliteration: boolean;
+  showGrammar: boolean;
+  showGloss: boolean;
+  maxVerses: number;
+}
+
+const {
+  corpus,
+  book,
+  chapter,
+  verseRange,
+  lastVerse,
+  mode,
+  showTransliteration,
+  showGrammar,
+  showGloss,
+  maxVerses,
+} = Astro.props;
+
+const action = explainUrl(corpus.id, book.id, chapter);
+---
+
+<form class="ai-form" action={action} method="get">
+  <RadioGroup class="ai-form__modes" legend={t.aiModeLabel} columns={3}>
+    {AI_MODES.map((item) => (
+      <RadioGroupItem
+        name="mode"
+        value={item}
+        checked={item === mode}
+        label={modeCopy(item).label}
+        hint={modeCopy(item).hint}
+      />
+    ))}
+  </RadioGroup>
+
+  <input type="hidden" name="generate" value="1" />
+  {showTransliteration ? (
+    <input type="hidden" name="translit" value="1" />
+  ) : null}
+  {showGrammar ? <input type="hidden" name="grammar" value="1" /> : null}
+  {showGloss ? <input type="hidden" name="gloss" value="1" /> : null}
+
+  <Separator class="ai-form__separator" />
+
+  <div class="ai-form__range">
+    <p class="ai-form__range-label">{t.aiRangeLabel}</p>
+    <div class="ai-form__range-fields">
+      <Field class="field" label={t.verseFromLabel} for="ai-from">
+        <Input
+          id="ai-from"
+          type="number"
+          name="from"
+          min="1"
+          max={lastVerse}
+          value={verseRange ? String(verseRange.from) : undefined}
+          inputmode="numeric"
+          placeholder="1"
+        />
+      </Field>
+      <span class="ai-form__dash" aria-hidden="true">
+        –
+      </span>
+      <Field class="field" label={t.verseToLabel} for="ai-to">
+        <Input
+          id="ai-to"
+          type="number"
+          name="to"
+          min="1"
+          max={lastVerse}
+          value={verseRange ? String(verseRange.to) : undefined}
+          inputmode="numeric"
+          placeholder={String(lastVerse)}
+        />
+      </Field>
+    </div>
+    <p class="ai-form__hint">{t.aiRangeHint}</p>
+    <p class="ai-form__hint">
+      {t.aiMaxVersesHint.replace("{max}", String(maxVerses))}
+    </p>
+  </div>
+
+  <Button type="submit" class="ai-submit">
+    <Spinner class="ai-submit__spinner" size={16} />
+    <span class="ai-submit__icon" aria-hidden="true">
+      <Icon name="sparkles" size={16} />
+    </span>
+    <span data-ai-submit-label data-loading-label={t.aiLoadingButton}>
+      {t.aiGenerate}
+    </span>
+  </Button>
+  <p class="ai-form__hint ai-form__wait">{t.aiWaitHint}</p>
+</form>

@@ -1,11 +1,14 @@
 ---
 import { NotFoundError, type Book } from "@bibleol/contracts";
+import AiPanel from "../../../../features/ai/AiPanel.astro";
 import BaseLayout from "../../../../layouts/BaseLayout.astro";
 import CorpusTabs from "../../../../features/navigation/CorpusTabs.astro";
 import ChapterNavigation from "../../../../features/navigation/ChapterNavigation.astro";
 import GrammarView from "../../../../features/reading/GrammarView.astro";
 import VerseList from "../../../../features/reading/VerseList.astro";
+import Icon from "../../../../components/ui/Icon.astro";
 import { t } from "../../../../i18n";
+import { aiAvailable } from "../../../../lib/ai";
 import { bookName } from "../../../../lib/book-names";
 import { getReader } from "../../../../lib/reader";
 import { chapterUrl } from "../../../../lib/urls";
@@ -78,6 +81,7 @@ const showGloss =
 const omitPanels =
   process.env.STATIC_EXPORT === "1" &&
   Astro.url.searchParams.get("panels") === "0";
+const showAi = process.env.STATIC_EXPORT !== "1" && aiAvailable();
 
 const corpusTabs = reader
   .listCorpora()
@@ -131,126 +135,169 @@ const reference = rangeReference
   ? `${chapterReference}:${rangeReference}`
   : chapterReference;
 const pageTitle = `${reference} · ${corpus.title} — ${t.appName}`;
+Astro.response.headers.set(
+  "Cache-Control",
+  "public, s-maxage=3600, stale-while-revalidate=86400",
+);
 ---
 
 <BaseLayout
   title={pageTitle}
   description={`${reference}, ${corpus.title}. ${t.grammarHint}`}
 >
-  <main id="main" class="reading-page">
-    <div class="wrap">
-      <CorpusTabs items={corpusTabs} activeId={corpus.id} />
+  <main id="main" class="reading-page" data-edition={corpus.id}>
+    <div class="wrap reading-layout">
+      <div class="reading-main">
+        <CorpusTabs items={corpusTabs} activeId={corpus.id} />
 
-      <header
-        class="reading-header"
-        data-reference={chapterReference}
-        data-title-suffix={` · ${corpus.title} — ${t.appName}`}
-        data-total={String(allVerses.length)}
-      >
-        <h1 class="reading-title">
-          {bookName(book.id)}{" "}
-          <span
-            class="reading-title__chapter"
-            data-chapter={String(chapterNumber)}
-          >{`${chapterNumber}${rangeReference ? `:${rangeReference}` : ""}`}</span>
-        </h1>
-        <p class="reading-header__meta" data-edition={editionPrefix}>
-          {meta}
-        </p>
-      </header>
-
-      <ChapterNavigation
-        corpus={corpus}
-        book={book}
-        chapter={chapterNumber}
-        previous={previous}
-        next={next}
-        showTransliteration={showTransliteration}
-        showGrammar={showGrammar}
-        showGloss={showGloss}
-        withVerseRange
-        verseRange={verseRange}
-        lastVerse={lastVerse}
-      />
-
-      <div class="reading-tools">
-        <p
-          class="reading-tools__hint"
-          data-hint-reading={t.grammarHint}
-          data-hint-grammar={t.grammarModeHint}
+        <header
+          class="reading-header"
+          data-reference={chapterReference}
+          data-title-suffix={` · ${corpus.title} — ${t.appName}`}
+          data-total={String(allVerses.length)}
         >
-          {showGrammar ? t.grammarModeHint : t.grammarHint}
-        </p>
-        <div class="reading-tools__links">
-          <a
-            class:list={["tool-link", { "tool-link--active": showGrammar }]}
-            href={toggleHref("grammar")}
-            data-toggle="grammar"
-            data-show-label={t.showGrammar}
-            data-hide-label={t.hideGrammar}
+          <p class="reading-kicker">
+            {corpus.title} · {corpus.languageName}
+          </p>
+          <h1 class="reading-title">
+            {bookName(book.id)}{" "}
+            <span
+              class="reading-title__chapter"
+              data-chapter={String(chapterNumber)}
+            >{`${chapterNumber}${rangeReference ? `:${rangeReference}` : ""}`}</span>
+          </h1>
+          <p class="reading-header__meta" data-edition={editionPrefix}>
+            {meta}
+          </p>
+        </header>
+
+        <ChapterNavigation
+          corpus={corpus}
+          book={book}
+          chapter={chapterNumber}
+          previous={previous}
+          next={next}
+          showTransliteration={showTransliteration}
+          showGrammar={showGrammar}
+          showGloss={showGloss}
+          withVerseRange
+          verseRange={verseRange}
+          lastVerse={lastVerse}
+        />
+
+        <div class="reading-tools">
+          <p
+            class="reading-tools__hint"
+            data-hint-reading={t.grammarHint}
+            data-hint-grammar={t.grammarModeHint}
           >
-            {showGrammar ? t.hideGrammar : t.showGrammar}
-          </a>
-          {corpus.hasTransliteration ? (
+            {showGrammar ? t.grammarModeHint : t.grammarHint}
+          </p>
+          <div class="reading-tools__links">
             <a
-              class:list={[
-                "tool-link",
-                { "tool-link--active": showTransliteration },
-              ]}
-              href={toggleHref("translit")}
-              data-toggle="translit"
-              data-show-label={t.showTransliteration}
-              data-hide-label={t.hideTransliteration}
+              class:list={["tool-link", { "tool-link--active": showGrammar }]}
+              href={toggleHref("grammar")}
+              data-toggle="grammar"
+              data-show-label={t.showGrammar}
+              data-hide-label={t.hideGrammar}
             >
-              {showTransliteration
-                ? t.hideTransliteration
-                : t.showTransliteration}
+              <Icon name="layers" size={14} class="tool-link__icon" />
+              <span class="tool-link__label">
+                {showGrammar ? t.hideGrammar : t.showGrammar}
+              </span>
             </a>
-          ) : null}
-          {corpus.gloss !== null ? (
-            <a
-              class:list={["tool-link", { "tool-link--active": showGloss }]}
-              href={toggleHref("gloss")}
-              data-toggle="gloss"
-              data-show-label={t.showGloss}
-              data-hide-label={t.hideGloss}
-            >
-              {showGloss ? t.hideGloss : t.showGloss}
-            </a>
-          ) : null}
+            {corpus.hasTransliteration ? (
+              <a
+                class:list={[
+                  "tool-link",
+                  { "tool-link--active": showTransliteration },
+                ]}
+                href={toggleHref("translit")}
+                data-toggle="translit"
+                data-show-label={t.showTransliteration}
+                data-hide-label={t.hideTransliteration}
+              >
+                <Icon name="languages" size={14} class="tool-link__icon" />
+                <span class="tool-link__label">
+                  {showTransliteration
+                    ? t.hideTransliteration
+                    : t.showTransliteration}
+                </span>
+              </a>
+            ) : null}
+            {corpus.gloss !== null ? (
+              <a
+                class:list={["tool-link", { "tool-link--active": showGloss }]}
+                href={toggleHref("gloss")}
+                data-toggle="gloss"
+                data-show-label={t.showGloss}
+                data-hide-label={t.hideGloss}
+              >
+                <Icon name="book-open" size={14} class="tool-link__icon" />
+                <span class="tool-link__label">
+                  {showGloss ? t.hideGloss : t.showGloss}
+                </span>
+              </a>
+            ) : null}
+            {showAi ? (
+              <a class="tool-link tool-link--ai" href="#ai">
+                <Icon name="sparkles" size={14} class="tool-link__icon" />
+                <span class="tool-link__label">{t.aiOpen}</span>
+              </a>
+            ) : null}
+          </div>
         </div>
+
+        {showAi ? (
+          <AiPanel
+            corpus={corpus}
+            book={book}
+            chapter={chapterNumber}
+            verseRange={verseRange}
+            showTransliteration={showTransliteration}
+            showGrammar={showGrammar}
+            showGloss={showGloss}
+          />
+        ) : null}
+
+        {showGrammar ? (
+          <GrammarView
+            verses={verses}
+            objects={grammar.objects}
+            levels={corpus.levels}
+            groups={corpus.groups}
+            features={wordFeatures}
+            language={corpus.language}
+            direction={corpus.direction}
+            translitLang={translitLang}
+            showTransliteration={showTransliteration}
+            showGloss={showGloss}
+            showWordPanels={!omitPanels}
+          />
+        ) : (
+          <VerseList
+            verses={verses}
+            language={corpus.language}
+            direction={corpus.direction}
+            translitLang={translitLang}
+            showTransliteration={showTransliteration}
+            showGloss={showGloss}
+            groups={corpus.groups}
+            features={wordFeatures}
+          />
+        )}
+
+        <a class="to-top" href="#top" aria-label={t.backToTop}>
+          <Icon name="arrow-up" size={18} />
+        </a>
       </div>
 
-      {showGrammar ? (
-        <GrammarView
-          verses={verses}
-          objects={grammar.objects}
-          levels={corpus.levels}
-          groups={corpus.groups}
-          features={wordFeatures}
-          language={corpus.language}
-          direction={corpus.direction}
-          translitLang={translitLang}
-          showTransliteration={showTransliteration}
-          showGloss={showGloss}
-          showWordPanels={!omitPanels}
-        />
-      ) : (
-        <VerseList
-          verses={verses}
-          language={corpus.language}
-          direction={corpus.direction}
-          translitLang={translitLang}
-          showTransliteration={showTransliteration}
-          showGloss={showGloss}
-          groups={corpus.groups}
-          features={wordFeatures}
-        />
-      )}
-
-      <a class="to-top" href="#top" aria-label={t.backToTop}>
-        <span aria-hidden="true">↑</span>
-      </a>
+      <aside class="word-inspector" aria-hidden="true">
+        <div class="word-inspector__empty">
+          <p class="word-inspector__label">{t.wordInspectorLabel}</p>
+          <p class="word-inspector__hint">{t.wordInspectorHint}</p>
+        </div>
+      </aside>
     </div>
   </main>
 </BaseLayout>

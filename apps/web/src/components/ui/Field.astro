@@ -1,0 +1,21 @@
+---
+import { cn } from "../../lib/cn";
+import Label from "./Label.astro";
+
+interface Props {
+  label?: string;
+  for?: string;
+  hint?: string;
+  class?: string;
+}
+
+const { label, for: htmlFor, hint, class: className } = Astro.props;
+---
+
+<div class={cn("flex min-w-0 flex-col gap-1.5", className)}>
+  {label ? <Label for={htmlFor}>{label}</Label> : null}
+  <slot />
+  {hint ? (
+    <p class="text-[0.7rem] leading-snug text-muted-foreground">{hint}</p>
+  ) : null}
+</div>

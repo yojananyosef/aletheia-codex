@@ -1,0 +1,1364 @@
+/*
+ * Reading surface.
+ *
+ * The chapter page is a critical edition: a quiet paper sheet, the original
+ * text at reading size, and the apparatus (transliteration, glosses, word
+ * panels and syntax) available without leaving the page.
+ */
+
+@layer components {
+  .reading-page {
+    --reading-accent: var(--brand);
+    --word-inspector-width: clamp(18.5rem, 23vw, 20.5rem);
+    --word-inspector-gap: clamp(1.5rem, 2.5vw, 2.2rem);
+    --word-inspector-top: 5.75rem;
+    padding-bottom: 5rem;
+  }
+
+  .reading-page[data-edition="ETCBC4"] {
+    --reading-accent: var(--edition-hebrew);
+  }
+
+  .reading-page[data-edition="nestle1904"] {
+    --reading-accent: var(--edition-greek);
+  }
+
+  .reading-page[data-edition="jvulgate"] {
+    --reading-accent: var(--edition-latin);
+  }
+
+  .reading-page > .wrap {
+    max-width: 72rem;
+  }
+
+  .reading-layout {
+    display: grid;
+  }
+
+  .reading-main {
+    min-width: 0;
+    container-type: inline-size;
+  }
+
+  .word-inspector {
+    display: none;
+  }
+
+  /* Edition selector ------------------------------------------------------ */
+  .corpus-tabs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0 1.5rem;
+    padding-top: 1.35rem;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .corpus-tab {
+    --tab-color: var(--brand);
+    display: block;
+    margin: 0 0 -1px;
+    padding: 0 0 0.7rem;
+    border-bottom: 2px solid transparent;
+    color: var(--muted);
+    text-decoration: none;
+    transition:
+      color 0.16s ease,
+      border-color 0.16s ease;
+  }
+
+  .corpus-tab[data-corpus="ETCBC4"] {
+    --tab-color: var(--edition-hebrew);
+  }
+
+  .corpus-tab[data-corpus="nestle1904"] {
+    --tab-color: var(--edition-greek);
+  }
+
+  .corpus-tab[data-corpus="jvulgate"] {
+    --tab-color: var(--edition-latin);
+  }
+
+  .corpus-tab:hover {
+    color: var(--foreground);
+  }
+
+  .corpus-tab[aria-current="page"] {
+    border-bottom-color: var(--tab-color);
+    color: var(--foreground);
+  }
+
+  .corpus-tab__title {
+    display: block;
+    font-family: var(--font-display);
+    font-size: 1.02rem;
+    font-weight: 500;
+    line-height: 1.25;
+    letter-spacing: -0.01em;
+  }
+
+  .corpus-tab[aria-current="page"] .corpus-tab__title {
+    color: var(--tab-color);
+  }
+
+  .corpus-tab__language {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    margin-top: 0.12rem;
+    color: var(--muted);
+    font-size: 0.6rem;
+    font-weight: 500;
+    letter-spacing: 0.09em;
+    text-transform: uppercase;
+  }
+
+  .corpus-tab__language::before {
+    width: 0.32rem;
+    height: 0.32rem;
+    border-radius: 50%;
+    background: var(--tab-color);
+    content: "";
+  }
+
+  .corpus-tab__short {
+    display: none;
+  }
+
+  /* Running head ---------------------------------------------------------- */
+  .reading-header {
+    position: relative;
+    padding: 2.6rem 0 1.5rem;
+  }
+
+  .reading-kicker {
+    margin: 0 0 0.7rem;
+    color: var(--reading-accent);
+    font-size: 0.62rem;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+
+  .reading-header::after {
+    display: block;
+    width: 4rem;
+    height: 2px;
+    margin-top: 1.5rem;
+    background: var(--reading-accent);
+    content: "";
+  }
+
+  .reading-title {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    margin: 0;
+    font-family: var(--font-display);
+    font-size: clamp(2.8rem, 5.4vw, 4.4rem);
+    font-weight: 400;
+    line-height: 0.98;
+    letter-spacing: -0.045em;
+  }
+
+  .reading-title__chapter {
+    margin-left: 0.16em;
+    color: var(--reading-accent);
+    font-size: 0.46em;
+    font-weight: 400;
+    letter-spacing: -0.02em;
+  }
+
+  .reading-header__meta {
+    margin: 0.9rem 0 0;
+    color: var(--muted);
+    font-size: 0.7rem;
+    font-weight: 500;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  /* Chapter navigation ---------------------------------------------------- */
+  .chapter-nav {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1.25rem;
+    padding: 0.75rem 0.9rem;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    background: var(--card);
+  }
+
+  .chapter-step {
+    display: flex;
+    max-width: 100%;
+    align-items: center;
+    padding: 0.45rem 0.5rem;
+    border-radius: var(--radius-sm);
+    color: var(--foreground);
+    text-decoration: none;
+    transition:
+      background-color 0.16s ease,
+      color 0.16s ease;
+  }
+
+  .chapter-step:hover {
+    background: var(--accent-surface);
+    color: var(--brand-strong);
+  }
+
+  .chapter-step--next {
+    justify-self: end;
+    text-align: right;
+  }
+
+  .chapter-step--empty {
+    visibility: hidden;
+  }
+
+  .chapter-step__arrow {
+    color: var(--brand);
+    font-size: 1.05rem;
+    line-height: 1;
+  }
+
+  .chapter-step__arrow + .chapter-step__text {
+    margin-left: 0.55rem;
+  }
+
+  .chapter-step--next .chapter-step__arrow {
+    margin-left: 0.55rem;
+  }
+
+  .chapter-step__text {
+    display: flex;
+    min-width: 0;
+    flex-direction: column;
+  }
+
+  .chapter-step__label {
+    color: var(--muted);
+    font-size: 0.56rem;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+
+  .chapter-step__ref {
+    overflow: hidden;
+    font-family: var(--font-display);
+    font-size: 0.95rem;
+    line-height: 1.3;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .chapter-jump {
+    display: flex;
+    min-width: 0;
+    align-items: flex-end;
+    justify-self: center;
+    gap: 0.45rem;
+  }
+
+  .chapter-jump__field {
+    display: flex;
+    min-width: 0;
+    flex-direction: column;
+    gap: 0.3rem;
+  }
+
+  .chapter-jump__label {
+    color: var(--muted);
+    font-size: 0.58rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    line-height: 1.2;
+    text-transform: uppercase;
+    white-space: nowrap;
+  }
+
+  .chapter-jump__book {
+    width: 10rem;
+  }
+
+  .chapter-jump__chapter {
+    width: 4.25rem;
+  }
+
+  .chapter-jump__verses {
+    width: 9.5rem;
+  }
+
+  .chapter-jump select,
+  .chapter-jump input[type="number"] {
+    width: 100%;
+    min-height: 2.3rem;
+    padding: 0.4rem 0.5rem;
+    border: 1px solid var(--input);
+    border-radius: var(--radius-sm);
+    background: var(--background);
+    color: var(--foreground);
+    font: inherit;
+    font-size: 0.8rem;
+  }
+
+  .chapter-jump select {
+    padding-right: 0.5rem;
+  }
+
+  .chapter-jump select:focus-visible,
+  .chapter-jump input[type="number"]:focus-visible {
+    border-color: var(--ring);
+    outline: 2px solid color-mix(in srgb, var(--ring) 22%, transparent);
+    outline-offset: 1px;
+  }
+
+  .chapter-jump__range {
+    display: flex;
+    align-items: center;
+    gap: 0.28rem;
+  }
+
+  .chapter-jump__range input {
+    min-width: 0;
+    flex: 1 1 0;
+    width: 0;
+    padding-right: 0.2rem;
+    padding-left: 0.2rem;
+    font-variant-numeric: tabular-nums;
+    text-align: center;
+  }
+
+  .chapter-jump__range span {
+    color: var(--muted);
+    font-size: 0.78rem;
+  }
+
+  .chapter-jump .button,
+  .chapter-jump .ui-button {
+    min-height: 2.3rem;
+    padding: 0.4rem 0.7rem;
+    align-self: flex-end;
+    font-size: 0.75rem;
+  }
+
+  /* Reading tools --------------------------------------------------------- */
+  .reading-tools {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.7rem 1rem;
+    margin: 1.15rem 0 0.9rem;
+  }
+
+  .reading-tools__hint {
+    max-width: 34rem;
+    margin: 0;
+    color: var(--muted);
+    font-size: 0.78rem;
+    line-height: 1.5;
+  }
+
+  .reading-tools__links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+  }
+
+  .tool-link {
+    display: inline-flex;
+    min-height: 2rem;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.34rem 0.65rem;
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    background: var(--card);
+    color: var(--muted);
+    font-size: 0.72rem;
+    font-weight: 500;
+    line-height: 1.2;
+    text-decoration: none;
+    transition:
+      border-color 0.16s ease,
+      background-color 0.16s ease,
+      color 0.16s ease;
+  }
+
+  .tool-link:hover {
+    border-color: color-mix(in srgb, var(--brand) 35%, var(--border));
+    color: var(--foreground);
+  }
+
+  .tool-link--active {
+    border-color: color-mix(in srgb, var(--brand) 30%, var(--border));
+    background: var(--brand-soft);
+    color: var(--brand-strong);
+  }
+
+  .tool-link--ai {
+    border-color: var(--foreground);
+    background: var(--foreground);
+    color: var(--background);
+  }
+
+  .tool-link--ai:hover {
+    border-color: var(--brand);
+    background: var(--brand);
+    color: var(--primary-foreground);
+  }
+
+  .tool-link__label {
+    white-space: nowrap;
+  }
+
+  .tool-link__icon {
+    flex: 0 0 auto;
+    opacity: 0.85;
+  }
+
+  /* Verses ---------------------------------------------------------------- */
+  .verses {
+    margin: 0;
+    padding: 0 clamp(1rem, 3.5vw, 2.4rem);
+    border: 1px solid var(--border);
+    border-top: 3px solid var(--reading-accent);
+    border-radius: var(--radius-lg);
+    background: var(--paper);
+    color: var(--paper-ink);
+    list-style: none;
+  }
+
+  .verse {
+    display: grid;
+    grid-template-columns: 2.5rem minmax(0, 1fr);
+    padding: 0.7rem 0 0.85rem;
+    border-bottom: 1px solid var(--border-soft);
+    scroll-margin-top: 6rem;
+  }
+
+  .verse:last-child {
+    border-bottom: 0;
+  }
+
+  .verse.rtl {
+    grid-template-columns: minmax(0, 1fr) 2.5rem;
+  }
+
+  .verse:target {
+    background: color-mix(in srgb, var(--brand-soft) 55%, transparent);
+  }
+
+  .verse__number {
+    grid-column: 1;
+    padding-top: 0.95rem;
+    color: var(--muted);
+    font-size: 0.66rem;
+    font-variant-numeric: tabular-nums;
+    line-height: 1;
+    text-decoration: none;
+  }
+
+  [dir="rtl"] .verse__number,
+  .verse.rtl .verse__number {
+    grid-column: 2;
+    text-align: right;
+  }
+
+  .verse__number:hover {
+    color: var(--brand);
+  }
+
+  .verse__text {
+    grid-column: 2;
+    min-width: 0;
+  }
+
+  [dir="rtl"] .verse__text,
+  .verse.rtl .verse__text {
+    grid-column: 1;
+    text-align: right;
+  }
+
+  .script-hebrew {
+    font-family: var(--font-hebrew);
+    font-size: 1.82rem;
+    line-height: 2.12;
+  }
+
+  .script-greek {
+    font-family: var(--font-reading);
+    font-size: 1.58rem;
+    line-height: 1.9;
+  }
+
+  .script-latin {
+    font-family: var(--font-reading);
+    font-size: 1.52rem;
+    line-height: 1.92;
+  }
+
+  /* Word tokens ----------------------------------------------------------- */
+  .word {
+    position: relative;
+    display: inline-block;
+    margin: 0 0.45em;
+    text-align: center;
+    anchor-name: var(--word-anchor);
+  }
+
+  .word__trigger {
+    display: inline-block;
+    margin: 0 -0.45em;
+    padding: 0.06em 0.45em;
+    border-radius: 4px;
+    cursor: help;
+    text-align: center;
+    transition: background-color 0.14s ease;
+  }
+
+  .word__trigger:hover {
+    background: var(--brand-soft);
+  }
+
+  .word__trigger:focus-visible {
+    background: var(--brand-soft);
+    outline: 2px solid var(--ring);
+    outline-offset: 1px;
+  }
+
+  .word__trigger:focus-visible .word__surface {
+    color: var(--brand-strong);
+  }
+
+  .word__translit {
+    display: block;
+    width: fit-content;
+    margin: 0.14rem auto 0;
+    color: var(--muted);
+    font-family: var(--font-translit);
+    font-size: 0.74rem;
+    line-height: 1.25;
+  }
+
+  .word__gloss {
+    display: block;
+    max-width: 11rem;
+    margin: 0.1rem auto 0;
+    color: var(--muted);
+    font-family: var(--font-sans);
+    font-size: 0.67rem;
+    line-height: 1.35;
+    overflow-wrap: break-word;
+  }
+
+  /* Gloss mode lays words out on a stable grid. Without a fixed cell the
+     width of a long gloss changes the position of the Hebrew word and
+     neighbouring words, which makes the verse jump as glosses are shown. */
+  .verse__text--gloss,
+  .grammar-words--gloss {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    gap: 0.9rem 0.6rem;
+  }
+
+  .verse__text--gloss .word,
+  .grammar-words--gloss .word {
+    width: 8rem;
+    margin: 0;
+  }
+
+  .verse__text--gloss .word__trigger,
+  .grammar-words--gloss .word__trigger {
+    margin: 0;
+    padding: 0.06em 0.3em;
+  }
+
+  .verse__text--gloss .word__gloss,
+  .grammar-words--gloss .word__gloss {
+    max-width: 100%;
+  }
+
+  span.word--plain {
+    margin: 0 0.35em;
+  }
+
+  /* Word panel ------------------------------------------------------------ */
+  .word__panel {
+    position: absolute;
+    top: calc(100% + 0.35rem);
+    left: 50%;
+    z-index: 40;
+    display: none;
+    width: 19rem;
+    max-width: min(80vw, 19rem);
+    max-height: min(75vh, 36rem);
+    padding: 0.95rem 1.05rem;
+    overflow-y: auto;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    background: var(--popover);
+    box-shadow: var(--shadow-panel);
+    color: var(--foreground);
+    font-family: var(--font-sans);
+    font-size: 0.8rem;
+    line-height: 1.45;
+    text-align: left;
+    transform: translateX(-50%);
+  }
+
+  .word__panel-title {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 0.75rem;
+    margin: 0 0 0.6rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .word__panel-word {
+    color: var(--brand-strong);
+    font-family: var(--font-reading);
+    font-size: 1.2rem;
+  }
+
+  .word__panel-caption {
+    color: var(--muted);
+    font-size: 0.56rem;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+  }
+
+  .word__lemma {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    margin: 0 0 0.6rem;
+  }
+
+  .word__label {
+    margin-right: 0.45rem;
+    color: var(--muted);
+    font-size: 0.58rem;
+    font-weight: 600;
+    letter-spacing: 0.09em;
+    text-transform: uppercase;
+  }
+
+  .word__lemma bdi {
+    font-family: var(--font-reading);
+    font-size: 1.05rem;
+  }
+
+  .word__features {
+    display: grid;
+    grid-template-columns: max-content minmax(0, 1fr);
+    gap: 0.28rem 0.7rem;
+    margin: 0;
+  }
+
+  .word__features--head {
+    margin-bottom: 0.6rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .word__features dt {
+    color: var(--muted);
+    font-size: 0.6rem;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+  }
+
+  .word__features dd {
+    min-width: 0;
+    margin: 0;
+    overflow-wrap: anywhere;
+  }
+
+  .word__head-lexeme-value bdi {
+    font-family: var(--font-reading);
+    font-size: 1.05rem;
+  }
+
+  .word__group + .word__group {
+    margin-top: 0.6rem;
+    padding-top: 0.6rem;
+    border-top: 1px dashed var(--border-soft);
+  }
+
+  .word__group-title {
+    margin: 0 0 0.32rem;
+    color: var(--brand);
+    font-size: 0.56rem;
+    font-weight: 700;
+    letter-spacing: 0.11em;
+    text-transform: uppercase;
+  }
+
+  .word__gloss-language {
+    color: var(--muted);
+    font-size: 0.64rem;
+  }
+
+  .word__empty {
+    margin: 0;
+    color: var(--muted);
+  }
+
+  /* The panel is a single preview, never a second pinned copy: it opens on
+     hover, on keyboard focus and on touch focus. The compact card keeps the
+     form, lemma, morphology and glosses; the long lexical statistics are
+     deliberately left out. */
+  .word__panel .word__group[data-group="lexeme"] {
+    display: none;
+  }
+
+  .word__panel:focus-visible {
+    outline: 2px solid var(--ring);
+    outline-offset: 2px;
+  }
+
+  @media (hover: hover) and (pointer: fine) {
+    .word:hover > .word__panel,
+    .word:has(> .word__trigger:focus-visible) > .word__panel,
+    .word:has(> .word__panel:focus-visible) > .word__panel {
+      position-anchor: var(--word-anchor);
+      position: fixed;
+      top: calc(anchor(below) + 0.35rem);
+      right: auto;
+      bottom: auto;
+      left: clamp(1rem, calc(anchor(center) - 9.5rem), calc(100vw - 20rem));
+      z-index: 60;
+      display: block;
+      width: 19rem;
+      max-width: min(80vw, 19rem);
+      max-height: min(40vh, 26rem);
+      transform: none;
+      animation: word-panel-in 120ms ease-out;
+      position-try-fallbacks: --word-panel-above;
+    }
+  }
+
+  /* Touch screens have no hover. Tapping a word focuses it and shows the same
+     card as a bottom sheet, where it has room to be read and scrolled. */
+  @media (hover: none) {
+    .word:focus-within > .word__panel {
+      position: fixed;
+      inset: auto 0.75rem max(0.75rem, env(safe-area-inset-bottom)) 0.75rem;
+      z-index: 60;
+      display: block;
+      width: auto;
+      max-width: none;
+      max-height: calc(100dvh - 1.5rem);
+      overflow-y: auto;
+      transform: none;
+      animation: word-panel-in 120ms ease-out;
+    }
+  }
+
+  /* Desktop apparatus: the word details keep a reserved column beside the
+     text. The card is anchored to that column, so it never covers the verse,
+     clips at a viewport edge or asks the reader to scroll the page. */
+  @media (hover: hover) and (pointer: fine) and (min-width: 1024px) {
+    .reading-layout {
+      grid-template-columns: minmax(0, 1fr) var(--word-inspector-width);
+      align-items: start;
+      gap: var(--word-inspector-gap);
+    }
+
+    .word-inspector {
+      position: sticky;
+      top: var(--word-inspector-top);
+      display: block;
+      padding: 0.95rem 1.05rem;
+      border: 1px solid var(--border);
+      border-left: 3px solid var(--reading-accent);
+      border-radius: var(--radius-lg);
+      background: color-mix(in srgb, var(--card) 62%, var(--paper));
+      color: var(--muted);
+      anchor-name: --word-inspector;
+    }
+
+    .word-inspector__label {
+      margin: 0;
+      color: var(--foreground);
+      font-family: var(--font-sans);
+      font-size: 0.68rem;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .word-inspector__hint {
+      margin: 0.35rem 0 0;
+      font-family: var(--font-sans);
+      font-size: 0.72rem;
+      line-height: 1.45;
+    }
+
+    .reading-layout:has(.word:hover > .word__panel) .word-inspector,
+    .reading-layout:has(.word > .word__trigger:focus-visible) .word-inspector,
+    .reading-layout:has(.word > .word__panel:focus-visible) .word-inspector {
+      opacity: 0;
+    }
+
+    .word:hover > .word__panel,
+    .word:has(> .word__trigger:focus-visible) > .word__panel,
+    .word:has(> .word__panel:focus-visible) > .word__panel {
+      position-anchor: --word-inspector;
+      top: anchor(top);
+      left: anchor(left);
+      right: auto;
+      bottom: auto;
+      z-index: 45;
+      width: var(--word-inspector-width);
+      max-width: none;
+      max-height: calc(100dvh - var(--word-inspector-top) - 1.5rem);
+      transform: none;
+      position-try-fallbacks: none;
+    }
+  }
+
+  @position-try --word-panel-above {
+    top: auto;
+    bottom: calc(anchor(top) - 0.35rem);
+    left: clamp(1rem, calc(anchor(center) - 9.5rem), calc(100vw - 20rem));
+  }
+
+  @keyframes word-panel-in {
+    from {
+      opacity: 0;
+      translate: 0 0.2rem;
+    }
+
+    to {
+      opacity: 1;
+      translate: 0 0;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .word:hover > .word__panel,
+    .word:focus-within > .word__panel {
+      animation: none;
+    }
+  }
+
+  /* Grammar view ---------------------------------------------------------- */
+  .grammar {
+    padding-top: 0.25rem;
+  }
+
+  .grammar-legend {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.35rem 0.9rem;
+    margin: 0 0 0.85rem;
+    padding: 0.6rem 0.8rem;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    background: var(--card);
+    color: var(--muted);
+    font-size: 0.7rem;
+  }
+
+  .grammar-legend__title {
+    color: var(--foreground);
+    font-size: 0.56rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+
+  .grammar-legend__item {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.32rem;
+  }
+
+  .grammar-legend__swatch {
+    width: 0.6rem;
+    height: 0.6rem;
+    border-radius: 2px;
+    background: var(--level-color);
+  }
+
+  .grammar-verses {
+    margin: 0;
+    padding: 0 clamp(0.8rem, 3vw, 2rem);
+    border: 1px solid var(--border);
+    border-top: 3px solid var(--reading-accent);
+    border-radius: var(--radius-lg);
+    background: var(--paper);
+    color: var(--paper-ink);
+    list-style: none;
+  }
+
+  .grammar-verse {
+    display: grid;
+    grid-template-columns: 2.5rem minmax(0, 1fr);
+    padding: 0.7rem 0 0.9rem;
+    border-bottom: 1px solid var(--border-soft);
+    scroll-margin-top: 6rem;
+  }
+
+  .grammar-verse:last-child {
+    border-bottom: 0;
+  }
+
+  .grammar-verse.rtl {
+    grid-template-columns: minmax(0, 1fr) 2.5rem;
+  }
+
+  .grammar-verse__body {
+    grid-column: 2;
+    min-width: 0;
+  }
+
+  [dir="rtl"] .grammar-verse__body,
+  .grammar-verse.rtl .grammar-verse__body {
+    grid-column: 1;
+  }
+
+  [dir="rtl"] .grammar-verse .verse__number,
+  .grammar-verse.rtl .verse__number {
+    text-align: right;
+  }
+
+  .grammar-node {
+    margin: 0.25rem 0;
+    padding: 0.12rem 0 0.12rem 0.8rem;
+    border-left: 3px solid var(--level-color);
+    border-radius: 0 4px 4px 0;
+  }
+
+  .grammar-node .grammar-node {
+    margin-left: 0.75rem;
+  }
+
+  .grammar-verse.rtl .grammar-node {
+    padding: 0.12rem 0.8rem 0.12rem 0;
+    border-right: 3px solid var(--level-color);
+    border-left: 0;
+    border-radius: 4px 0 0 4px;
+    text-align: right;
+  }
+
+  .grammar-verse.rtl .grammar-node .grammar-node {
+    margin-right: 0.75rem;
+    margin-left: 0;
+  }
+
+  .grammar-verse.rtl .grammar-node__head,
+  .grammar-verse.rtl .grammar-node__features {
+    justify-content: flex-end;
+    text-align: right;
+  }
+
+  .grammar-node__head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 0.15rem 0.55rem;
+    margin: 0;
+    font-size: 0.68rem;
+    line-height: 1.4;
+  }
+
+  .grammar-node__badge {
+    color: var(--level-color);
+    font-size: 0.6rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  .grammar-node__ref {
+    color: var(--muted);
+    font-size: 0.62rem;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .grammar-node__features {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.1rem 0.8rem;
+    margin: 0.1rem 0 0;
+    color: var(--muted);
+    font-size: 0.66rem;
+    line-height: 1.4;
+  }
+
+  .grammar-node__feature-label {
+    font-size: 0.55rem;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    opacity: 0.85;
+  }
+
+  .grammar-words {
+    margin: 0.15rem 0 0.2rem;
+    padding-left: 0;
+    /* Words sit inside their deepest grammar box; word order stays RTL even
+       though the box borders stack left-to-right. */
+    text-align: left;
+  }
+
+  [dir="rtl"] .grammar-words,
+  .grammar-words[dir="rtl"],
+  .grammar-words.rtl {
+    text-align: right;
+  }
+
+  .grammar-words.script-hebrew {
+    font-size: 1.45rem;
+    line-height: 1.95;
+  }
+
+  .grammar-words.script-greek {
+    font-size: 1.35rem;
+    line-height: 1.75;
+  }
+
+  .grammar-words.script-latin {
+    font-size: 1.3rem;
+    line-height: 1.75;
+  }
+
+  /* Back to top ----------------------------------------------------------- */
+  .to-top {
+    position: fixed;
+    right: max(1rem, env(safe-area-inset-right));
+    bottom: max(1rem, env(safe-area-inset-bottom));
+    z-index: 30;
+    display: grid;
+    width: 2.75rem;
+    height: 2.75rem;
+    place-items: center;
+    border: 1px solid var(--border);
+    border-radius: 50%;
+    background: var(--card);
+    box-shadow: 0 6px 20px rgba(20, 24, 33, 0.16);
+    color: var(--brand);
+    font-size: 1rem;
+    line-height: 1;
+    text-decoration: none;
+    animation: to-top-reveal linear both;
+  }
+
+  .to-top:hover {
+    border-color: var(--brand);
+    color: var(--brand-strong);
+  }
+
+  @supports (animation-timeline: scroll()) {
+    .to-top {
+      animation-timeline: scroll(root block);
+      animation-range: 0 120px;
+    }
+  }
+
+  @keyframes to-top-reveal {
+    0%,
+    20% {
+      visibility: hidden;
+      opacity: 0;
+      transform: translateY(0.4rem) scale(0.96);
+    }
+
+    100% {
+      visibility: visible;
+      opacity: 1;
+      transform: none;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    @keyframes to-top-reveal {
+      0%,
+      20% {
+        visibility: hidden;
+        opacity: 0;
+      }
+
+      100% {
+        visibility: visible;
+        opacity: 1;
+      }
+    }
+  }
+
+  @media (max-width: 1100px) {
+    .chapter-jump__book {
+      width: 8.5rem;
+    }
+
+    .chapter-jump__verses {
+      width: 8rem;
+    }
+  }
+
+  @media (max-width: 1199px) {
+    .corpus-tab {
+      margin-right: 0;
+    }
+
+    .corpus-tab__title,
+    .corpus-tab__language {
+      display: none;
+    }
+
+    .corpus-tab__short {
+      display: block;
+      font-family: var(--font-display);
+      font-size: 1rem;
+      font-weight: 500;
+      line-height: 1.25;
+    }
+
+    .reading-title {
+      font-size: clamp(2.4rem, 5vw, 3.6rem);
+    }
+
+    .reading-title__chapter {
+      font-size: 0.46em;
+    }
+
+    .verse,
+    .grammar-verse {
+      grid-template-columns: 2rem minmax(0, 1fr);
+    }
+
+    .verse.rtl,
+    .grammar-verse.rtl {
+      grid-template-columns: minmax(0, 1fr) 2rem;
+    }
+
+    .script-hebrew {
+      font-size: 1.65rem;
+    }
+
+    .script-greek {
+      font-size: 1.45rem;
+    }
+
+    .script-latin {
+      font-size: 1.4rem;
+    }
+  }
+
+  @media (max-width: 940px) {
+    .chapter-nav {
+      grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+    }
+
+    .chapter-jump {
+      gap: 0.35rem;
+    }
+
+    .chapter-jump__book {
+      width: 7.5rem;
+    }
+
+    .chapter-jump__verses {
+      display: none;
+    }
+
+    .chapter-jump__chapter {
+      width: 3.75rem;
+    }
+  }
+
+  @media (max-width: 760px) {
+    .chapter-nav {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 0;
+      padding: 0.65rem 0.75rem;
+    }
+
+    .chapter-step--prev {
+      order: 1;
+    }
+
+    .chapter-step--next {
+      order: 2;
+      margin-left: auto;
+    }
+
+    .chapter-step--empty {
+      display: none;
+    }
+
+    .chapter-jump {
+      order: 3;
+      justify-content: flex-start;
+      width: 100%;
+      margin-top: 0.35rem;
+      padding-top: 0.6rem;
+      border-top: 1px solid var(--border-soft);
+    }
+
+    .chapter-jump__book {
+      width: 9rem;
+    }
+
+    .chapter-jump__verses {
+      display: flex;
+      width: 8.5rem;
+    }
+
+    .chapter-jump .button,
+    .chapter-jump .ui-button {
+      margin-left: auto;
+    }
+  }
+
+  @media (max-width: 560px) {
+    .reading-header {
+      padding-top: 1.9rem;
+    }
+
+    .reading-title {
+      font-size: 2.3rem;
+    }
+
+    .reading-title__chapter {
+      font-size: 0.44em;
+    }
+
+    .reading-tools {
+      align-items: flex-start;
+      flex-direction: column;
+    }
+
+    .reading-tools__hint {
+      width: 100%;
+    }
+
+    .reading-tools__links {
+      width: 100%;
+    }
+
+    .tool-link {
+      flex: 0 1 auto;
+      justify-content: center;
+    }
+
+    .chapter-jump {
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+
+    .chapter-jump select,
+    .chapter-jump input[type="number"],
+    .chapter-jump .button,
+    .chapter-jump .ui-button {
+      min-height: 2.65rem;
+    }
+
+    .chapter-jump__book {
+      flex: 1 1 calc(100% - 4.3rem);
+      width: auto;
+    }
+
+    .chapter-jump__chapter {
+      flex: 0 0 3.8rem;
+      width: auto;
+    }
+
+    .chapter-jump__verses {
+      flex: 1 1 8rem;
+      width: auto;
+    }
+
+    .chapter-jump .button,
+    .chapter-jump .ui-button {
+      flex: 0 0 auto;
+    }
+
+    .verses,
+    .grammar-verses {
+      padding-right: 0.8rem;
+      padding-left: 0.8rem;
+    }
+
+    .verse,
+    .grammar-verse {
+      grid-template-columns: 1.5rem minmax(0, 1fr);
+    }
+
+    .verse.rtl,
+    .grammar-verse.rtl {
+      grid-template-columns: minmax(0, 1fr) 1.5rem;
+    }
+
+    .verse__number {
+      padding-top: 0.9rem;
+    }
+
+    .word__panel {
+      max-width: calc(100vw - 2rem);
+    }
+
+    .grammar-node .grammar-node {
+      margin-left: 0.45rem;
+    }
+
+    .grammar-verse.rtl .grammar-node .grammar-node {
+      margin-right: 0.45rem;
+    }
+  }
+
+  @media print {
+    .site-header,
+    .site-footer,
+    .corpus-tabs,
+    .chapter-nav,
+    .reading-tools,
+    .to-top,
+    .skip-link,
+    .word-inspector,
+    .ai-panel {
+      display: none;
+    }
+
+    body {
+      background: #fff;
+      color: #000;
+    }
+
+    .reading-page {
+      padding: 0;
+    }
+
+    .verses,
+    .grammar-verses {
+      border: 0;
+      background: #fff;
+    }
+
+    .verse {
+      break-inside: avoid;
+    }
+
+    .word__trigger {
+      background: none;
+    }
+
+    .word__panel {
+      display: none;
+    }
+  }
+}

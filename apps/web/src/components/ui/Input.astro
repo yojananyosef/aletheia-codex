@@ -1,0 +1,18 @@
+---
+import { cn } from "../../lib/cn";
+
+interface Props {
+  class?: string;
+  [key: string]: unknown;
+}
+
+const { class: className, ...rest } = Astro.props;
+---
+
+<input
+  class={cn(
+    "flex h-11 w-full rounded-md border border-input bg-card px-3 py-2 text-sm text-foreground shadow-[inset_0_1px_0_rgba(0,0,0,0.02)] transition-colors placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/20 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-2 aria-invalid:ring-destructive/15",
+    className,
+  )}
+  {...rest}
+/>

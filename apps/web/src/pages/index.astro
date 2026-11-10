@@ -1,12 +1,20 @@
 ---
 import BaseLayout from "../layouts/BaseLayout.astro";
+import Badge from "../components/ui/Badge.astro";
+import Button from "../components/ui/Button.astro";
+import Field from "../components/ui/Field.astro";
+import Icon from "../components/ui/Icon.astro";
+import Input from "../components/ui/Input.astro";
+import Select from "../components/ui/Select.astro";
 import { t } from "../i18n";
+import { aiAvailable } from "../lib/ai";
 import { bookName } from "../lib/book-names";
-import { corpusSample } from "../lib/corpus-copy";
+import { corpusCopy } from "../lib/corpus-copy";
 import { getReader } from "../lib/reader";
 
 const reader = getReader();
 const corpora = reader.listCorpora();
+const showAiNote = process.env.STATIC_EXPORT !== "1" && aiAvailable();
 
 const cards = corpora.map((corpus) => {
   const defaultBook =
@@ -18,62 +26,185 @@ const cards = corpora.map((corpus) => {
     throw new Error(`El corpus ${corpus.id} no tiene libros.`);
   }
 
+  const chapters = corpus.books.reduce((sum, book) => sum + book.chapters, 0);
+
   return {
     ...corpus,
     defaultBook,
-    sample: corpusSample(corpus.id),
+    chapters,
+    sample: corpusCopy(corpus.id),
     directionLabel:
       corpus.direction === "rtl" ? t.directionRtl : t.directionLtr,
   };
 });
+
+const totalBooks = corpora.reduce(
+  (sum, corpus) => sum + corpus.books.length,
+  0,
+);
+const totalChapters = cards.reduce((sum, corpus) => sum + corpus.chapters, 0);
+const totalScripts = new Set(corpora.map((corpus) => corpus.language)).size;
+const formatCount = (value: number): string =>
+  new Intl.NumberFormat("es-ES", { useGrouping: "always" }).format(value);
+const specimen = cards.flatMap((corpus) =>
+  corpus.sample
+    ? [
+        {
+          id: corpus.id,
+          languageName: corpus.languageName,
+          direction: corpus.direction,
+          ...corpus.sample,
+        },
+      ]
+    : [],
+);
+
+Astro.response.headers.set(
+  "Cache-Control",
+  "public, s-maxage=3600, stale-while-revalidate=86400",
+);
 ---
 
 <BaseLayout>
-  <main id="main" class="page">
-    <div class="wrap">
-      <section class="hero">
-        <p class="eyebrow">{t.tagline}</p>
-        <h1>{t.homeTitle}</h1>
-        <p class="hero__intro">{t.homeIntro}</p>
-      </section>
-
-      <section class="corpora" aria-labelledby="corpora-title">
-        <div class="section-heading">
-          <h2 id="corpora-title">{t.corpusLabel}</h2>
-          <p>{t.corporaIntro}</p>
+  <main id="main" class="page home-page">
+    <section class="hero" aria-labelledby="hero-title">
+      <div class="wrap hero__grid">
+        <div class="hero__copy">
+          <p class="hero__eyebrow">
+            <span class="hero__eyebrow-rule" aria-hidden="true"></span>
+            {t.homeEyebrow}
+          </p>
+          <h1 id="hero-title">{t.homeTitle}</h1>
+          <p class="hero__intro">{t.homeIntro}</p>
+          <div class="hero__actions">
+            <Button href="#ediciones" size="lg">
+              {t.homePrimary}
+              <Icon name="arrow-right" size={17} />
+            </Button>
+            <a class="hero__secondary" href="/read/ETCBC4/Genesis/1">
+              {t.homeSecondary}
+              <Icon name="arrow-right" size={15} />
+            </a>
+          </div>
+          <dl class="hero__facts">
+            <div>
+              <dt>{t.homeFactEditions}</dt>
+              <dd>{corpora.length}</dd>
+            </div>
+            <div>
+              <dt>{t.homeFactBooks}</dt>
+              <dd>{totalBooks}</dd>
+            </div>
+            <div>
+              <dt>{t.homeFactChapters}</dt>
+              <dd>{formatCount(totalChapters)}</dd>
+            </div>
+            <div>
+              <dt>{t.homeFactScripts}</dt>
+              <dd>{totalScripts}</dd>
+            </div>
+          </dl>
         </div>
 
-        <div class="corpus-grid">
-          {cards.map((corpus) => (
-            <article class="corpus-card">
-              <header class="corpus-card__header">
-                <p class="corpus-card__meta">
-                  {corpus.languageName} · {corpus.directionLabel}
+        <aside class="specimen" aria-labelledby="specimen-title">
+          <div class="specimen__head">
+            <p class="specimen__kicker" id="specimen-title">
+              {t.homeSpecimenTitle}
+            </p>
+            <p class="specimen__note">{t.homeSpecimenNote}</p>
+          </div>
+          <ol class="specimen__list">
+            {specimen.map((item) => (
+              <li class="specimen__item" data-edition={item.id}>
+                <div class="specimen__meta">
+                  <span class="specimen__lang">{item.languageName}</span>
+                  <span>{item.reference}</span>
+                </div>
+                <p
+                  class={`specimen__text ${item.className}`}
+                  lang={item.lang}
+                  dir={item.direction}
+                >
+                  {item.text}
                 </p>
-                <div class="corpus-card__title-row">
-                  <h3>{corpus.title}</h3>
-                  {corpus.sample ? (
+              </li>
+            ))}
+          </ol>
+          <p class="specimen__foot">{t.homeSpecimenFoot}</p>
+        </aside>
+      </div>
+    </section>
+
+    <section class="editions" id="ediciones" aria-labelledby="editions-title">
+      <div class="wrap">
+        <div class="section-heading">
+          <div class="section-heading__copy">
+            <p class="section-kicker">{t.homeEditionsKicker}</p>
+            <h2 id="editions-title">{t.homeEditionsTitle}</h2>
+          </div>
+          <p class="section-heading__intro">{t.corporaIntro}</p>
+        </div>
+
+        <div class="edition-list">
+          {cards.map((corpus) => (
+            <article
+              class="edition-row corpus-card"
+              data-edition={corpus.id}
+              aria-labelledby={`edition-${corpus.id}`}
+            >
+              <div class="edition-row__specimen">
+                <span class="edition-row__language">{corpus.languageName}</span>
+                {corpus.sample ? (
+                  <>
                     <p
-                      class={`corpus-card__script ${corpus.sample.className}`}
+                      class={`edition-row__script ${corpus.sample.className}`}
                       lang={corpus.sample.lang}
                       dir={corpus.direction}
                     >
                       {corpus.sample.text}
                     </p>
-                  ) : null}
+                    <span class="edition-row__ref">
+                      {corpus.sample.reference}
+                    </span>
+                  </>
+                ) : null}
+              </div>
+
+              <div class="edition-row__copy">
+                <div class="edition-row__title-line">
+                  <h3 id={`edition-${corpus.id}`}>{corpus.title}</h3>
+                  <Badge variant="edition">{corpus.id}</Badge>
                 </div>
-                <p class="corpus-card__count">
-                  {corpus.books.length} {t.booksCount} · {t.edition}{" "}
+                <p class="edition-row__description">
+                  {corpus.sample?.description}
+                </p>
+                <p class="edition-row__meta">
+                  {corpus.books.length} {t.booksCount} ·{" "}
+                  {formatCount(corpus.chapters)} capítulos · {t.edition}{" "}
                   {corpus.version}
                 </p>
-              </header>
+                <a
+                  class="edition-row__sample-link"
+                  href={`/read/${corpus.id}/${corpus.defaultBook.id}/1`}
+                >
+                  {t.openSample} {bookName(corpus.defaultBook.id)} 1
+                  <Icon name="arrow-right" size={13} />
+                </a>
+              </div>
 
-              <form class="corpus-form" action="/read" method="get">
+              <form
+                class="edition-row__form corpus-form"
+                action="/read"
+                method="get"
+              >
                 <input type="hidden" name="corpus" value={corpus.id} />
 
-                <div class="field">
-                  <label for={`book-${corpus.id}`}>{t.bookLabel}</label>
-                  <select id={`book-${corpus.id}`} name="book">
+                <Field
+                  class="edition-row__book"
+                  label={t.bookLabel}
+                  for={`book-${corpus.id}`}
+                >
+                  <Select id={`book-${corpus.id}`} name="book">
                     {corpus.books.map((book) => (
                       <option
                         value={book.id}
@@ -82,12 +213,15 @@ const cards = corpora.map((corpus) => {
                         {bookName(book.id)}
                       </option>
                     ))}
-                  </select>
-                </div>
+                  </Select>
+                </Field>
 
-                <div class="field field--chapter">
-                  <label for={`chapter-${corpus.id}`}>{t.chapterLabel}</label>
-                  <input
+                <Field
+                  class="edition-row__chapter"
+                  label={t.chapterLabel}
+                  for={`chapter-${corpus.id}`}
+                >
+                  <Input
                     id={`chapter-${corpus.id}`}
                     type="number"
                     name="chapter"
@@ -97,16 +231,13 @@ const cards = corpora.map((corpus) => {
                     inputmode="numeric"
                     required
                   />
-                </div>
+                </Field>
 
-                <div class="corpus-form__range">
-                  <p class="corpus-form__range-label">{t.verseRangeLabel}</p>
-                  <div class="corpus-form__range-fields">
-                    <div class="field field--verse">
-                      <label for={`from-${corpus.id}`}>
-                        {t.verseFromLabel}
-                      </label>
-                      <input
+                <fieldset class="edition-row__range">
+                  <legend>{t.verseRangeLabel}</legend>
+                  <div class="edition-row__range-grid">
+                    <Field label={t.verseFromLabel} for={`from-${corpus.id}`}>
+                      <Input
                         id={`from-${corpus.id}`}
                         type="number"
                         name="from"
@@ -115,13 +246,12 @@ const cards = corpora.map((corpus) => {
                         inputmode="numeric"
                         placeholder="1"
                       />
-                    </div>
-                    <span class="corpus-form__dash" aria-hidden="true">
+                    </Field>
+                    <span class="edition-row__range-dash" aria-hidden="true">
                       –
                     </span>
-                    <div class="field field--verse">
-                      <label for={`to-${corpus.id}`}>{t.verseToLabel}</label>
-                      <input
+                    <Field label={t.verseToLabel} for={`to-${corpus.id}`}>
+                      <Input
                         id={`to-${corpus.id}`}
                         type="number"
                         name="to"
@@ -130,27 +260,103 @@ const cards = corpora.map((corpus) => {
                         inputmode="numeric"
                         placeholder="176"
                       />
-                    </div>
+                    </Field>
                   </div>
-                </div>
+                </fieldset>
 
-                <button class="button button--primary" type="submit">
+                <Button type="submit" class="edition-row__submit">
                   {t.readButton}
-                  <span class="button__arrow" aria-hidden="true">
-                    →
-                  </span>
-                </button>
+                  <Icon name="arrow-right" size={16} />
+                </Button>
               </form>
-
-              <p class="corpus-card__sample">
-                <a href={`/read/${corpus.id}/${corpus.defaultBook.id}/1`}>
-                  {t.openSample} {bookName(corpus.defaultBook.id)} 1
-                </a>
-              </p>
             </article>
           ))}
         </div>
+      </div>
+    </section>
+
+    <section class="features" id="como-leer" aria-labelledby="features-title">
+      <div class="wrap">
+        <div class="section-heading">
+          <div class="section-heading__copy">
+            <p class="section-kicker">{t.homeFeaturesKicker}</p>
+            <h2 id="features-title">{t.homeFeaturesTitle}</h2>
+          </div>
+          <p class="section-heading__intro">{t.homeFeaturesIntro}</p>
+        </div>
+
+        <div class="feature-grid">
+          <article class="feature">
+            <p class="feature__index">01</p>
+            <h3>{t.homeFeature1Title}</h3>
+            <p>{t.homeFeature1Text}</p>
+          </article>
+          <article class="feature">
+            <p class="feature__index">02</p>
+            <h3>{t.homeFeature2Title}</h3>
+            <p>{t.homeFeature2Text}</p>
+          </article>
+          <article class="feature">
+            <p class="feature__index">03</p>
+            <h3>{t.homeFeature3Title}</h3>
+            <p>{t.homeFeature3Text}</p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    {showAiNote ? (
+      <section class="ai-home" aria-labelledby="ai-home-title">
+        <div class="wrap ai-home__grid">
+          <div>
+            <p class="section-kicker">{t.aiLabel}</p>
+            <h2 id="ai-home-title">{t.aiHomeTitle}</h2>
+            <p>{t.aiHomeText}</p>
+            <div class="ai-home__cta">
+              <Button href="/read/nestle1904/Matthew/1" variant="inverse">
+                {t.aiHomeCta}
+                <Icon name="arrow-right" size={16} />
+              </Button>
+            </div>
+          </div>
+          <ul class="ai-home__modes">
+            <li>
+              <span class="ai-home__mode-icon">
+                <Icon name="scan-text" size={16} />
+              </span>
+              <div class="ai-home__mode-copy">
+                <strong>Resumen</strong>
+                <span class="ai-home__mode-hint">
+                  Síntesis del pasaje, puntos clave y contexto literario.
+                </span>
+              </div>
+            </li>
+            <li>
+              <span class="ai-home__mode-icon">
+                <Icon name="pen-line" size={16} />
+              </span>
+              <div class="ai-home__mode-copy">
+                <strong>Explicación</strong>
+                <span class="ai-home__mode-hint">
+                  Sentido del texto por unidades literarias, con ambigüedades y
+                  preguntas de estudio.
+                </span>
+              </div>
+            </li>
+            <li>
+              <span class="ai-home__mode-icon">
+                <Icon name="layers" size={16} />
+              </span>
+              <div class="ai-home__mode-copy">
+                <strong>Gramática</strong>
+                <span class="ai-home__mode-hint">
+                  Oraciones, cláusulas y frases, con la morfología relevante.
+                </span>
+              </div>
+            </li>
+          </ul>
+        </div>
       </section>
-    </div>
+    ) : null}
   </main>
 </BaseLayout>

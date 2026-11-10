@@ -1,9 +1,19 @@
 node_modules
 dist
+dist-static
 .astro
 data/corpora
 data/lexicon
+data/metadata/corpora.json
+data/cache
 playwright-report
 test-results
 .playwright-mcp
 pnpm-lock.yaml
+
+# Vendored agent skills
+.agents/
+.codex/
+.github/agents/
+.github/hooks/
+.github/skills/

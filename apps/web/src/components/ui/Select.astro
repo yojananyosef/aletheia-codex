@@ -1,0 +1,28 @@
+---
+import { cn } from "../../lib/cn";
+import Icon from "./Icon.astro";
+
+interface Props {
+  class?: string;
+  [key: string]: unknown;
+}
+
+const { class: className, ...rest } = Astro.props;
+---
+
+<div class="relative">
+  <select
+    class={cn(
+      "flex h-11 w-full appearance-none rounded-md border border-input bg-card px-3 py-2 pr-9 text-sm text-foreground shadow-[inset_0_1px_0_rgba(0,0,0,0.02)] transition-colors focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/20 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-2 aria-invalid:ring-destructive/15",
+      className,
+    )}
+    {...rest}
+  >
+    <slot />
+  </select>
+  <Icon
+    name="chevron-down"
+    size={16}
+    class="pointer-events-none absolute top-1/2 right-3 -translate-y-1/2 text-muted-foreground"
+  />
+</div>

@@ -28,14 +28,45 @@ html.static-reading:not(.show-gloss) .grammar-words--gloss .word {
   margin: 0 0.55em;
 }
 
-html.static-reading:not(.show-gloss) .verse__text--gloss .word__summary,
-html.static-reading:not(.show-gloss) .grammar-words--gloss .word__summary {
+html.static-reading:not(.show-gloss) .verse__text--gloss .word__trigger,
+html.static-reading:not(.show-gloss) .grammar-words--gloss .word__trigger {
   margin: 0 -0.55em;
   padding: 0.06em 0.55em;
 }
 
 html.static-reading.show-grammar .verses {
   display: none;
+}
+
+/*
+ * Panels are loaded on demand in the static snapshot. Keep the single-column
+ * reading layout and hide the empty inspector; the card follows the word
+ * instead of docking in the (absent) apparatus rail.
+ */
+html.static-reading .reading-layout {
+  display: block;
+}
+
+html.static-reading .word-inspector {
+  display: none;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  html.static-reading .word:hover > .word__panel,
+  html.static-reading .word:has(> .word__trigger:focus-visible) > .word__panel,
+  html.static-reading .word:has(> .word__panel:focus-visible) > .word__panel {
+    position-anchor: var(--word-anchor);
+    position: fixed;
+    top: calc(anchor(below) + 0.35rem);
+    right: auto;
+    bottom: auto;
+    left: clamp(1rem, calc(anchor(center) - 9.5rem), calc(100vw - 20rem));
+    width: 19rem;
+    max-width: min(80vw, 19rem);
+    max-height: min(40vh, 26rem);
+    transform: none;
+    position-try-fallbacks: --word-panel-above;
+  }
 }
 
 .static-loading {
@@ -48,6 +79,33 @@ html.static-reading.show-grammar .verses {
   color: var(--muted);
   font-family: var(--font-ui);
   font-size: 0.8rem;
+}
+
+.static-loading::before,
+.word__panel--loading::before {
+  display: inline-block;
+  width: 0.85rem;
+  height: 0.85rem;
+  margin-right: 0.45rem;
+  border: 2px solid color-mix(in srgb, currentColor 22%, transparent);
+  border-top-color: currentColor;
+  border-radius: 50%;
+  content: "";
+  vertical-align: -0.12em;
+  animation: static-spin 0.7s linear infinite;
+}
+
+@keyframes static-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .static-loading::before,
+  .word__panel--loading::before {
+    animation: none;
+  }
 }
 
 .grammar-slot {

@@ -1,0 +1,31 @@
+---
+import { cn } from "../../lib/cn";
+
+type Variant = "default" | "secondary" | "outline" | "edition";
+
+interface Props {
+  variant?: Variant;
+  class?: string;
+  [key: string]: unknown;
+}
+
+const { variant = "default", class: className, ...rest } = Astro.props;
+
+const variants: Record<Variant, string> = {
+  default: "border-transparent bg-primary/10 text-primary",
+  secondary: "border-transparent bg-secondary text-secondary-foreground",
+  outline: "border-border bg-transparent text-muted-foreground",
+  edition:
+    "border-transparent bg-[var(--edition-soft,var(--secondary))] text-[var(--edition-color,var(--primary))]",
+};
+
+const classes = cn(
+  "inline-flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-[0.68rem] font-medium tracking-[0.015em]",
+  variants[variant],
+  className,
+);
+---
+
+<span class={classes} {...rest}>
+  <slot />
+</span>

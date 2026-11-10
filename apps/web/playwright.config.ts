@@ -29,7 +29,15 @@ export default defineConfig({
     url: `http://127.0.0.1:${port}/`,
     reuseExistingServer: false,
     timeout: 180_000,
-    env: { HOST: "127.0.0.1", PORT: String(port) },
+    env: {
+      HOST: "127.0.0.1",
+      PORT: String(port),
+      // Keep the AI feature deterministic in tests: it must stay hidden and
+      // the explain route must answer 404 even if the developer has a key in
+      // the shell environment.
+      AI_ENABLED: "0",
+      OPENROUTER_API_KEY: "",
+    },
     stdout: "ignore",
     stderr: "pipe",
   },

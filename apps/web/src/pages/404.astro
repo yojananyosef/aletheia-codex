@@ -15,9 +15,15 @@ Astro.response.statusText = "No encontrado";
       <p class="eyebrow">404</p>
       <h1>{t.notFoundTitle}</h1>
       <p class="not-found__text">{t.notFoundText}</p>
-      <a class="button button--primary" href="/">
-        {t.backToSelection}
-      </a>
+      <div class="not-found__actions">
+        <a class="button button--primary" href="/">
+          Volver a la selección
+        </a>
+        <a class="not-found__link" href="/#ediciones">
+          Explorar las ediciones
+        </a>
+      </div>
+      <p class="not-found__note">ETCBC4 · Nestlé 1904 · Vulgata</p>
     </div>
   </main>
 </BaseLayout>

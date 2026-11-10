@@ -1,0 +1,63 @@
+name: Comprobar
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 12.18.0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 26
+          cache: pnpm
+
+      - name: Instalar dependencias
+        run: pnpm install --frozen-lockfile
+
+      - name: Restaurar corpus
+        uses: actions/cache@v4
+        with:
+          path: data/corpora
+          key: corpora-${{ hashFiles('data/metadata/corpora.json') }}
+
+      - name: Descargar corpus
+        run: pnpm data:sync
+
+      - name: Comprobar tipos
+        run: pnpm check
+
+      - name: Pruebas unitarias
+        run: pnpm test
+
+      - name: Lint
+        run: pnpm lint
+
+      - name: Comprobar formato
+        run: pnpm format:check
+
+      - name: Compilar
+        run: pnpm build
+
+      - name: Instalar Chromium
+        run: pnpm exec playwright install --with-deps chromium
+
+      - name: Pruebas end-to-end
+        run: pnpm test:e2e

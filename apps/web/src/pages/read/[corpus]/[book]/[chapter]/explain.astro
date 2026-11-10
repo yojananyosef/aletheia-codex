@@ -1,0 +1,438 @@
+---
+import { NotFoundError } from "@bibleol/contracts";
+import ExplainForm from "../../../../../features/ai/ExplainForm.astro";
+import BaseLayout from "../../../../../layouts/BaseLayout.astro";
+import Alert from "../../../../../components/ui/Alert.astro";
+import Button from "../../../../../components/ui/Button.astro";
+import Icon from "../../../../../components/ui/Icon.astro";
+import Skeleton from "../../../../../components/ui/Skeleton.astro";
+import Spinner from "../../../../../components/ui/Spinner.astro";
+import { t } from "../../../../../i18n";
+import {
+  AiBusyError,
+  AiDisabledError,
+  AiError,
+  AiNotConfiguredError,
+  AiPassageTooLargeError,
+  AiPromptTooLargeError,
+  AiProviderError,
+  AiRateLimitError,
+  AiStorageError,
+  aiAvailable,
+  clientIdentifier,
+  explainPassage,
+  getAiConfig,
+  parseAiMode,
+  type AiResult,
+} from "../../../../../lib/ai";
+import { modeCopy } from "../../../../../lib/ai/labels";
+import { bookName } from "../../../../../lib/book-names";
+import { getReader } from "../../../../../lib/reader";
+import { chapterUrl, explainUrl } from "../../../../../lib/urls";
+import { parseVerseRange } from "../../../../../lib/verse-range";
+
+interface Failure {
+  title: string;
+  message: string;
+  status: number;
+  retryAfter: number | null;
+}
+
+const corpusId = Astro.params.corpus;
+const bookId = Astro.params.book;
+const chapterParam = Astro.params.chapter;
+
+if (
+  process.env.STATIC_EXPORT === "1" ||
+  !aiAvailable() ||
+  !corpusId ||
+  !bookId ||
+  !chapterParam ||
+  !/^\d+$/.test(chapterParam)
+) {
+  return Astro.rewrite("/404");
+}
+
+const chapterNumber = Number(chapterParam);
+const reader = getReader();
+
+let data: ReturnType<typeof reader.getChapter>;
+try {
+  data = reader.getChapter(corpusId, bookId, chapterNumber);
+} catch (error) {
+  if (error instanceof NotFoundError) {
+    return Astro.rewrite("/404");
+  }
+  throw error;
+}
+
+const { corpus, book, verses: allVerses } = data;
+const lastVerse = allVerses.at(-1)?.number ?? 1;
+const parsedRange = parseVerseRange(Astro.url.searchParams, lastVerse);
+const mode = parseAiMode(Astro.url.searchParams.get("mode"));
+const generate = Astro.url.searchParams.get("generate") === "1";
+const crossSite = Astro.request.headers.get("sec-fetch-site") === "cross-site";
+const config = getAiConfig();
+
+const viewOptions = {
+  transliteration: Astro.url.searchParams.get("translit") === "1",
+  grammar: Astro.url.searchParams.get("grammar") === "1",
+  gloss: Astro.url.searchParams.get("gloss") === "1",
+  verseRange: parsedRange,
+};
+
+const backHref = chapterUrl(corpus.id, book.id, chapterNumber, viewOptions);
+const changeModeHref = explainUrl(corpus.id, book.id, chapterNumber, {
+  ...viewOptions,
+  mode,
+});
+const retryHref = explainUrl(corpus.id, book.id, chapterNumber, {
+  ...viewOptions,
+  mode,
+  generate: true,
+});
+
+const chapterReference = `${bookName(book.id)} ${chapterNumber}`;
+const rangeReference = parsedRange
+  ? parsedRange.from === parsedRange.to
+    ? String(parsedRange.from)
+    : `${parsedRange.from}–${parsedRange.to}`
+  : null;
+const reference = rangeReference
+  ? `${chapterReference}:${rangeReference}`
+  : chapterReference;
+
+const dateFormatter = new Intl.DateTimeFormat("es-ES", {
+  dateStyle: "medium",
+  timeStyle: "short",
+  timeZone: "UTC",
+});
+const formatDate = (value: number): string =>
+  `${dateFormatter.format(new Date(value))} UTC`;
+
+const quotaText = t.aiQuotaText
+  .replace("{daily}", String(config.perUserDaily))
+  .replace("{burst}", String(config.perUserBurst));
+const maxVersesText = t.aiMaxVersesHint.replace(
+  "{max}",
+  String(config.maxVerses),
+);
+
+let result: AiResult | null = null;
+let failure: Failure | null = null;
+
+if (generate && crossSite) {
+  Astro.response.status = 403;
+  failure = {
+    title: t.aiBlockedTitle,
+    message: t.aiBlockedText,
+    status: 403,
+    retryAfter: null,
+  };
+} else if (generate) {
+  try {
+    result = await explainPassage({
+      corpusId: corpus.id,
+      bookId: book.id,
+      chapter: chapterNumber,
+      from: parsedRange?.from ?? null,
+      to: parsedRange?.to ?? null,
+      mode,
+      clientAddress: clientIdentifier(
+        Astro.request,
+        Astro.clientAddress,
+        config,
+      ),
+    });
+  } catch (error) {
+    if (error instanceof NotFoundError) {
+      return Astro.rewrite("/404");
+    }
+    if (error instanceof AiRateLimitError) {
+      const message =
+        error.reason === "user-daily"
+          ? t.aiRateLimitDaily
+          : error.reason === "global-daily"
+            ? t.aiRateLimitGlobal
+            : t.aiRateLimitBurst;
+      Astro.response.status = 429;
+      Astro.response.headers.set(
+        "Retry-After",
+        String(error.retryAfterSeconds),
+      );
+      failure = {
+        title: t.aiRateLimitTitle,
+        message,
+        status: 429,
+        retryAfter: error.retryAfterSeconds,
+      };
+    } else if (error instanceof AiPassageTooLargeError) {
+      Astro.response.status = 413;
+      failure = {
+        title: t.aiTooLargeTitle,
+        message: t.aiTooLargeText.replace("{max}", String(error.maxVerses)),
+        status: 413,
+        retryAfter: null,
+      };
+    } else if (error instanceof AiPromptTooLargeError) {
+      Astro.response.status = 413;
+      failure = {
+        title: t.aiTooLargeTitle,
+        message: t.aiPromptTooLargeText,
+        status: 413,
+        retryAfter: null,
+      };
+    } else if (error instanceof AiBusyError) {
+      Astro.response.status = 503;
+      Astro.response.headers.set(
+        "Retry-After",
+        String(error.retryAfterSeconds),
+      );
+      failure = {
+        title: t.aiBusyTitle,
+        message: t.aiBusyText,
+        status: 503,
+        retryAfter: error.retryAfterSeconds,
+      };
+    } else if (error instanceof AiProviderError) {
+      const rateLimited = error.status === 429;
+      Astro.response.status = rateLimited ? 503 : 502;
+      if (error.retryAfterSeconds) {
+        Astro.response.headers.set(
+          "Retry-After",
+          String(error.retryAfterSeconds),
+        );
+      }
+      console.error(
+        `[ai] fallo en ${corpus.id}/${book.id}/${chapterNumber}:${mode}: ${error.detail}`,
+      );
+      failure = {
+        title: rateLimited ? t.aiBusyTitle : t.aiErrorTitle,
+        message: rateLimited ? t.aiBusyText : t.aiErrorText,
+        status: rateLimited ? 503 : 502,
+        retryAfter: error.retryAfterSeconds,
+      };
+    } else if (
+      error instanceof AiDisabledError ||
+      error instanceof AiNotConfiguredError
+    ) {
+      Astro.response.status = 503;
+      console.error(
+        `[ai] asistente no disponible en ${corpus.id}/${book.id}/${chapterNumber}: ${error.message}`,
+      );
+      failure = {
+        title: t.aiUnavailableTitle,
+        message: t.aiUnavailableText,
+        status: 503,
+        retryAfter: null,
+      };
+    } else if (error instanceof AiStorageError) {
+      Astro.response.status = 503;
+      console.error(
+        `[ai] almacén no disponible en ${corpus.id}/${book.id}/${chapterNumber}: ${error.detail}`,
+      );
+      failure = {
+        title: t.aiUnavailableTitle,
+        message: t.aiUnavailableText,
+        status: 503,
+        retryAfter: null,
+      };
+    } else if (error instanceof AiError) {
+      Astro.response.status = 500;
+      console.error(`[ai] error interno: ${error.message}`);
+      failure = {
+        title: t.aiErrorTitle,
+        message: t.aiErrorText,
+        status: 500,
+        retryAfter: null,
+      };
+    } else {
+      throw error;
+    }
+  }
+}
+
+Astro.response.headers.set("Cache-Control", "no-store");
+Astro.response.headers.set("X-Robots-Tag", "noindex, nofollow");
+
+const pageTitle = `${reference} · ${t.aiTitle} — ${t.appName}`;
+const resultReference = result
+  ? result.from === result.to
+    ? `${chapterReference}:${result.from}`
+    : `${chapterReference}:${result.from}–${result.to}`
+  : reference;
+---
+
+<BaseLayout
+  title={pageTitle}
+  description={`${t.aiTitle}: ${reference}, ${corpus.title}.`}
+  robots="noindex, nofollow"
+>
+  <main id="main" class="page ai-page">
+    <div class="wrap ai-wrap">
+      <div class="ai-busy" data-ai-busy hidden role="status" aria-live="polite">
+        <Spinner class="ai-busy__spinner" size={18} />
+        <div class="ai-busy__copy">
+          <p class="ai-busy__title">{t.aiLoadingTitle}</p>
+          <p class="ai-busy__hint">{t.aiWaitHint}</p>
+          <div class="ai-busy__skeleton" aria-hidden="true">
+            <Skeleton class="h-1.5 w-3/4 bg-white/15" />
+            <Skeleton class="h-1.5 w-full bg-white/15" />
+            <Skeleton class="h-1.5 w-5/6 bg-white/15" />
+          </div>
+        </div>
+      </div>
+
+      <a class="ai-back" href={backHref}>
+        <Icon name="arrow-left" size={15} />
+        {t.aiBackToChapter}
+      </a>
+
+      <header class="ai-header">
+        <p class="eyebrow">{t.aiLabel}</p>
+        <h1>{resultReference}</h1>
+        <p class="ai-header__intro">{result ? t.aiResultIntro : t.aiIntro}</p>
+      </header>
+
+      {failure ? (
+        <Alert variant="destructive" class="ai-notice">
+          <div>
+            <h2>{failure.title}</h2>
+            <p>{failure.message}</p>
+          </div>
+        </Alert>
+      ) : null}
+
+      {result ? (
+        <article
+          class="ai-answer"
+          aria-labelledby="ai-answer-title"
+          data-ai-result={result.cached ? "cached" : "generated"}
+        >
+          <header class="ai-answer__header">
+            <h2 id="ai-answer-title">{t.aiResultTitle}</h2>
+            <p class="ai-answer__meta">
+              <span>{modeCopy(result.mode).label}</span>
+              <span>
+                {result.cached
+                  ? t.aiCached
+                  : `${t.aiGenerated} ${formatDate(result.createdAt)}`}
+              </span>
+            </p>
+          </header>
+          <div class="ai-answer__body">{result.text}</div>
+          {result.remaining !== null ? (
+            <p class="ai-answer__quota">
+              {t.aiRemainingLabel}: {result.remaining}
+            </p>
+          ) : null}
+        </article>
+      ) : null}
+
+      {result ? (
+        <div class="ai-actions">
+          <Button href={backHref}>
+            <Icon name="arrow-left" size={15} />
+            {t.aiBackToChapter}
+          </Button>
+          <Button href={changeModeHref} variant="outline">
+            {t.aiNewRequest}
+          </Button>
+        </div>
+      ) : null}
+
+      {failure ? (
+        <div class="ai-actions">
+          {failure.status === 502 ||
+          failure.status === 503 ||
+          failure.status === 500 ? (
+            <Button href={retryHref} data-ai-generate>
+              <Icon name="rotate-ccw" size={15} />
+              {t.aiRetry}
+            </Button>
+          ) : null}
+          <Button href={backHref} variant="outline">
+            {t.aiBackToChapter}
+          </Button>
+        </div>
+      ) : null}
+
+      {!result ? (
+        <>
+          <ExplainForm
+            corpus={corpus}
+            book={book}
+            chapter={chapterNumber}
+            verseRange={parsedRange}
+            lastVerse={lastVerse}
+            mode={mode}
+            showTransliteration={viewOptions.transliteration}
+            showGrammar={viewOptions.grammar}
+            showGloss={viewOptions.gloss}
+            maxVerses={config.maxVerses}
+          />
+
+          <aside class="ai-info" aria-label={t.aiTitle}>
+            <div class="ai-info__block">
+              <h2>{t.aiQuotaTitle}</h2>
+              <p>{quotaText}</p>
+            </div>
+            <div class="ai-info__block">
+              <h2>{t.aiPrivacyTitle}</h2>
+              <p>{t.aiPrivacyText}</p>
+            </div>
+            <p class="ai-info__footnote">
+              {maxVersesText} {t.aiDisclaimer}
+            </p>
+          </aside>
+        </>
+      ) : (
+        <p class="ai-disclaimer">{t.aiDisclaimer}</p>
+      )}
+    </div>
+
+    <script is:inline>
+      (() => {
+        const busy = document.querySelector("[data-ai-busy]");
+        if (!busy) return;
+
+        const form = document.querySelector(".ai-form");
+        const submit = form?.querySelector('button[type="submit"]');
+        const label = submit?.querySelector("[data-ai-submit-label]");
+        const originalLabel = label?.textContent ?? "";
+        const loadingLabel =
+          label?.getAttribute("data-loading-label") ?? originalLabel;
+
+        function setBusy(active) {
+          busy.hidden = !active;
+          if (!submit) return;
+          submit.disabled = active;
+          submit.toggleAttribute("data-loading", active);
+          submit.setAttribute("aria-busy", String(active));
+          if (label) {
+            label.textContent = active ? loadingLabel : originalLabel;
+          }
+        }
+
+        form?.addEventListener("submit", () => setBusy(true));
+
+        for (const link of document.querySelectorAll("[data-ai-generate]")) {
+          link.addEventListener("click", (event) => {
+            if (
+              event.metaKey ||
+              event.ctrlKey ||
+              event.shiftKey ||
+              event.altKey ||
+              event.button !== 0
+            ) {
+              return;
+            }
+            setBusy(true);
+          });
+        }
+
+        window.addEventListener("pageshow", () => setBusy(false));
+      })();
+    </script>
+  </main>
+</BaseLayout>

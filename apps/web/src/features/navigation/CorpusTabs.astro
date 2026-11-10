@@ -21,6 +21,7 @@ const { items, activeId } = Astro.props;
     <a
       class="corpus-tab"
       href={item.href}
+      data-corpus={item.id}
       aria-current={item.id === activeId ? "page" : undefined}
     >
       <span class="corpus-tab__title">{item.title}</span>

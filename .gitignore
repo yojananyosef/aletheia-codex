@@ -4,6 +4,7 @@ node_modules/
 
 # Build output
 .astro/
+.vercel/
 dist/
 dist-static/
 dist-static-*/
@@ -16,6 +17,7 @@ data/corpora/*
 data/lexicon/*
 !data/lexicon/.gitkeep
 !data/lexicon/*.json
+data/cache/
 .env
 .env.*
 !.env.example
@@ -30,3 +32,13 @@ test-results/
 .DS_Store
 .idea/
 .vscode/
+.vercel
+.env*
+
+# Local agent tooling
+.agents/
+.codex/
+.github/agents/
+.github/hooks/
+.github/skills/
+skills-lock.json

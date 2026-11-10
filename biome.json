@@ -11,13 +11,18 @@
       "**/*.jsx",
       "**/*.tsx",
       "**/*.astro",
-      "!**/.astro/**",
-      "!**/dist/**",
-      "!**/node_modules/**",
-      "!data/corpora/**",
-      "!data/lexicon/**",
-      "!playwright-report/**",
-      "!test-results/**"
+      "!**/.astro",
+      "!**/.agents",
+      "!**/.codex",
+      "!**/.github/agents",
+      "!**/.github/hooks",
+      "!**/.github/skills",
+      "!**/dist",
+      "!**/node_modules",
+      "!data/corpora",
+      "!data/lexicon",
+      "!playwright-report",
+      "!test-results"
     ]
   },
   "formatter": {

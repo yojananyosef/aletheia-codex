@@ -3,8 +3,13 @@
 Aplicación de lectura bíblica en lenguas originales. El texto se sirve como HTML
 desde Astro SSR y se lee directamente de los corpus Emdros mediante SQLite de
 solo lectura. La interfaz está en español y funciona sin JavaScript en la
-versión SSR. La edición publicada en GitHub Pages es una instantánea estática
-que carga los paneles y la gramática bajo demanda con JavaScript.
+versión SSR. El despliegue principal es un contenedor SSR en Vercel que incluye
+los corpus; la exportación estática queda como respaldo.
+
+La versión SSR incluye además un asistente de estudio con IA, opcional y
+desactivado por defecto, que genera resúmenes, explicaciones y análisis
+gramaticales a partir del mismo texto y de la morfología del corpus. La
+exportación estática no incluye esta función porque no tiene backend.
 
 Este primer corte cubre la lectura de corpus, libros y capítulos: hebreo con
 transliteración, griego y latín, con la forma en el texto, el lexema, la
@@ -44,6 +49,7 @@ necesidad de MySQL.
 
 - `/`: selección de corpus, libro y capítulo.
 - `/read/:corpus/:book/:chapter`: lectura del capítulo.
+- `/read/:corpus/:book/:chapter/explain`: asistente de estudio con IA (solo SSR).
 - `/read?corpus=...&book=...&chapter=...`: redirección a la URL canónica.
 - `?translit=1`: muestra la transliteración cuando el corpus la ofrece.
 - `?grammar=1`: muestra la estructura gramatical por versículo.
@@ -62,11 +68,73 @@ completo; dejar los dos campos vacíos también muestra todo el capítulo.
 Las URL de lectura conservan `translit=1`, `grammar=1`, `gloss=1`, `from` y
 `to` al cambiar de vista.
 
-## Publicación en GitHub Pages
+## Despliegue en Vercel
 
-El flujo `.github/workflows/pages.yml` compila y publica la aplicación en
-<https://yojananyosef.github.io/bibleol-astro/> al hacer push a `main` (o al
-ejecutarlo manualmente). Como Pages solo sirve archivos estáticos, el flujo:
+Producción: <https://bibleol-astro.vercel.app>
+
+El despliegue principal es un contenedor SSR en Vercel. El `Dockerfile` de la
+raíz:
+
+1. instala pnpm y las dependencias,
+2. descarga los corpus con `pnpm data:sync`,
+3. compila Astro con el adaptador Node,
+4. poda las dependencias de desarrollo,
+5. arranca `apps/web/dist/server/entry.mjs` en el puerto 80.
+
+`vercel.json` fija el framework `container` y la región `gru1`. El CLI crea o
+vincula el proyecto y despliega:
+
+```sh
+vercel link --yes --project bibleol-astro
+pnpm deploy:vercel
+```
+
+`pnpm deploy:vercel` copia el proyecto a un directorio temporal sin `.git` y
+lanza el despliegue desde allí. Así Vercel no aplica la comprobación de autor
+del commit local, que puede bloquear los despliegues por CLI aunque el proyecto
+esté vinculado correctamente.
+
+Para activar el asistente de IA hay que añadir la clave como secreto y volver a
+desplegar:
+
+```sh
+printf '%s' 'sk-or-v1-...' | vercel env add OPENROUTER_API_KEY --environment production --sensitive --yes
+pnpm deploy:vercel
+```
+
+Variables recomendadas en Vercel (Production):
+
+- `OPENROUTER_API_KEY`: activa el asistente de IA.
+- `AI_ENABLED=1`.
+- `AI_SITE_URL=https://bibleol-astro.vercel.app`.
+- `AI_IP_SALT=<secreto-largo>`.
+- `AI_TRUST_PROXY=1`: Vercel reescribe `X-Forwarded-For`.
+- `VERCEL_SUPPORT_LARGE_FUNCTIONS=1`: necesario si la imagen supera el límite
+  estándar de funciones.
+- `BIBLEOL_AI_DB=/tmp/ai.sqlite`: respaldo local si no hay Redis.
+- `KV_REST_API_URL` y `KV_REST_API_TOKEN`: los añade la integración de Upstash
+  Redis y permiten compartir caché y cuotas entre instancias.
+
+La integración de Redis se puede provisionar desde el CLI:
+
+```sh
+vercel integration add upstash/upstash-kv --name bibleol-ai -e production -e preview
+```
+
+El contenedor incluye los tres corpus, por lo que no depende de un hosting
+estático ni de un servidor aparte. La primera compilación descarga unos 240 MB
+de corpus y puede tardar varios minutos. En Vercel, Redis guarda el caché y los
+contadores compartidos; sin Redis, la app cae a SQLite en `/tmp` y cada
+instancia mantiene su propio estado.
+
+Las páginas de lectura y la portada se cachean en el CDN de Vercel
+(`s-maxage=3600`, `stale-while-revalidate=86400`). La página del asistente usa
+`Cache-Control: no-store` para no reutilizar respuestas generadas.
+
+### Exportación estática opcional
+
+La instantánea estática sigue disponible como respaldo, pero ya no es el
+despliegue principal. El script:
 
 1. descarga los corpus,
 2. compila la aplicación SSR,
@@ -74,31 +142,121 @@ ejecutarlo manualmente). Como Pages solo sirve archivos estáticos, el flujo:
 4. separa los paneles de palabra y la vista gramatical en archivos `.gz` que se
    cargan bajo demanda.
 
-La instantánea final ocupa unos 263 MiB, por debajo del límite de 1 GB de Pages.
-El HTML contiene los versículos y las glosas; los paneles, la gramática, los
-cambios de vista y el filtro de versículos necesitan JavaScript en esta
-edición. El filtro se aplica sobre el HTML ya exportado y sobre el fragmento
-gramatical cuando se carga, sin generar una página por cada rango posible.
+La instantánea final ocupa unos 263 MiB. El HTML contiene los versículos y las
+glosas; los paneles, la gramática, los cambios de vista y el filtro de
+versículos necesitan JavaScript en esta edición. El filtro se aplica sobre el
+HTML ya exportado y sobre el fragmento gramatical cuando se carga, sin generar
+una página por cada rango posible. No incluye el asistente de IA.
 
 Para generarla localmente:
 
 ```sh
 pnpm build
-node scripts/export-static.mjs --start-server --base /bibleol-astro
+node scripts/export-static.mjs --start-server
 ```
 
 El resultado queda en `dist-static/`. En máquinas con varios núcleos conviene
 repartir las peticiones entre varios servidores SSR (`--servers 2`) y, para
 repetir una exportación interrumpida sin rehacer todo el trabajo, usar
-`--resume`. La publicación en GitHub Pages guarda `dist-static` en la caché de
-Actions y solo vuelve a generar las páginas cuando cambia el marcado o los
-datos; los cambios puramente visuales reutilizan el HTML y sustituyen el CSS
-estable `_astro/app.css`.
+`--resume`. Los cambios puramente visuales reutilizan el HTML y sustituyen el
+CSS estable `_astro/app.css`.
 
 En la vista gramatical, cada nivel (frase, cláusula y oración) aparece con el
 color del proyecto original. Las palabras se agrupan bajo el objeto gramatical
 más profundo que las contiene y siguen siendo desplegables para consultar todos
 sus datos.
+
+## Asistente de IA (opcional)
+
+La versión SSR puede generar resúmenes, explicaciones y análisis gramaticales
+del pasaje visible. La función está desactivada por defecto y solo aparece
+cuando el servidor tiene `OPENROUTER_API_KEY` (o `AI_ENABLED=1` y una clave).
+La exportación estática no la incluye: el panel se oculta con
+`STATIC_EXPORT=1` y la ruta `/explain` no se exporta.
+
+### Configuración
+
+1. Defina `OPENROUTER_API_KEY` en el entorno del servidor (o en el `.env` que
+   cargue su plataforma). `.env.example` documenta todas las variables.
+2. Ajuste `AI_MODEL` y `AI_FALLBACK_MODELS` si quiere otros modelos.
+3. Para un despliegue público, defina `AI_SITE_URL`, `AI_IP_SALT` y, si hay un
+   proxy inverso de confianza que reescribe `X-Forwarded-For`, active
+   `AI_TRUST_PROXY=1`. No lo active si el servidor recibe tráfico directo.
+4. Arranque `pnpm dev` o `pnpm build && pnpm start`.
+
+Valores por defecto:
+
+| Variable             | Valor                                    |
+| -------------------- | ---------------------------------------- |
+| `AI_MODEL`           | `google/gemma-4-31b-it:free`             |
+| `AI_FALLBACK_MODELS` | `nvidia/nemotron-3-ultra-550b-a55b:free` |
+| `AI_PER_USER_DAILY`  | 15 análisis por IP y día                 |
+| `AI_PER_USER_BURST`  | 3 análisis por IP y minuto               |
+| `AI_GLOBAL_DAILY`    | 40 análisis por día en todo el servidor  |
+| `AI_MAX_VERSES`      | 80 versículos por análisis               |
+| `AI_MAX_CONCURRENT`  | 3 peticiones simultáneas                 |
+| `AI_CACHE_TTL_DAYS`  | 30 días                                  |
+
+Use `AI_FALLBACK_MODELS=-` para desactivar el modelo de respaldo.
+
+### Modelos y límites de OpenRouter
+
+Los dos modelos gratuitos recomendados existen en OpenRouter y se comprobaron
+contra su catálogo:
+
+- `google/gemma-4-31b-it:free`: 262.144 tokens de contexto, gratuito y con
+  razonamiento. Es el modelo principal.
+- `nvidia/nemotron-3-ultra-550b-a55b:free`: 1.000.000 de tokens de contexto,
+  gratuito y solo texto. Es el respaldo.
+
+Los límites de la plataforma son independientes de los de BibleOL. Según la
+documentación de OpenRouter, los modelos `:free` permiten 20 solicitudes por
+minuto y:
+
+- 50 solicitudes por día si la cuenta ha comprado menos de 10 créditos;
+- 1.000 solicitudes por día si ha comprado al menos 10 créditos.
+
+Por eso `AI_GLOBAL_DAILY` vale 40 por defecto: deja margen bajo el límite diario
+de 50 del plan gratuito. Si su cuenta tiene el límite de 1.000, puede subirlo.
+Los límites por IP y el límite global se aplican en SQLite antes de llamar al
+proveedor. Una respuesta ya guardada en caché no consume cuota.
+
+También puede usar modelos de pago: el coste lo asume el operador. El caché
+exacto y los límites protegen la factura. `AI_REASONING=0` desactiva el
+razonamiento para responder antes y consumir menos tokens.
+
+### Funcionamiento
+
+- La generación no usa streaming: una petición no streaming, una respuesta
+  completa y renderizado como texto plano. La primera generación puede tardar
+  entre uno y dos minutos según el modelo; el mismo pasaje se sirve después
+  desde caché.
+- El máximo es un capítulo por petición. Con 80 versículos por defecto, los
+  capítulos largos (por ejemplo, Salmos 119) requieren elegir un rango.
+- El prompt incluye el texto original, la transliteración, el lexema, la
+  morfología, las glosas y la estructura gramatical del pasaje.
+- El caché es exacto por pasaje, rango, modo y modelo. El modelo de respaldo se
+  gestiona con el parámetro `models` de OpenRouter. En local se guarda en
+  SQLite; en Vercel se comparte por Redis si la integración está disponible.
+- La página de confirmación usa un formulario GET sin JavaScript. La generación
+  solo se ejecuta con `generate=1`, lo que evita llamadas accidentales desde
+  enlaces compartidos o rastreadores.
+- El texto del pasaje se envía a OpenRouter. No se envían datos de cuenta ni
+  datos personales. La IP solo se usa para el límite anónimo y se guarda como
+  hash SHA-256 con `AI_IP_SALT`; no se registra en los logs. El contenido
+  generado se guarda en SQLite local o en Redis (si está configurado) durante
+  `AI_CACHE_TTL_DAYS`.
+
+La ruta acepta `?mode=resumen|explicacion|gramatica`, `?from=`, `?to=` y
+`?generate=1`. Sin `generate=1` solo muestra el formulario y la información de
+uso.
+
+El estado de cuota y caché vive en SQLite local por defecto. Si existen
+`KV_REST_API_URL` y `KV_REST_API_TOKEN` (Upstash Redis), la aplicación usa Redis
+para compartir caché y contadores entre instancias. Sin Redis, cada proceso
+mantiene su propio contador y su propia caché; para cuotas globales exactas en
+varias réplicas conviene Redis o Postgres. La instancia necesita un directorio
+de datos escribible si usa SQLite.
 
 ## Scripts
 
@@ -108,9 +266,10 @@ sus datos.
 | `pnpm build`         | Comprobación de tipos y compilación de producción.      |
 | `pnpm start`         | Servidor de producción (requiere `pnpm build`).         |
 | `pnpm check`         | Comprobación de tipos de todos los paquetes.            |
-| `pnpm test`          | Pruebas de integración del lector de corpus.            |
+| `pnpm test`          | Pruebas del lector, la IA y sus límites (vitest).       |
 | `pnpm test:e2e`      | Pruebas end-to-end sin JavaScript sobre la compilación. |
-| `pnpm export:static` | Genera la instantánea estática para GitHub Pages.       |
+| `pnpm export:static` | Genera la instantánea estática opcional.                |
+| `pnpm deploy:vercel` | Despliega el contenedor SSR en Vercel.                  |
 | `pnpm data:sync`     | Descarga y verifica los corpus Emdros.                  |
 | `pnpm data:import`   | Regenera `data/metadata/corpora.json` desde el legacy.  |
 | `pnpm data:lexicons` | Regenera las glosas de `data/lexicon/` desde el legacy. |
@@ -139,13 +298,20 @@ ORM ni una capa de repositorios genérica.
 ## Pruebas
 
 `pnpm test` ejecuta las pruebas del paquete `@bibleol/corpus` contra los datos
-locales. Se omiten si los corpus no están descargados.
+locales y las pruebas unitarias de `apps/web` (limpieza de texto, prompt, caché,
+límites y URLs). Las pruebas del lector se omiten si los corpus no están
+descargados.
 
 `pnpm test:e2e` compila la aplicación, arranca el servidor de producción en el
 puerto 4323 y ejecuta Playwright con JavaScript desactivado en el navegador. Las
 pruebas cubren selección, rangos de versículos, lectura hebrea/griega/latina,
 transliteración, paneles de palabra con glosas, glosa bajo la palabra, vista
-gramatical, navegación, redirecciones, 404 y vista móvil.
+gramatical, navegación, redirecciones, 404 y vista móvil. También comprueban que
+sin clave de OpenRouter el panel de IA no aparece y `/explain` responde 404.
+
+El flujo `.github/workflows/ci.yml` ejecuta la comprobación de tipos, las
+pruebas unitarias, el lint, la compilación y las pruebas end-to-end en cada push
+a `main` y en cada pull request.
 
 Las pruebas usan Chromium. En macOS 12 el WebKit empaquetado por Playwright está
 congelado y no es compatible con la versión actual; en macOS 13 o superior se
@@ -158,6 +324,10 @@ PLAYWRIGHT_WEBKIT=1 pnpm test:e2e
 ## Estructura
 
 - `apps/web`: Astro SSR, rutas, componentes e i18n.
+- `apps/web/src/lib/ai`: configuración, prompt, OpenRouter, caché y límites.
+- `apps/web/src/features/ai`: panel del capítulo y formulario de generación.
+- `Dockerfile`, `vercel.json`: despliegue del contenedor SSR en Vercel.
+- `scripts/deploy-vercel.sh`: despliegue desde una copia sin metadatos de Git.
 - `packages/contracts`: tipos compartidos.
 - `packages/corpus`: catálogo y lector Emdros de solo lectura.
 - `apps/web/e2e`: pruebas end-to-end.
@@ -168,8 +338,11 @@ Los componentes viven junto a la funcionalidad que los usa
 
 ## Principios
 
-- La versión SSR funciona sin JavaScript; la instantánea de Pages usa
+- La versión SSR funciona sin JavaScript; la exportación estática usa
   JavaScript solo para los paneles, la gramática y los conmutadores de vista.
+- El asistente de IA es opcional y solo existe en el servidor. No se usa en la
+  instantánea estática y el texto se envía a OpenRouter únicamente cuando el
+  usuario confirma la generación.
 - Cero dependencias de navegador: sin framework cliente, CDN, fuentes externas
   ni librerías de iconos.
 - Fuentes locales (Ezra SIL, Gentium Plus, Galatia SIL y Doulos SIL).
