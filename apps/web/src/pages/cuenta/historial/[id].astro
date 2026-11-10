@@ -1,0 +1,135 @@
+---
+import Alert from "../../../components/ui/Alert.astro";
+import Button from "../../../components/ui/Button.astro";
+import CsrfInput from "../../../features/auth/CsrfInput.astro";
+import AccountShell from "../../../features/account/AccountShell.astro";
+import { t } from "../../../i18n";
+import BaseLayout from "../../../layouts/BaseLayout.astro";
+import {
+  createCsrfToken,
+  getAnalysis,
+  loginUrl,
+  type AnalysisRecord,
+} from "../../../lib/auth";
+import { modeCopy, modelLabel } from "../../../lib/ai/labels";
+import { formatDateTime } from "../../../lib/date-format";
+import { chapterUrl, explainUrl } from "../../../lib/urls";
+
+const user = Astro.locals.user;
+const id = Astro.params.id ?? "";
+
+if (!user) {
+  return Astro.redirect(
+    loginUrl(`/cuenta/historial/${encodeURIComponent(id)}`),
+    303,
+  );
+}
+
+if (
+  !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id)
+) {
+  return Astro.rewrite("/404");
+}
+
+const supabase = Astro.locals.supabase;
+let item: AnalysisRecord | null = null;
+let loadError = false;
+
+if (supabase) {
+  try {
+    item = await getAnalysis(supabase, user.id, id);
+  } catch (error) {
+    loadError = true;
+    console.error(
+      `[history] no se pudo leer el análisis ${id}: ${
+        error instanceof Error ? error.message : String(error)
+      }`,
+    );
+  }
+}
+
+if (!item && !loadError) {
+  return Astro.rewrite("/404");
+}
+
+const csrf = createCsrfToken();
+const email = user.email ?? "—";
+const reference = item?.reference ?? "";
+const versesLabel = item
+  ? item.from === item.to
+    ? `${t.verseShort} ${item.from}`
+    : `${t.versesShort} ${item.from}–${item.to}`
+  : "";
+const chapterHref = item
+  ? chapterUrl(item.corpusId, item.bookId, item.chapter)
+  : "/";
+const regenerateHref = item
+  ? explainUrl(item.corpusId, item.bookId, item.chapter, {
+      mode: item.mode,
+      verseRange: { from: item.from, to: item.to },
+      generate: true,
+    })
+  : "/";
+---
+
+<BaseLayout
+  title={`${reference || t.authAccountHistory} — ${t.appName}`}
+  description={t.authAccountHistoryIntro}
+  robots="noindex, nofollow"
+>
+  <AccountShell
+    title={reference || t.authAccountHistory}
+    intro={t.authAccountHistoryIntro}
+    active="history"
+    email={email}
+  >
+    {loadError ? (
+      <Alert variant="destructive" class="account-notice">
+        <p>{t.authGenericError}</p>
+      </Alert>
+    ) : item ? (
+      <>
+        <a class="account-back" href="/cuenta/historial">
+          ← {t.authBackToHistory}
+        </a>
+
+        <article class="history-detail">
+          <header class="history-detail__header">
+            <p class="history-detail__mode">{modeCopy(item.mode).label}</p>
+            <p class="history-detail__meta">
+              <time datetime={item.createdAt}>
+                {formatDateTime(item.createdAt)}
+              </time>
+              <span aria-hidden="true">·</span>
+              <span>{versesLabel}</span>
+              <span aria-hidden="true">·</span>
+              <span>{modelLabel(item.model)}</span>
+            </p>
+          </header>
+          <div class="history-detail__body">{item.text}</div>
+        </article>
+
+        <div class="account-actions">
+          <Button href={chapterHref} variant="outline">
+            {t.authViewChapter}
+          </Button>
+          <Button href={regenerateHref} variant="outline">
+            {t.authRegenerate}
+          </Button>
+        </div>
+
+        <div class="danger-zone">
+          <h2>{t.authDeleteAnalysis}</h2>
+          <p>{t.authDeleteAnalysisConfirm}</p>
+          <form action="/cuenta/historial/eliminar" method="post">
+            <CsrfInput token={csrf} />
+            <input type="hidden" name="id" value={item.id} />
+            <Button type="submit" variant="destructive" size="sm">
+              {t.authDeleteAnalysis}
+            </Button>
+          </form>
+        </div>
+      </>
+    ) : null}
+  </AccountShell>
+</BaseLayout>

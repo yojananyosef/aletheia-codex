@@ -12,6 +12,11 @@ import { t } from "../i18n";
     </div>
     <div class="site-footer__meta">
       <p>{t.footerVersionNote}</p>
+      {process.env.STATIC_EXPORT !== "1" ? (
+        <p>
+          <a href="/privacidad">{t.footerPrivacy}</a>
+        </p>
+      ) : null}
     </div>
   </div>
 </footer>

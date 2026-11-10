@@ -21,6 +21,8 @@
     "format:check": "prettier --check .",
     "test": "pnpm -r test",
     "test:e2e": "pnpm --filter @bibleol/web test:e2e",
+    "db:migrate": "node scripts/db-migrate.mjs",
+    "db:status": "node scripts/db-migrate.mjs --status",
     "data:import": "python3 scripts/import_legacy.py",
     "data:lexicons": "python3 scripts/import_lexicons.py",
     "data:sync": "python3 scripts/sync_corpora.py",
@@ -29,6 +31,8 @@
   "devDependencies": {
     "@biomejs/biome": "2.6.6",
     "@playwright/test": "1.65.0",
+    "@types/pg": "^8.23.1",
+    "pg": "^8.23.1",
     "prettier": "^3.9.10",
     "prettier-plugin-astro": "^1.1.2",
     "typescript": "7.0.2"

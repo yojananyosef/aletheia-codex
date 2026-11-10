@@ -1,0 +1,165 @@
+---
+import Alert from "../../components/ui/Alert.astro";
+import Button from "../../components/ui/Button.astro";
+import Field from "../../components/ui/Field.astro";
+import Input from "../../components/ui/Input.astro";
+import AccountShell from "../../features/account/AccountShell.astro";
+import CsrfInput from "../../features/auth/CsrfInput.astro";
+import { t } from "../../i18n";
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import {
+  clientIp,
+  consumeAuthRateLimit,
+  createCsrfToken,
+  createSupabaseAdminClient,
+  getAuthConfig,
+  isSameOriginRequest,
+  loginUrl,
+  readFormString,
+  readFormValue,
+  verifyFormCsrf,
+} from "../../lib/auth";
+
+const user = Astro.locals.user;
+if (!user) {
+  return Astro.redirect(loginUrl("/cuenta/eliminar"), 303);
+}
+
+const config = getAuthConfig();
+const admin = createSupabaseAdminClient();
+const csrf = createCsrfToken();
+const email = user.email ?? "—";
+
+let error: string | null = null;
+let retryAfter: number | null = null;
+
+if (Astro.request.method.toUpperCase() === "POST") {
+  const form = await Astro.request.formData();
+  const confirmation = readFormString(form, "confirmation", 40);
+  const password = readFormValue(form, "password", 200);
+
+  if (!isSameOriginRequest(Astro.request, Astro.url) || !verifyFormCsrf(form)) {
+    Astro.response.status = 403;
+    error = t.authGenericError;
+  } else if (!admin) {
+    Astro.response.status = 503;
+    error = t.authAccountDeleteUnavailable;
+  } else if (confirmation !== t.authAccountDeleteConfirmValue) {
+    Astro.response.status = 400;
+    error = t.authAccountDeleteMismatch;
+  } else if (!user.email || !password) {
+    Astro.response.status = 400;
+    error = t.authAccountPasswordWrong;
+  } else {
+    const limit = await consumeAuthRateLimit({
+      scope: "delete-user",
+      identifier: `${user.id}:${clientIp(Astro.request, Astro.clientAddress)}`,
+      limit: 5,
+      windowSeconds: 15 * 60,
+    });
+    if (!limit.allowed) {
+      Astro.response.status = 429;
+      retryAfter = limit.retryAfterSeconds;
+      Astro.response.headers.set("Retry-After", String(retryAfter));
+      error = t.authRateLimited;
+    } else {
+      const supabase = Astro.locals.supabase;
+      if (!supabase) {
+        Astro.response.status = 503;
+        error = t.authUnavailableText;
+      } else {
+        const { error: reauthError } = await supabase.auth.signInWithPassword({
+          email: user.email,
+          password,
+        });
+        if (reauthError) {
+          Astro.response.status = 400;
+          error = t.authAccountPasswordWrong;
+        } else {
+          const { error: deleteError } = await admin.auth.admin.deleteUser(
+            user.id,
+          );
+          if (deleteError) {
+            Astro.response.status = 500;
+            console.error(
+              `[auth] no se pudo eliminar la cuenta: ${deleteError.message}`,
+            );
+            error = t.authGenericError;
+          } else {
+            await supabase.auth.signOut({ scope: "local" }).catch(() => null);
+            return Astro.redirect("/entrar?cuenta=eliminada", 303);
+          }
+        }
+      }
+    }
+  }
+}
+---
+
+<BaseLayout
+  title={`${t.authAccountDeleteTitle} — ${t.appName}`}
+  description={t.authAccountDeleteIntro}
+  robots="noindex, nofollow"
+>
+  <AccountShell
+    title={t.authAccountDeleteTitle}
+    intro={t.authAccountDeleteIntro}
+    active="delete"
+    email={email}
+  >
+    {!admin ? (
+      <Alert variant="warning" class="account-notice">
+        <p>{t.authAccountDeleteUnavailable}</p>
+      </Alert>
+    ) : (
+      <>
+        {error ? (
+          <Alert variant="destructive" class="account-notice">
+            <p>{error}</p>
+          </Alert>
+        ) : null}
+        <div class="danger-zone">
+          <h2>{t.authAccountDangerZone}</h2>
+          <p>{t.authAccountDeleteWarning}</p>
+          <form
+            class="auth-form account-form"
+            action="/cuenta/eliminar"
+            method="post"
+          >
+            <CsrfInput token={csrf} />
+            <Field
+              label={t.authAccountDeleteConfirmLabel}
+              for="delete-confirmation"
+            >
+              <Input
+                id="delete-confirmation"
+                name="confirmation"
+                type="text"
+                autocomplete="off"
+                required
+                pattern={t.authAccountDeleteConfirmValue}
+                maxlength="40"
+              />
+            </Field>
+            <Field label={t.authPasswordLabel} for="delete-password">
+              <Input
+                id="delete-password"
+                name="password"
+                type="password"
+                autocomplete="current-password"
+                required
+                maxlength="200"
+              />
+            </Field>
+            <Button type="submit" variant="destructive">
+              {t.authAccountDeleteButton}
+            </Button>
+            {retryAfter ? (
+              <p class="auth-form__hint">{t.authRetryHint}</p>
+            ) : null}
+          </form>
+        </div>
+      </>
+    )}
+  </AccountShell>
+</BaseLayout>

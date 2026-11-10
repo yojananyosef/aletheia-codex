@@ -5,6 +5,7 @@ import type { AiBackend } from "./backend";
 import { AiStore, cacheKey, hashIdentifier } from "./cache";
 import { getAiConfig, type AiConfig } from "./config";
 import {
+  AiAuthRequiredError,
   AiBusyError,
   AiDisabledError,
   AiNotConfiguredError,
@@ -136,7 +137,10 @@ export interface ExplainPassageOptions {
   from: number | null;
   to: number | null;
   mode: AiMode;
-  clientAddress: string;
+  /** Authenticated Supabase user id. Required when `AI_REQUIRE_ACCOUNT` is on. */
+  userId?: string | null;
+  /** Anonymous fallback used only when account requirement is disabled. */
+  clientAddress?: string;
 }
 
 export async function explainPassage(
@@ -148,6 +152,9 @@ export async function explainPassage(
   }
   if (!config.apiKey) {
     throw new AiNotConfiguredError();
+  }
+  if (config.requireAccount && !options.userId) {
+    throw new AiAuthRequiredError();
   }
 
   const reader = getReader();
@@ -207,6 +214,7 @@ export async function explainPassage(
     return {
       text: cached.text,
       model: cached.model,
+      cacheKey: key,
       cached: true,
       createdAt: cached.createdAt,
       remaining: null,
@@ -218,7 +226,9 @@ export async function explainPassage(
     };
   }
 
-  const identifier = hashIdentifier(options.clientAddress, config.ipSalt);
+  const identifier = options.userId
+    ? `user:${options.userId}`
+    : hashIdentifier(options.clientAddress ?? "unknown", config.ipSalt);
   const release = acquireSlot(config.maxConcurrent);
   try {
     let decision: Awaited<ReturnType<AiBackend["consume"]>>;
@@ -281,6 +291,7 @@ export async function explainPassage(
       return {
         text,
         model: completion.model,
+        cacheKey: key,
         cached: false,
         createdAt,
         remaining: decision.reservation.remaining,

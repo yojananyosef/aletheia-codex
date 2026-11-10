@@ -1,0 +1,279 @@
+---
+import Alert from "../components/ui/Alert.astro";
+import Button from "../components/ui/Button.astro";
+import Field from "../components/ui/Field.astro";
+import Input from "../components/ui/Input.astro";
+import AuthShell from "../features/auth/AuthShell.astro";
+import CsrfInput from "../features/auth/CsrfInput.astro";
+import { t } from "../i18n";
+import BaseLayout from "../layouts/BaseLayout.astro";
+import {
+  clientIp,
+  consumeAuthRateLimit,
+  createCsrfToken,
+  createSupabaseAdminClient,
+  getAuthConfig,
+  isSameOriginRequest,
+  isValidEmail,
+  normalizeEmail,
+  passwordIssue,
+  readFormString,
+  readFormValue,
+  registerUrl,
+  safeNextPath,
+  verifyFormCsrf,
+} from "../lib/auth";
+
+const config = getAuthConfig();
+const nextPath = safeNextPath(Astro.url.searchParams.get("next"));
+const method = Astro.request.method.toUpperCase();
+const csrf = createCsrfToken();
+
+let error: string | null = null;
+let emailValue = "";
+let sent = false;
+let retryAfter: number | null = null;
+
+if (method === "GET" && Astro.locals.user) {
+  return Astro.redirect(nextPath, 303);
+}
+
+function redirectWithCreated(path: string): Response {
+  const target = new URL(path, "http://bibleol.local");
+  target.searchParams.set("created", "1");
+  return Astro.redirect(
+    `${target.pathname}${target.search}${target.hash}`,
+    303,
+  );
+}
+
+if (method === "POST") {
+  const form = await Astro.request.formData();
+  emailValue = normalizeEmail(readFormString(form, "email", 254));
+  const password = readFormValue(form, "password", 200);
+  const confirmation = readFormValue(form, "passwordConfirm", 200);
+  const postedNext = safeNextPath(readFormString(form, "next", 2_048));
+  const honeypot = readFormString(form, "website", 200);
+
+  if (honeypot) {
+    return Astro.redirect("/entrar", 303);
+  }
+
+  const issue = passwordIssue(password, config.passwordMinLength);
+  if (!isSameOriginRequest(Astro.request, Astro.url) || !verifyFormCsrf(form)) {
+    Astro.response.status = 403;
+    error = t.authGenericError;
+  } else if (!config.signupEnabled) {
+    Astro.response.status = 403;
+    error = t.authSignupDisabled;
+  } else if (!isValidEmail(emailValue)) {
+    Astro.response.status = 400;
+    error = t.authEmailInvalid;
+  } else if (issue === "short") {
+    Astro.response.status = 400;
+    error = t.authPasswordShort.replace(
+      "{min}",
+      String(config.passwordMinLength),
+    );
+  } else if (issue === "long") {
+    Astro.response.status = 400;
+    error = t.authPasswordLong;
+  } else if (issue === "weak") {
+    Astro.response.status = 400;
+    error = t.authPasswordWeak;
+  } else if (password !== confirmation) {
+    Astro.response.status = 400;
+    error = t.authPasswordMismatch;
+  } else {
+    const ipLimit = await consumeAuthRateLimit({
+      scope: "signup-ip",
+      identifier: clientIp(Astro.request, Astro.clientAddress),
+      limit: 5,
+      windowSeconds: 60 * 60,
+    });
+    const emailLimit = await consumeAuthRateLimit({
+      scope: "signup-email",
+      identifier: emailValue,
+      limit: 3,
+      windowSeconds: 60 * 60,
+    });
+    if (!ipLimit.allowed || !emailLimit.allowed) {
+      Astro.response.status = 429;
+      retryAfter = Math.max(
+        ipLimit.retryAfterSeconds,
+        emailLimit.retryAfterSeconds,
+      );
+      Astro.response.headers.set("Retry-After", String(retryAfter));
+      error = t.authRateLimited;
+    } else if (config.requireEmailConfirmation) {
+      const supabase = Astro.locals.supabase;
+      if (!supabase) {
+        Astro.response.status = 503;
+        error = t.authUnavailableText;
+      } else {
+        const { data, error: signUpError } = await supabase.auth.signUp({
+          email: emailValue,
+          password,
+          options: {
+            emailRedirectTo: `${config.siteUrl}/auth/confirm`,
+            data: { locale: "es" },
+          },
+        });
+        if (signUpError) {
+          Astro.response.status = 400;
+          error = /already|exists|registered/i.test(signUpError.message)
+            ? t.authEmailTaken
+            : t.authGenericError;
+        } else if (data.session) {
+          return redirectWithCreated(postedNext);
+        } else {
+          sent = true;
+        }
+      }
+    } else {
+      const admin = createSupabaseAdminClient();
+      if (!admin) {
+        Astro.response.status = 503;
+        error = t.authUnavailableText;
+      } else {
+        const { error: createError } = await admin.auth.admin.createUser({
+          email: emailValue,
+          password,
+          email_confirm: true,
+          user_metadata: { locale: "es" },
+        });
+        if (createError) {
+          Astro.response.status = 400;
+          error = /already|exists|registered/i.test(createError.message)
+            ? t.authEmailTaken
+            : t.authGenericError;
+        } else {
+          const supabase = Astro.locals.supabase;
+          if (!supabase) {
+            return redirectWithCreated("/entrar");
+          }
+          const { error: signInError } = await supabase.auth.signInWithPassword(
+            {
+              email: emailValue,
+              password,
+            },
+          );
+          if (signInError) {
+            return redirectWithCreated("/entrar");
+          }
+          return redirectWithCreated(postedNext);
+        }
+      }
+    }
+  }
+}
+---
+
+<BaseLayout
+  title={`${t.authRegisterFormTitle} — ${t.appName}`}
+  description={t.authRegisterIntro}
+  robots="noindex, nofollow"
+>
+  <AuthShell
+    title={t.authRegisterTitle}
+    intro={t.authRegisterIntro}
+    formTitle={t.authRegisterFormTitle}
+    alternateText={t.authRegisterHaveAccount}
+    alternateHref={`/entrar?next=${encodeURIComponent(nextPath)}`}
+    alternateLabel={t.authLoginLink}
+  >
+    {!config.configured ? (
+      <Alert variant="destructive" class="auth-notice">
+        <div>
+          <h2>{t.authUnavailableTitle}</h2>
+          <p>{t.authUnavailableText}</p>
+        </div>
+      </Alert>
+    ) : !config.signupEnabled ? (
+      <Alert variant="warning" class="auth-notice">
+        <p>{t.authSignupDisabled}</p>
+      </Alert>
+    ) : sent ? (
+      <Alert variant="success" class="auth-notice">
+        <p>{t.authCheckEmail}</p>
+      </Alert>
+    ) : (
+      <>
+        {error ? (
+          <Alert variant="destructive" class="auth-notice">
+            <p>{error}</p>
+          </Alert>
+        ) : null}
+        <form class="auth-form" action={registerUrl(nextPath)} method="post">
+          <CsrfInput token={csrf} />
+          <input type="hidden" name="next" value={nextPath} />
+          <div class="auth-honeypot" aria-hidden="true">
+            <label for="register-website">Sitio web</label>
+            <input
+              id="register-website"
+              name="website"
+              type="text"
+              tabindex="-1"
+              autocomplete="off"
+            />
+          </div>
+          <Field
+            label={t.authEmailLabel}
+            for="register-email"
+            hint={t.authEmailHint}
+          >
+            <Input
+              id="register-email"
+              name="email"
+              type="email"
+              autocomplete="email"
+              inputmode="email"
+              required
+              maxlength="254"
+              value={emailValue}
+            />
+          </Field>
+          <Field
+            label={t.authPasswordLabel}
+            for="register-password"
+            hint={t.authPasswordHint.replace(
+              "{min}",
+              String(config.passwordMinLength),
+            )}
+          >
+            <Input
+              id="register-password"
+              name="password"
+              type="password"
+              autocomplete="new-password"
+              required
+              minlength={config.passwordMinLength}
+              maxlength="200"
+            />
+          </Field>
+          <Field
+            label={t.authPasswordConfirmLabel}
+            for="register-password-confirm"
+          >
+            <Input
+              id="register-password-confirm"
+              name="passwordConfirm"
+              type="password"
+              autocomplete="new-password"
+              required
+              minlength={config.passwordMinLength}
+              maxlength="200"
+            />
+          </Field>
+          <Button type="submit" class="w-full">
+            {t.authRegisterButton}
+          </Button>
+          {retryAfter ? <p class="auth-form__hint">{t.authRetryHint}</p> : null}
+          <p class="auth-form__legal">
+            {t.authTerms} <a href="/privacidad">{t.authPrivacyLink}</a>.
+          </p>
+        </form>
+      </>
+    )}
+  </AuthShell>
+</BaseLayout>

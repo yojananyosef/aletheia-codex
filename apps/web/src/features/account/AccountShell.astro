@@ -1,0 +1,75 @@
+---
+import Button from "../../components/ui/Button.astro";
+import CsrfInput from "../auth/CsrfInput.astro";
+import { t } from "../../i18n";
+import { createCsrfToken } from "../../lib/auth/csrf";
+
+export type AccountSection =
+  "overview" | "history" | "password" | "delete" | "privacy";
+
+interface Props {
+  title: string;
+  intro: string;
+  active: AccountSection;
+  email: string;
+}
+
+const { title, intro, active, email } = Astro.props;
+const csrf = createCsrfToken();
+
+const links: { key: AccountSection; href: string; label: string }[] = [
+  { key: "overview", href: "/cuenta", label: t.authAccountOverview },
+  {
+    key: "history",
+    href: "/cuenta/historial",
+    label: t.authAccountHistory,
+  },
+  {
+    key: "password",
+    href: "/cuenta/contrasena",
+    label: t.authAccountPasswordNav,
+  },
+  {
+    key: "delete",
+    href: "/cuenta/eliminar",
+    label: t.authAccountDeleteNav,
+  },
+  { key: "privacy", href: "/privacidad", label: t.authAccountPrivacyNav },
+];
+---
+
+<main id="main" class="page account-page">
+  <div class="wrap account-layout">
+    <aside class="account-sidebar">
+      <p class="eyebrow">{t.navAccount}</p>
+      <p class="account-sidebar__email" title={email}>
+        {email}
+      </p>
+      <nav class="account-nav" aria-label={t.authAccountNavLabel}>
+        {links.map((link) => (
+          <a
+            class="account-nav__link"
+            href={link.href}
+            aria-current={active === link.key ? "page" : undefined}
+          >
+            {link.label}
+          </a>
+        ))}
+      </nav>
+      <form class="account-signout" action="/salir" method="post">
+        <CsrfInput token={csrf} />
+        <Button type="submit" variant="outline" size="sm" class="w-full">
+          {t.authLogoutButton}
+        </Button>
+      </form>
+    </aside>
+
+    <section class="account-main" aria-labelledby="account-title">
+      <header class="account-header">
+        <h1 id="account-title">{title}</h1>
+        <p>{intro}</p>
+      </header>
+      <slot />
+    </section>
+  </div>
+</main>

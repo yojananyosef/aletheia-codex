@@ -1,0 +1,59 @@
+---
+import { t } from "../../i18n";
+
+interface Props {
+  title: string;
+  intro: string;
+  formTitle: string;
+  alternateText?: string;
+  alternateHref?: string;
+  alternateLabel?: string;
+}
+
+const {
+  title,
+  intro,
+  formTitle,
+  alternateText,
+  alternateHref,
+  alternateLabel,
+} = Astro.props;
+
+const benefits = [
+  [t.authAsideBenefit1Title, t.authAsideBenefit1Text],
+  [t.authAsideBenefit2Title, t.authAsideBenefit2Text],
+  [t.authAsideBenefit3Title, t.authAsideBenefit3Text],
+] as const;
+---
+
+<main id="main" class="page auth-page">
+  <div class="wrap auth-layout">
+    <section class="auth-aside" aria-labelledby="auth-page-title">
+      <p class="eyebrow">{t.authAsideEyebrow}</p>
+      <h1 id="auth-page-title">{title}</h1>
+      <p class="auth-aside__intro">{intro}</p>
+      <ul class="auth-benefits">
+        {benefits.map(([benefitTitle, benefitText]) => (
+          <li>
+            <span class="auth-benefits__mark" aria-hidden="true" />
+            <span>
+              <strong>{benefitTitle}</strong>
+              <span>{benefitText}</span>
+            </span>
+          </li>
+        ))}
+      </ul>
+      <p class="auth-aside__note">{t.authAsideNote}</p>
+    </section>
+
+    <section class="auth-card" aria-labelledby="auth-form-title">
+      <h2 id="auth-form-title">{formTitle}</h2>
+      <slot />
+      {alternateText && alternateHref && alternateLabel ? (
+        <p class="auth-card__alt">
+          {alternateText} <a href={alternateHref}>{alternateLabel}</a>
+        </p>
+      ) : null}
+    </section>
+  </div>
+</main>

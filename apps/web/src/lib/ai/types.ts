@@ -12,6 +12,7 @@ export function parseAiMode(value: string | null | undefined): AiMode {
 export interface AiResult {
   text: string;
   model: string;
+  cacheKey: string;
   cached: boolean;
   createdAt: number;
   remaining: number | null;

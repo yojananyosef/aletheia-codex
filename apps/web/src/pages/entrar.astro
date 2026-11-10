@@ -1,0 +1,196 @@
+---
+import Alert from "../components/ui/Alert.astro";
+import Button from "../components/ui/Button.astro";
+import Field from "../components/ui/Field.astro";
+import Input from "../components/ui/Input.astro";
+import AuthShell from "../features/auth/AuthShell.astro";
+import CsrfInput from "../features/auth/CsrfInput.astro";
+import { t } from "../i18n";
+import BaseLayout from "../layouts/BaseLayout.astro";
+import {
+  clientIp,
+  consumeAuthRateLimit,
+  createCsrfToken,
+  getAuthConfig,
+  isSameOriginRequest,
+  isValidEmail,
+  normalizeEmail,
+  readFormString,
+  readFormValue,
+  registerUrl,
+  safeNextPath,
+  verifyFormCsrf,
+} from "../lib/auth";
+
+const config = getAuthConfig();
+const nextPath = safeNextPath(Astro.url.searchParams.get("next"));
+const method = Astro.request.method.toUpperCase();
+const created = Astro.url.searchParams.get("created") === "1";
+const confirmed = Astro.url.searchParams.get("confirmado") === "1";
+const confirmationError =
+  Astro.url.searchParams.get("error") === "confirmacion";
+const accountDeleted = Astro.url.searchParams.get("cuenta") === "eliminada";
+const csrf = createCsrfToken();
+
+let error: string | null = null;
+let emailValue = "";
+let retryAfter: number | null = null;
+let sentConfirmation = false;
+
+if (method === "GET" && Astro.locals.user) {
+  return Astro.redirect(nextPath, 303);
+}
+
+if (method === "POST") {
+  const form = await Astro.request.formData();
+  emailValue = normalizeEmail(readFormString(form, "email", 254));
+  const password = readFormValue(form, "password", 200);
+  const postedNext = safeNextPath(readFormString(form, "next", 2_048));
+
+  if (!isSameOriginRequest(Astro.request, Astro.url) || !verifyFormCsrf(form)) {
+    Astro.response.status = 403;
+    error = t.authGenericError;
+  } else if (!isValidEmail(emailValue)) {
+    Astro.response.status = 400;
+    error = t.authEmailInvalid;
+  } else if (!password) {
+    Astro.response.status = 400;
+    error = t.authInvalidCredentials;
+  } else {
+    const ipLimit = await consumeAuthRateLimit({
+      scope: "login-ip",
+      identifier: clientIp(Astro.request, Astro.clientAddress),
+      limit: 12,
+      windowSeconds: 15 * 60,
+    });
+    const emailLimit = await consumeAuthRateLimit({
+      scope: "login-email",
+      identifier: emailValue,
+      limit: 6,
+      windowSeconds: 15 * 60,
+    });
+    if (!ipLimit.allowed || !emailLimit.allowed) {
+      Astro.response.status = 429;
+      retryAfter = Math.max(
+        ipLimit.retryAfterSeconds,
+        emailLimit.retryAfterSeconds,
+      );
+      Astro.response.headers.set("Retry-After", String(retryAfter));
+      error = t.authRateLimited;
+    } else {
+      const supabase = Astro.locals.supabase;
+      if (!supabase) {
+        Astro.response.status = 503;
+        error = t.authUnavailableText;
+      } else {
+        const { error: signInError } = await supabase.auth.signInWithPassword({
+          email: emailValue,
+          password,
+        });
+        if (signInError) {
+          Astro.response.status = 401;
+          if (/email not confirmed/i.test(signInError.message)) {
+            sentConfirmation = true;
+            error = t.authCheckEmail;
+          } else {
+            error = t.authInvalidCredentials;
+          }
+        } else {
+          return Astro.redirect(postedNext, 303);
+        }
+      }
+    }
+  }
+}
+---
+
+<BaseLayout
+  title={`${t.authLoginFormTitle} — ${t.appName}`}
+  description={t.authLoginIntro}
+  robots="noindex, nofollow"
+>
+  <AuthShell
+    title={t.authLoginTitle}
+    intro={t.authLoginIntro}
+    formTitle={t.authLoginFormTitle}
+    alternateText={t.authLoginNoAccount}
+    alternateHref={registerUrl(nextPath)}
+    alternateLabel={t.authRegisterLink}
+  >
+    {!config.configured ? (
+      <Alert variant="destructive" class="auth-notice">
+        <div>
+          <h2>{t.authUnavailableTitle}</h2>
+          <p>{t.authUnavailableText}</p>
+        </div>
+      </Alert>
+    ) : (
+      <>
+        {created ? (
+          <Alert variant="success" class="auth-notice">
+            <p>{t.authCreated}</p>
+          </Alert>
+        ) : null}
+        {confirmed ? (
+          <Alert variant="success" class="auth-notice">
+            <p>{t.authEmailConfirmed}</p>
+          </Alert>
+        ) : null}
+        {accountDeleted ? (
+          <Alert variant="success" class="auth-notice">
+            <p>{t.authAccountDeleted}</p>
+          </Alert>
+        ) : null}
+        {confirmationError ? (
+          <Alert variant="destructive" class="auth-notice">
+            <p>{t.authConfirmError}</p>
+          </Alert>
+        ) : null}
+        {error ? (
+          <Alert variant="destructive" class="auth-notice">
+            <p>{error}</p>
+          </Alert>
+        ) : null}
+        {sentConfirmation ? null : (
+          <form class="auth-form" action="/entrar" method="post">
+            <CsrfInput token={csrf} />
+            <input type="hidden" name="next" value={nextPath} />
+            <Field
+              label={t.authEmailLabel}
+              for="login-email"
+              hint={t.authEmailHint}
+            >
+              <Input
+                id="login-email"
+                name="email"
+                type="email"
+                autocomplete="email"
+                inputmode="email"
+                required
+                maxlength="254"
+                value={emailValue}
+              />
+            </Field>
+            <Field label={t.authPasswordLabel} for="login-password">
+              <Input
+                id="login-password"
+                name="password"
+                type="password"
+                autocomplete="current-password"
+                required
+                minlength={config.passwordMinLength}
+                maxlength="200"
+              />
+            </Field>
+            <Button type="submit" class="w-full">
+              {t.authLoginButton}
+            </Button>
+            {retryAfter ? (
+              <p class="auth-form__hint">{t.authRetryHint}</p>
+            ) : null}
+          </form>
+        )}
+      </>
+    )}
+  </AuthShell>
+</BaseLayout>

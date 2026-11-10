@@ -15,6 +15,7 @@ export {
   type ExplainPassageOptions,
 } from "./service";
 export {
+  AiAuthRequiredError,
   AiBusyError,
   AiDisabledError,
   AiError,

@@ -13,6 +13,12 @@ export class AiDisabledError extends AiError {
   }
 }
 
+export class AiAuthRequiredError extends AiError {
+  constructor() {
+    super("Se requiere una cuenta para generar análisis con IA.");
+  }
+}
+
 export class AiNotConfiguredError extends AiError {
   constructor() {
     super("El asistente de IA no tiene una clave de API configurada.");

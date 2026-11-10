@@ -110,10 +110,12 @@ export const es = {
     "La generación puede tardar hasta dos minutos. No cierre la página mientras espera.",
   aiQuotaTitle: "Límites de uso",
   aiQuotaText:
-    "Cada visitante puede generar {daily} análisis al día y {burst} por minuto. Las respuestas ya guardadas no consumen cuota.",
+    "Cada cuenta puede generar {daily} análisis al día y {burst} por minuto. Las respuestas ya guardadas no consumen cuota.",
+  aiQuotaAccountText:
+    "Su cuenta puede generar {daily} análisis al día y {burst} por minuto. Las respuestas ya guardadas no consumen cuota.",
   aiPrivacyTitle: "Privacidad",
   aiPrivacyText:
-    "El texto del pasaje y sus datos morfológicos se envían a un servicio externo para generar la respuesta. No se envían datos de su cuenta.",
+    "El texto del pasaje y sus datos morfológicos se envían a un servicio externo para generar la respuesta. El análisis se guarda en su cuenta; no se envían su correo ni su contraseña.",
   aiDisclaimer:
     "La respuesta la genera un modelo de lenguaje y puede contener errores. Verifique siempre el texto y la morfología del corpus.",
   aiMaxVersesHint: "Máximo {max} versículos por análisis.",
@@ -152,6 +154,148 @@ export const es = {
   aiHomeText:
     "Resumen, explicación y gramática generados a partir del original y de la morfología anotada. Las respuestas se guardan para no repetir consultas.",
   aiHomeCta: "Probar el asistente",
+  aiLoginTitle: "Inicie sesión para generar análisis",
+  aiLoginText:
+    "El asistente guarda cada análisis en su cuenta y aplica una cuota por usuario. Así el límite no depende de su dirección IP.",
+  aiLoginCta: "Entrar",
+  aiRegisterCta: "Crear una cuenta",
+  aiHistoryCta: "Ver mi historial",
+  aiHistorySaveError:
+    "El análisis se generó, pero no se pudo guardar en su historial.",
+  aiAuthRequiredTitle: "Necesita una cuenta",
+  aiAuthRequiredText:
+    "Inicie sesión para generar y guardar análisis en su historial.",
+  navAccount: "Cuenta",
+  authAsideEyebrow: "Cuenta BibleOL",
+  authAsideBenefit1Title: "Historial privado",
+  authAsideBenefit1Text:
+    "Cada análisis queda guardado en su cuenta para consultarlo cuando quiera.",
+  authAsideBenefit2Title: "Cuota por cuenta",
+  authAsideBenefit2Text:
+    "El límite de uso depende de su cuenta, no de su dirección IP.",
+  authAsideBenefit3Title: "Control total",
+  authAsideBenefit3Text:
+    "Puede cambiar la contraseña o eliminar la cuenta y su historial.",
+  authAsideNote: "Lectura y estudio sin seguimiento publicitario.",
+  authLoginTitle: "Vuelva a su mesa de estudio",
+  authLoginIntro:
+    "Entre para generar análisis y recuperar su historial desde cualquier dispositivo.",
+  authLoginFormTitle: "Entrar en su cuenta",
+  authLoginButton: "Entrar",
+  authLoginNoAccount: "¿Aún no tiene cuenta?",
+  authRegisterLink: "Crear una cuenta",
+  authRegisterTitle: "Empiece a guardar su estudio",
+  authRegisterIntro:
+    "Una cuenta gratuita conserva sus análisis y le da una cuota propia.",
+  authRegisterFormTitle: "Crear una cuenta",
+  authRegisterButton: "Crear cuenta",
+  authRegisterHaveAccount: "¿Ya tiene una cuenta?",
+  authLoginLink: "Entrar",
+  authEmailLabel: "Correo electrónico",
+  authEmailHint:
+    "No compartimos su correo ni lo mostramos en páginas públicas.",
+  authPasswordLabel: "Contraseña",
+  authPasswordConfirmLabel: "Repita la contraseña",
+  authPasswordHint: "Al menos {min} caracteres, con una letra y un número.",
+  authCurrentPasswordLabel: "Contraseña actual",
+  authNewPasswordLabel: "Nueva contraseña",
+  authTerms: "Al crear una cuenta acepta la",
+  authPrivacyLink: "política de privacidad",
+  authInvalidCredentials: "El correo o la contraseña no son correctos.",
+  authRateLimited:
+    "Demasiados intentos. Espere unos minutos y vuelva a intentarlo.",
+  authRetryHint: "Si el límite persiste, espere unos minutos.",
+  authEmailInvalid: "Introduzca una dirección de correo válida.",
+  authPasswordShort: "La contraseña debe tener al menos {min} caracteres.",
+  authPasswordLong: "La contraseña no puede superar los 72 bytes.",
+  authPasswordWeak:
+    "La contraseña debe incluir al menos una letra y un número.",
+  authPasswordMismatch: "Las contraseñas no coinciden.",
+  authEmailTaken: "Ya existe una cuenta con ese correo. Inicie sesión.",
+  authGenericError: "No se pudo completar la operación. Inténtelo de nuevo.",
+  authSignupDisabled: "El registro está cerrado temporalmente.",
+  authCheckEmail:
+    "Le hemos enviado un correo para confirmar la cuenta. Revise su bandeja de entrada.",
+  authEmailConfirmed: "Correo confirmado. Ya puede entrar.",
+  authConfirmError: "El enlace de confirmación no es válido o ha caducado.",
+  authCreated: "Cuenta creada. Ya puede generar análisis.",
+  authLoggedOut: "Ha cerrado la sesión.",
+  authLogoutButton: "Cerrar sesión",
+  authUnavailableTitle: "Cuenta no disponible",
+  authUnavailableText:
+    "El servicio de cuentas no está configurado en este servidor.",
+  authAccountTitle: "Su cuenta",
+  authAccountIntro:
+    "Desde aquí puede consultar su historial y gestionar el acceso.",
+  authAccountEmail: "Correo",
+  authAccountSince: "Cuenta creada",
+  authAccountAnalyses: "Análisis guardados",
+  authAccountLastAnalysis: "Último análisis",
+  authAccountNoAnalyses: "Todavía no hay análisis.",
+  authAccountHistory: "Historial de análisis",
+  authAccountHistoryIntro:
+    "Cada análisis generado con su cuenta se guarda aquí.",
+  authAccountHistoryEmptyTitle: "Su historial está vacío",
+  authAccountHistoryEmptyText:
+    "Abra un capítulo y genere su primer análisis para verlo aquí.",
+  authAccountHistoryEmptyCta: "Ir a la lectura",
+  authAccountHistoryCount: "Análisis guardados: {total}",
+  authAccountOpenAnalysis: "Abrir análisis",
+  authAccountDeletedAnalysis: "Análisis eliminado.",
+  authAccountPage: "Página {page} de {pages}",
+  authPrevious: "Anterior",
+  authNext: "Siguiente",
+  authBackToHistory: "Volver al historial",
+  authViewChapter: "Ver el pasaje",
+  authRegenerate: "Generar otro análisis",
+  authDeleteAnalysis: "Eliminar del historial",
+  authDeleteAnalysisConfirm:
+    "¿Eliminar este análisis del historial? Esta acción no se puede deshacer.",
+  authAccountPasswordTitle: "Cambiar la contraseña",
+  authAccountPasswordIntro: "Confirme su contraseña actual y elija una nueva.",
+  authAccountPasswordButton: "Guardar contraseña",
+  authAccountPasswordChanged: "Contraseña actualizada.",
+  authAccountPasswordWrong: "La contraseña actual no es correcta.",
+  authAccountDeleteTitle: "Eliminar la cuenta",
+  authAccountDeleteIntro:
+    "Se eliminarán su cuenta y todos los análisis guardados. Esta acción no se puede deshacer.",
+  authAccountDeleteWarning:
+    "Escriba ELIMINAR y confirme con su contraseña para continuar.",
+  authAccountDeleteConfirmLabel: "Escriba ELIMINAR para confirmar",
+  authAccountDeleteConfirmValue: "ELIMINAR",
+  authAccountDeleteButton: "Eliminar mi cuenta definitivamente",
+  authAccountDeleteMismatch: "Escriba ELIMINAR exactamente para confirmar.",
+  authAccountDeleted: "Su cuenta y su historial se han eliminado.",
+  authAccountDeleteUnavailable:
+    "La eliminación de cuentas no está configurada en este servidor.",
+  authAccountDangerZone: "Zona de peligro",
+  authAccountOverview: "Resumen",
+  authAccountNavLabel: "Secciones de la cuenta",
+  authAccountPasswordNav: "Contraseña",
+  authAccountDeleteNav: "Eliminar cuenta",
+  authAccountPrivacyNav: "Privacidad",
+  privacyTitle: "Privacidad y datos",
+  privacyIntro: "Qué guardamos, para qué y cómo puede eliminarlo.",
+  privacyAccountTitle: "Cuenta",
+  privacyAccountText:
+    "Guardamos su correo electrónico y una contraseña cifrada gestionada por Supabase. No pedimos nombre, teléfono ni datos de pago.",
+  privacyHistoryTitle: "Historial de análisis",
+  privacyHistoryText:
+    "Cada análisis generado se guarda en su cuenta junto con el pasaje, el modo y la fecha. Solo usted puede verlo gracias a las políticas de seguridad de la base de datos.",
+  privacyAiTitle: "Servicio de IA",
+  privacyAiText:
+    "Para generar una respuesta enviamos el texto del pasaje y su morfología anotada a OpenRouter. No enviamos su correo, su contraseña ni su identificador de cuenta.",
+  privacyCookiesTitle: "Cookies",
+  privacyCookiesText:
+    "Usamos cookies estrictamente necesarias para mantener la sesión iniciada y proteger los formularios. No usamos cookies publicitarias ni de seguimiento.",
+  privacyDeleteTitle: "Eliminación",
+  privacyDeleteText:
+    "Puede borrar análisis concretos o eliminar la cuenta completa desde su panel. Al eliminar la cuenta se borra también todo el historial.",
+  privacyContactTitle: "Contacto",
+  privacyContactText:
+    "Si tiene alguna duda sobre sus datos, escriba al responsable del proyecto.",
+  privacyBack: "Volver a la lectura",
+  footerPrivacy: "Privacidad",
   wordInspectorLabel: "Detalle",
   wordInspectorHint: "Pase el cursor sobre una palabra del texto.",
 } as const;

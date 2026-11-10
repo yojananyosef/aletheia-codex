@@ -1,0 +1,107 @@
+---
+import Alert from "../../components/ui/Alert.astro";
+import Button from "../../components/ui/Button.astro";
+import AccountShell from "../../features/account/AccountShell.astro";
+import { t } from "../../i18n";
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import { countAnalyses, loginUrl } from "../../lib/auth";
+import { getAiConfig } from "../../lib/ai";
+import { formatDate, formatDateTime } from "../../lib/date-format";
+
+const user = Astro.locals.user;
+if (!user) {
+  return Astro.redirect(loginUrl("/cuenta"), 303);
+}
+
+const supabase = Astro.locals.supabase;
+let total = 0;
+let latest: string | null = null;
+let statsError = false;
+
+if (supabase) {
+  try {
+    const stats = await countAnalyses(supabase, user.id);
+    total = stats.total;
+    latest = stats.latest;
+  } catch (error) {
+    statsError = true;
+    console.error(
+      `[account] no se pudieron leer las estadísticas: ${
+        error instanceof Error ? error.message : String(error)
+      }`,
+    );
+  }
+}
+
+const email = user.email ?? "—";
+const created = Astro.url.searchParams.get("created") === "1";
+const confirmed = Astro.url.searchParams.get("confirmado") === "1";
+const aiConfig = getAiConfig();
+---
+
+<BaseLayout
+  title={`${t.authAccountTitle} — ${t.appName}`}
+  description={t.authAccountIntro}
+  robots="noindex, nofollow"
+>
+  <AccountShell
+    title={t.authAccountTitle}
+    intro={t.authAccountIntro}
+    active="overview"
+    email={email}
+  >
+    {created ? (
+      <Alert variant="success" class="account-notice">
+        <p>{t.authCreated}</p>
+      </Alert>
+    ) : null}
+    {confirmed ? (
+      <Alert variant="success" class="account-notice">
+        <p>{t.authEmailConfirmed}</p>
+      </Alert>
+    ) : null}
+    {statsError ? (
+      <Alert variant="destructive" class="account-notice">
+        <p>{t.authGenericError}</p>
+      </Alert>
+    ) : null}
+
+    <dl class="account-facts">
+      <div class="account-fact">
+        <dt>{t.authAccountEmail}</dt>
+        <dd>{email}</dd>
+      </div>
+      <div class="account-fact">
+        <dt>{t.authAccountSince}</dt>
+        <dd>{formatDate(user.created_at)}</dd>
+      </div>
+      <div class="account-fact">
+        <dt>{t.authAccountAnalyses}</dt>
+        <dd>{total}</dd>
+      </div>
+      <div class="account-fact">
+        <dt>{t.authAccountLastAnalysis}</dt>
+        <dd>{latest ? formatDateTime(latest) : t.authAccountNoAnalyses}</dd>
+      </div>
+    </dl>
+
+    <div class="account-actions">
+      <Button href="/cuenta/historial">{t.authAccountHistory}</Button>
+      <Button href="/cuenta/contrasena" variant="outline">
+        {t.authAccountPasswordNav}
+      </Button>
+      <Button href="/privacidad" variant="ghost">
+        {t.authAccountPrivacyNav}
+      </Button>
+    </div>
+
+    <div class="account-note">
+      <h2>{t.aiQuotaTitle}</h2>
+      <p>
+        {t.aiQuotaAccountText
+          .replace("{daily}", String(aiConfig.perUserDaily))
+          .replace("{burst}", String(aiConfig.perUserBurst))}
+      </p>
+    </div>
+  </AccountShell>
+</BaseLayout>

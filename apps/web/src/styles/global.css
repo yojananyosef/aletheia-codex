@@ -4,6 +4,7 @@
 @import "@fontsource-variable/ibm-plex-sans/wght.css";
 @import "./reading.css";
 @import "./ai.css";
+@import "./auth.css";
 
 @theme inline {
   --font-sans:

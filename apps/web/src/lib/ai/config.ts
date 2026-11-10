@@ -102,6 +102,7 @@ export interface AiConfig {
   trustProxy: boolean;
   ipSalt: string;
   reasoning: boolean;
+  requireAccount: boolean;
 }
 
 let cached: AiConfig | undefined;
@@ -152,7 +153,7 @@ export function getAiConfig(): AiConfig {
     maxOutputTokens: readInteger("AI_MAX_OUTPUT_TOKENS", 2_500, 256, 32_768),
     perUserDaily: readInteger("AI_PER_USER_DAILY", 15, 1, 1_000),
     perUserBurst: readInteger("AI_PER_USER_BURST", 3, 1, 60),
-    globalDaily: readInteger("AI_GLOBAL_DAILY", 40, 1, 100_000),
+    globalDaily: readInteger("AI_GLOBAL_DAILY", 120, 1, 100_000),
     maxConcurrent: readInteger("AI_MAX_CONCURRENT", 3, 1, 20),
     cacheTtlDays: readInteger("AI_CACHE_TTL_DAYS", 30, 1, 3_650),
     cacheDbPath: configuredDb
@@ -165,6 +166,7 @@ export function getAiConfig(): AiConfig {
     trustProxy: readBoolean("AI_TRUST_PROXY", false),
     ipSalt: readString("AI_IP_SALT", defaultSalt),
     reasoning: readBoolean("AI_REASONING", false),
+    requireAccount: readBoolean("AI_REQUIRE_ACCOUNT", true),
   };
 
   return cached;

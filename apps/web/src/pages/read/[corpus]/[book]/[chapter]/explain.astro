@@ -9,6 +9,7 @@ import Skeleton from "../../../../../components/ui/Skeleton.astro";
 import Spinner from "../../../../../components/ui/Spinner.astro";
 import { t } from "../../../../../i18n";
 import {
+  AiAuthRequiredError,
   AiBusyError,
   AiDisabledError,
   AiError,
@@ -26,6 +27,8 @@ import {
   type AiResult,
 } from "../../../../../lib/ai";
 import { modeCopy } from "../../../../../lib/ai/labels";
+import { AI_PROMPT_VERSION } from "../../../../../lib/ai/prompt";
+import { loginUrl, registerUrl, saveAnalysis } from "../../../../../lib/auth";
 import { bookName } from "../../../../../lib/book-names";
 import { getReader } from "../../../../../lib/reader";
 import { chapterUrl, explainUrl } from "../../../../../lib/urls";
@@ -73,6 +76,9 @@ const mode = parseAiMode(Astro.url.searchParams.get("mode"));
 const generate = Astro.url.searchParams.get("generate") === "1";
 const crossSite = Astro.request.headers.get("sec-fetch-site") === "cross-site";
 const config = getAiConfig();
+const user = Astro.locals.user;
+const authRequired = !user;
+const currentPath = `${Astro.url.pathname}${Astro.url.search}`;
 
 const viewOptions = {
   transliteration: Astro.url.searchParams.get("translit") === "1",
@@ -120,8 +126,11 @@ const maxVersesText = t.aiMaxVersesHint.replace(
 
 let result: AiResult | null = null;
 let failure: Failure | null = null;
+let historyError = false;
 
-if (generate && crossSite) {
+if (generate && !user) {
+  Astro.response.status = 401;
+} else if (generate && crossSite) {
   Astro.response.status = 403;
   failure = {
     title: t.aiBlockedTitle,
@@ -129,7 +138,7 @@ if (generate && crossSite) {
     status: 403,
     retryAfter: null,
   };
-} else if (generate) {
+} else if (generate && user) {
   try {
     result = await explainPassage({
       corpusId: corpus.id,
@@ -138,6 +147,7 @@ if (generate && crossSite) {
       from: parsedRange?.from ?? null,
       to: parsedRange?.to ?? null,
       mode,
+      userId: user.id,
       clientAddress: clientIdentifier(
         Astro.request,
         Astro.clientAddress,
@@ -148,7 +158,15 @@ if (generate && crossSite) {
     if (error instanceof NotFoundError) {
       return Astro.rewrite("/404");
     }
-    if (error instanceof AiRateLimitError) {
+    if (error instanceof AiAuthRequiredError) {
+      Astro.response.status = 401;
+      failure = {
+        title: t.aiAuthRequiredTitle,
+        message: t.aiAuthRequiredText,
+        status: 401,
+        retryAfter: null,
+      };
+    } else if (error instanceof AiRateLimitError) {
       const message =
         error.reason === "user-daily"
           ? t.aiRateLimitDaily
@@ -261,6 +279,37 @@ const resultReference = result
     ? `${chapterReference}:${result.from}`
     : `${chapterReference}:${result.from}–${result.to}`
   : reference;
+
+if (result && user) {
+  const supabase = Astro.locals.supabase;
+  if (!supabase) {
+    historyError = true;
+  } else {
+    try {
+      await saveAnalysis(supabase, user.id, {
+        cacheKey: result.cacheKey,
+        corpusId: corpus.id,
+        bookId: book.id,
+        chapter: chapterNumber,
+        from: result.from,
+        to: result.to,
+        mode: result.mode,
+        reference: resultReference,
+        text: result.text,
+        model: result.model,
+        promptVersion: AI_PROMPT_VERSION,
+        usage: result.usage,
+      });
+    } catch (error) {
+      historyError = true;
+      console.error(
+        `[ai] no se pudo guardar el análisis en el historial: ${
+          error instanceof Error ? error.message : String(error)
+        }`,
+      );
+    }
+  }
+}
 ---
 
 <BaseLayout
@@ -291,7 +340,9 @@ const resultReference = result
       <header class="ai-header">
         <p class="eyebrow">{t.aiLabel}</p>
         <h1>{resultReference}</h1>
-        <p class="ai-header__intro">{result ? t.aiResultIntro : t.aiIntro}</p>
+        <p class="ai-header__intro">
+          {result ? t.aiResultIntro : authRequired ? t.aiLoginText : t.aiIntro}
+        </p>
       </header>
 
       {failure ? (
@@ -329,6 +380,12 @@ const resultReference = result
         </article>
       ) : null}
 
+      {result && historyError ? (
+        <Alert variant="warning" class="ai-notice">
+          <p>{t.aiHistorySaveError}</p>
+        </Alert>
+      ) : null}
+
       {result ? (
         <div class="ai-actions">
           <Button href={backHref}>
@@ -338,11 +395,22 @@ const resultReference = result
           <Button href={changeModeHref} variant="outline">
             {t.aiNewRequest}
           </Button>
+          <Button href="/cuenta/historial" variant="ghost">
+            {t.aiHistoryCta}
+          </Button>
         </div>
       ) : null}
 
       {failure ? (
         <div class="ai-actions">
+          {failure.status === 401 ? (
+            <>
+              <Button href={loginUrl(currentPath)}>{t.aiLoginCta}</Button>
+              <Button href={registerUrl(currentPath)} variant="outline">
+                {t.aiRegisterCta}
+              </Button>
+            </>
+          ) : null}
           {failure.status === 502 ||
           failure.status === 503 ||
           failure.status === 500 ? (
@@ -358,34 +426,49 @@ const resultReference = result
       ) : null}
 
       {!result ? (
-        <>
-          <ExplainForm
-            corpus={corpus}
-            book={book}
-            chapter={chapterNumber}
-            verseRange={parsedRange}
-            lastVerse={lastVerse}
-            mode={mode}
-            showTransliteration={viewOptions.transliteration}
-            showGrammar={viewOptions.grammar}
-            showGloss={viewOptions.gloss}
-            maxVerses={config.maxVerses}
-          />
+        authRequired ? (
+          <section class="ai-gate" aria-labelledby="ai-gate-title">
+            <p class="ai-gate__eyebrow">{t.aiLabel}</p>
+            <h2 id="ai-gate-title">{t.aiLoginTitle}</h2>
+            <p>{t.aiLoginText}</p>
+            <div class="ai-gate__actions">
+              <Button href={loginUrl(currentPath)}>{t.aiLoginCta}</Button>
+              <Button href={registerUrl(currentPath)} variant="outline">
+                {t.aiRegisterCta}
+              </Button>
+            </div>
+            <p class="ai-gate__note">{t.aiPrivacyText}</p>
+          </section>
+        ) : (
+          <>
+            <ExplainForm
+              corpus={corpus}
+              book={book}
+              chapter={chapterNumber}
+              verseRange={parsedRange}
+              lastVerse={lastVerse}
+              mode={mode}
+              showTransliteration={viewOptions.transliteration}
+              showGrammar={viewOptions.grammar}
+              showGloss={viewOptions.gloss}
+              maxVerses={config.maxVerses}
+            />
 
-          <aside class="ai-info" aria-label={t.aiTitle}>
-            <div class="ai-info__block">
-              <h2>{t.aiQuotaTitle}</h2>
-              <p>{quotaText}</p>
-            </div>
-            <div class="ai-info__block">
-              <h2>{t.aiPrivacyTitle}</h2>
-              <p>{t.aiPrivacyText}</p>
-            </div>
-            <p class="ai-info__footnote">
-              {maxVersesText} {t.aiDisclaimer}
-            </p>
-          </aside>
-        </>
+            <aside class="ai-info" aria-label={t.aiTitle}>
+              <div class="ai-info__block">
+                <h2>{t.aiQuotaTitle}</h2>
+                <p>{quotaText}</p>
+              </div>
+              <div class="ai-info__block">
+                <h2>{t.aiPrivacyTitle}</h2>
+                <p>{t.aiPrivacyText}</p>
+              </div>
+              <p class="ai-info__footnote">
+                {maxVersesText} {t.aiDisclaimer}
+              </p>
+            </aside>
+          </>
+        )
       ) : (
         <p class="ai-disclaimer">{t.aiDisclaimer}</p>
       )}

@@ -1,0 +1,749 @@
+/*
+ * Accounts, authentication and the saved-analysis archive.
+ *
+ * These screens share the calm paper palette of the reading app: a serif
+ * display heading, one bordered card and a restrained accent. Nothing here
+ * is loaded on the static GitHub Pages snapshot.
+ */
+
+@layer components {
+  /* Authentication ------------------------------------------------------ */
+  .auth-page {
+    padding: clamp(2rem, 6vw, 4.5rem) 0 clamp(3rem, 7vw, 6rem);
+  }
+
+  .auth-layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 25rem);
+    gap: clamp(2rem, 6vw, 5.5rem);
+    align-items: start;
+  }
+
+  .auth-aside {
+    max-width: 34rem;
+    padding-top: 0.4rem;
+  }
+
+  .auth-aside h1 {
+    max-width: 15ch;
+    margin: 0;
+    font-family: var(--font-display);
+    font-size: clamp(2.3rem, 5vw, 3.6rem);
+    font-weight: 400;
+    line-height: 1.02;
+    letter-spacing: -0.04em;
+  }
+
+  .auth-aside__intro {
+    max-width: 30rem;
+    margin: 1.2rem 0 2rem;
+    color: var(--muted);
+    font-size: 1.02rem;
+    line-height: 1.65;
+  }
+
+  .auth-benefits {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    border-top: 1px solid var(--border);
+  }
+
+  .auth-benefits li {
+    display: grid;
+    grid-template-columns: 0.55rem minmax(0, 1fr);
+    gap: 0.85rem;
+    padding: 1rem 0;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .auth-benefits__mark {
+    width: 0.42rem;
+    height: 0.42rem;
+    margin-top: 0.42rem;
+    border-radius: 999px;
+    background: var(--brand);
+  }
+
+  .auth-benefits strong {
+    display: block;
+    margin-bottom: 0.2rem;
+    font-size: 0.86rem;
+    font-weight: 600;
+  }
+
+  .auth-benefits span span {
+    display: block;
+    color: var(--muted);
+    font-size: 0.82rem;
+    line-height: 1.55;
+  }
+
+  .auth-aside__note {
+    margin: 1.4rem 0 0;
+    color: var(--muted);
+    font-size: 0.7rem;
+    letter-spacing: 0.04em;
+  }
+
+  .auth-card {
+    padding: clamp(1.35rem, 3vw, 2rem);
+    border: 1px solid var(--border);
+    border-radius: calc(var(--radius) + 6px);
+    background: var(--card);
+    box-shadow: 0 24px 60px -48px rgba(18, 24, 40, 0.55);
+  }
+
+  .auth-card h2 {
+    margin: 0 0 1.15rem;
+    font-family: var(--font-display);
+    font-size: clamp(1.5rem, 2.6vw, 1.9rem);
+    font-weight: 500;
+    line-height: 1.1;
+    letter-spacing: -0.025em;
+  }
+
+  .auth-form {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .auth-form__hint {
+    margin: -0.3rem 0 0;
+    color: var(--muted);
+    font-size: 0.72rem;
+    line-height: 1.5;
+  }
+
+  .auth-form__legal {
+    margin: 0.2rem 0 0;
+    color: var(--muted);
+    font-size: 0.7rem;
+    line-height: 1.55;
+  }
+
+  .auth-form__legal a {
+    color: var(--brand-strong);
+    text-decoration: underline;
+    text-underline-offset: 0.15em;
+  }
+
+  .auth-card__alt {
+    margin: 1.35rem 0 0;
+    padding-top: 1rem;
+    border-top: 1px solid var(--border);
+    color: var(--muted);
+    font-size: 0.8rem;
+    text-align: center;
+  }
+
+  .auth-card__alt a {
+    color: var(--brand-strong);
+    font-weight: 500;
+    text-decoration: none;
+  }
+
+  .auth-card__alt a:hover {
+    text-decoration: underline;
+  }
+
+  .auth-notice {
+    margin-bottom: 1rem;
+  }
+
+  .auth-notice h2 {
+    margin: 0 0 0.2rem;
+    font-family: var(--font-sans);
+    font-size: 0.82rem;
+    font-weight: 600;
+  }
+
+  .auth-notice p {
+    margin: 0;
+    font-size: 0.82rem;
+    line-height: 1.5;
+  }
+
+  .auth-honeypot {
+    position: absolute;
+    left: -9999px;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+  }
+
+  /* Account shell ------------------------------------------------------- */
+  .account-page {
+    padding: clamp(2rem, 5vw, 3.5rem) 0 clamp(3rem, 7vw, 5.5rem);
+  }
+
+  .account-layout {
+    display: grid;
+    grid-template-columns: 15rem minmax(0, 1fr);
+    gap: clamp(1.5rem, 4vw, 3.5rem);
+    align-items: start;
+  }
+
+  .account-sidebar {
+    position: sticky;
+    top: 5.5rem;
+    padding: 1.1rem;
+    border: 1px solid var(--border);
+    border-radius: calc(var(--radius) + 4px);
+    background: color-mix(in srgb, var(--card) 88%, var(--background));
+  }
+
+  .account-sidebar__email {
+    margin: 0 0 1rem;
+    overflow: hidden;
+    color: var(--muted);
+    font-size: 0.72rem;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .account-nav {
+    display: flex;
+    flex-direction: column;
+    gap: 0.12rem;
+  }
+
+  .account-nav__link {
+    display: flex;
+    min-height: 2.3rem;
+    align-items: center;
+    padding: 0.4rem 0.6rem;
+    border-radius: var(--radius);
+    color: var(--muted);
+    font-size: 0.8rem;
+    text-decoration: none;
+    transition:
+      background-color 0.15s ease,
+      color 0.15s ease;
+  }
+
+  .account-nav__link:hover {
+    background: var(--accent-surface);
+    color: var(--foreground);
+  }
+
+  .account-nav__link[aria-current="page"] {
+    background: var(--brand-soft);
+    color: var(--brand-strong);
+    font-weight: 600;
+  }
+
+  .account-signout {
+    margin-top: 1rem;
+    padding-top: 0.9rem;
+    border-top: 1px solid var(--border);
+  }
+
+  .account-main {
+    min-width: 0;
+  }
+
+  .account-header {
+    max-width: 42rem;
+    margin-bottom: 1.6rem;
+  }
+
+  .account-header h1 {
+    margin: 0;
+    font-family: var(--font-display);
+    font-size: clamp(2rem, 4vw, 2.8rem);
+    font-weight: 400;
+    line-height: 1.05;
+    letter-spacing: -0.035em;
+  }
+
+  .account-header p {
+    margin: 0.65rem 0 0;
+    color: var(--muted);
+    font-size: 0.92rem;
+    line-height: 1.6;
+  }
+
+  .account-notice {
+    margin-bottom: 1.2rem;
+  }
+
+  .account-facts {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0;
+    margin: 0 0 1.6rem;
+    border: 1px solid var(--border);
+    border-radius: calc(var(--radius) + 4px);
+    background: var(--card);
+  }
+
+  .account-fact {
+    padding: 1rem 1.1rem;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .account-fact:nth-child(odd) {
+    border-right: 1px solid var(--border);
+  }
+
+  .account-fact:nth-last-child(-n + 2) {
+    border-bottom: 0;
+  }
+
+  .account-fact dt {
+    color: var(--muted);
+    font-size: 0.64rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  .account-fact dd {
+    margin: 0.35rem 0 0;
+    overflow-wrap: anywhere;
+    font-size: 0.92rem;
+    line-height: 1.4;
+  }
+
+  .account-actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.6rem;
+    margin: 1.2rem 0 1.8rem;
+  }
+
+  .account-note {
+    padding: 1rem 1.1rem;
+    border: 1px solid var(--border);
+    border-radius: calc(var(--radius) + 4px);
+    background: var(--accent-surface);
+  }
+
+  .account-note h2 {
+    margin: 0 0 0.35rem;
+    font-size: 0.82rem;
+    font-weight: 600;
+  }
+
+  .account-note p {
+    margin: 0;
+    color: var(--muted);
+    font-size: 0.8rem;
+    line-height: 1.55;
+  }
+
+  .account-back {
+    display: inline-flex;
+    margin-bottom: 1.2rem;
+    color: var(--muted);
+    font-size: 0.78rem;
+    font-weight: 500;
+    text-decoration: none;
+  }
+
+  .account-back:hover {
+    color: var(--brand-strong);
+  }
+
+  .account-form {
+    max-width: 26rem;
+  }
+
+  /* History ------------------------------------------------------------- */
+  .history-count {
+    margin: 0 0 0.7rem;
+    color: var(--muted);
+    font-size: 0.72rem;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }
+
+  .history-list {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    border-top: 1px solid var(--border);
+  }
+
+  .history-item {
+    padding: 1.15rem 0 1.25rem;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .history-item__head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1.5rem;
+  }
+
+  .history-item__mode {
+    margin: 0 0 0.2rem;
+    color: var(--brand-strong);
+    font-size: 0.62rem;
+    font-weight: 600;
+    letter-spacing: 0.09em;
+    text-transform: uppercase;
+  }
+
+  .history-item__ref {
+    margin: 0;
+    font-family: var(--font-display);
+    font-size: 1.25rem;
+    font-weight: 500;
+    line-height: 1.15;
+    letter-spacing: -0.02em;
+  }
+
+  .history-item__ref a {
+    color: var(--foreground);
+    text-decoration: none;
+  }
+
+  .history-item__ref a:hover {
+    color: var(--brand-strong);
+  }
+
+  .history-item__head time {
+    flex-shrink: 0;
+    color: var(--muted);
+    font-size: 0.7rem;
+    line-height: 1.5;
+    text-align: right;
+  }
+
+  .history-item__snippet {
+    max-width: 58rem;
+    margin: 0.55rem 0 0.45rem;
+    color: var(--muted);
+    font-size: 0.85rem;
+    line-height: 1.6;
+  }
+
+  .history-item__open {
+    color: var(--brand-strong);
+    font-size: 0.74rem;
+    font-weight: 500;
+    text-decoration: none;
+  }
+
+  .history-item__open:hover {
+    text-decoration: underline;
+  }
+
+  .history-empty {
+    max-width: 34rem;
+    padding: 2rem 1.5rem;
+    border: 1px dashed var(--border);
+    border-radius: calc(var(--radius) + 4px);
+    background: var(--card);
+  }
+
+  .history-empty h2 {
+    margin: 0 0 0.45rem;
+    font-family: var(--font-display);
+    font-size: 1.5rem;
+    font-weight: 500;
+  }
+
+  .history-empty p {
+    margin: 0 0 1.2rem;
+    color: var(--muted);
+    font-size: 0.88rem;
+    line-height: 1.6;
+  }
+
+  .history-pagination {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-top: 1.4rem;
+  }
+
+  .history-pagination__link {
+    color: var(--brand-strong);
+    font-size: 0.78rem;
+    font-weight: 500;
+    text-decoration: none;
+  }
+
+  .history-pagination__link:hover {
+    text-decoration: underline;
+  }
+
+  .history-pagination__link.is-disabled {
+    color: var(--muted);
+    opacity: 0.55;
+    text-decoration: none;
+  }
+
+  .history-pagination__status {
+    color: var(--muted);
+    font-size: 0.72rem;
+  }
+
+  .history-detail {
+    padding: clamp(1.2rem, 3vw, 1.8rem);
+    border: 1px solid var(--border);
+    border-radius: calc(var(--radius) + 4px);
+    background: var(--card);
+  }
+
+  .history-detail__header {
+    padding-bottom: 1rem;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .history-detail__mode {
+    margin: 0 0 0.3rem;
+    color: var(--brand-strong);
+    font-size: 0.64rem;
+    font-weight: 600;
+    letter-spacing: 0.09em;
+    text-transform: uppercase;
+  }
+
+  .history-detail__meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.35rem;
+    margin: 0;
+    color: var(--muted);
+    font-size: 0.72rem;
+  }
+
+  .history-detail__body {
+    padding-top: 1.2rem;
+    font-size: 0.98rem;
+    line-height: 1.78;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+  }
+
+  .danger-zone {
+    margin-top: 2rem;
+    padding: 1.1rem 1.2rem;
+    border: 1px solid color-mix(in srgb, var(--destructive) 28%, var(--border));
+    border-radius: calc(var(--radius) + 4px);
+    background: color-mix(in srgb, var(--destructive) 4%, var(--card));
+  }
+
+  .danger-zone h2 {
+    margin: 0 0 0.35rem;
+    font-size: 0.9rem;
+    font-weight: 600;
+  }
+
+  .danger-zone p {
+    margin: 0 0 1rem;
+    color: var(--muted);
+    font-size: 0.8rem;
+    line-height: 1.55;
+  }
+
+  .danger-zone form {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.8rem;
+  }
+
+  /* Public privacy page ------------------------------------------------- */
+  .prose-page {
+    max-width: 44rem;
+    padding: clamp(3rem, 7vw, 5.5rem) 0;
+  }
+
+  .prose-page h1 {
+    margin: 0;
+    font-family: var(--font-display);
+    font-size: clamp(2.3rem, 5vw, 3.4rem);
+    font-weight: 400;
+    line-height: 1.05;
+    letter-spacing: -0.035em;
+  }
+
+  .prose-page__intro {
+    margin: 1rem 0 2.2rem;
+    color: var(--muted);
+    font-size: 1.05rem;
+    line-height: 1.65;
+  }
+
+  .prose-page__section {
+    padding: 1.2rem 0;
+    border-top: 1px solid var(--border);
+  }
+
+  .prose-page__section h2 {
+    margin: 0 0 0.45rem;
+    font-size: 0.95rem;
+    font-weight: 600;
+  }
+
+  .prose-page__section p {
+    margin: 0;
+    color: var(--muted);
+    font-size: 0.92rem;
+    line-height: 1.7;
+  }
+
+  .prose-page .button {
+    margin-top: 1.6rem;
+  }
+
+  /* AI account gate ----------------------------------------------------- */
+  .ai-gate {
+    margin-top: 1.4rem;
+    padding: clamp(1.3rem, 3vw, 2rem);
+    border: 1px solid var(--ai-line);
+    border-radius: calc(var(--radius) + 6px);
+    background: var(--ai-bg);
+    color: var(--ai-ink);
+  }
+
+  .ai-gate__eyebrow {
+    margin: 0 0 0.5rem;
+    color: var(--ai-accent);
+    font-size: 0.62rem;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+  }
+
+  .ai-gate h2 {
+    max-width: 22ch;
+    margin: 0;
+    font-family: var(--font-display);
+    font-size: clamp(1.5rem, 3vw, 2.1rem);
+    font-weight: 400;
+    line-height: 1.08;
+    letter-spacing: -0.025em;
+  }
+
+  .ai-gate p {
+    max-width: 40rem;
+    margin: 0.8rem 0 0;
+    color: var(--ai-muted);
+    font-size: 0.9rem;
+    line-height: 1.65;
+  }
+
+  .ai-gate__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.6rem;
+    margin-top: 1.2rem;
+  }
+
+  .ai-gate__note {
+    padding-top: 1rem;
+    border-top: 1px solid var(--ai-line);
+    font-size: 0.72rem;
+  }
+
+  /* Header/footer accents ---------------------------------------------- */
+  .site-nav__cta {
+    margin-left: 0.25rem;
+    border: 1px solid var(--border);
+    color: var(--foreground);
+    font-weight: 500;
+  }
+
+  .site-nav__cta:hover {
+    border-color: color-mix(in srgb, var(--brand) 35%, var(--border));
+    background: var(--brand-soft);
+    color: var(--brand-strong);
+  }
+
+  .site-footer__meta a {
+    color: var(--muted);
+    text-decoration: none;
+  }
+
+  .site-footer__meta a:hover {
+    color: var(--brand-strong);
+    text-decoration: underline;
+  }
+
+  @media (max-width: 900px) {
+    .auth-layout {
+      grid-template-columns: 1fr;
+      gap: 2rem;
+    }
+
+    .auth-aside {
+      max-width: 42rem;
+    }
+
+    .auth-aside h1 {
+      max-width: 20ch;
+    }
+
+    .auth-card {
+      max-width: 34rem;
+    }
+
+    .account-layout {
+      grid-template-columns: 1fr;
+    }
+
+    .account-sidebar {
+      position: static;
+    }
+
+    .account-nav {
+      flex-direction: row;
+      overflow-x: auto;
+      padding-bottom: 0.2rem;
+    }
+
+    .account-nav__link {
+      flex-shrink: 0;
+    }
+
+    .account-signout {
+      display: flex;
+      justify-content: flex-end;
+    }
+  }
+
+  @media (max-width: 560px) {
+    .account-facts {
+      grid-template-columns: 1fr;
+    }
+
+    .account-fact,
+    .account-fact:nth-child(odd) {
+      border-right: 0;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .account-fact:last-child {
+      border-bottom: 0;
+    }
+
+    .history-item__head {
+      display: block;
+    }
+
+    .history-item__head time {
+      display: block;
+      margin-top: 0.35rem;
+      text-align: left;
+    }
+
+    .history-pagination {
+      flex-wrap: wrap;
+    }
+
+    .history-pagination__status {
+      order: -1;
+      width: 100%;
+    }
+  }
+}

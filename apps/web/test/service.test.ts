@@ -3,7 +3,11 @@ import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { resetAiConfigForTests } from "../src/lib/ai/config";
-import { AiProviderError, AiRateLimitError } from "../src/lib/ai/errors";
+import {
+  AiAuthRequiredError,
+  AiProviderError,
+  AiRateLimitError,
+} from "../src/lib/ai/errors";
 import { explainPassage, resetAiServiceForTests } from "../src/lib/ai/service";
 
 const dataDir = fileURLToPath(new URL("../../../data", import.meta.url));
@@ -19,6 +23,7 @@ function configure(overrides: Record<string, string> = {}): void {
   vi.stubEnv("AI_PER_USER_DAILY", "10");
   vi.stubEnv("AI_PER_USER_BURST", "10");
   vi.stubEnv("AI_GLOBAL_DAILY", "10");
+  vi.stubEnv("AI_REQUIRE_ACCOUNT", "1");
   for (const [key, value] of Object.entries(overrides)) {
     vi.stubEnv(key, value);
   }
@@ -56,6 +61,7 @@ const options = {
   from: 1,
   to: 1,
   mode: "resumen" as const,
+  userId: "00000000-0000-0000-0000-000000000001",
   clientAddress: "192.0.2.1",
 };
 
@@ -67,6 +73,16 @@ afterEach(() => {
 });
 
 describe.skipIf(!available)("explainPassage", () => {
+  it("requires an account when the feature is configured that way", async () => {
+    configure();
+    const fetchMock = mockCompletion();
+
+    await expect(
+      explainPassage({ ...options, userId: null }),
+    ).rejects.toBeInstanceOf(AiAuthRequiredError);
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
   it("caches an exact passage without consuming quota again", async () => {
     configure({ AI_PER_USER_DAILY: "1", AI_PER_USER_BURST: "1" });
     const fetchMock = mockCompletion();

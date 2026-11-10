@@ -1,0 +1,150 @@
+---
+import Alert from "../../../components/ui/Alert.astro";
+import AccountShell from "../../../features/account/AccountShell.astro";
+import { t } from "../../../i18n";
+import BaseLayout from "../../../layouts/BaseLayout.astro";
+import { listAnalyses, loginUrl, type AnalysisRecord } from "../../../lib/auth";
+import { modeCopy } from "../../../lib/ai/labels";
+import { formatDateTime, textSnippet } from "../../../lib/date-format";
+
+const PAGE_SIZE = 20;
+
+const user = Astro.locals.user;
+if (!user) {
+  return Astro.redirect(loginUrl("/cuenta/historial"), 303);
+}
+
+const pageParam = Astro.url.searchParams.get("page");
+const requestedPage = Math.max(1, Number.parseInt(pageParam ?? "1", 10) || 1);
+
+const supabase = Astro.locals.supabase;
+let items: AnalysisRecord[] = [];
+let total = 0;
+let queryError = false;
+
+if (supabase) {
+  try {
+    const result = await listAnalyses(supabase, user.id, {
+      limit: PAGE_SIZE,
+      offset: (requestedPage - 1) * PAGE_SIZE,
+    });
+    items = result.items;
+    total = result.total;
+  } catch (error) {
+    queryError = true;
+    console.error(
+      `[history] no se pudo leer el historial: ${
+        error instanceof Error ? error.message : String(error)
+      }`,
+    );
+  }
+}
+
+const pages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+if (!queryError && total > 0 && requestedPage > pages) {
+  return Astro.redirect(`/cuenta/historial?page=${pages}`, 303);
+}
+
+const deleted = Astro.url.searchParams.get("deleted") === "1";
+const email = user.email ?? "—";
+---
+
+<BaseLayout
+  title={`${t.authAccountHistory} — ${t.appName}`}
+  description={t.authAccountHistoryIntro}
+  robots="noindex, nofollow"
+>
+  <AccountShell
+    title={t.authAccountHistory}
+    intro={t.authAccountHistoryIntro}
+    active="history"
+    email={email}
+  >
+    {deleted ? (
+      <Alert variant="success" class="account-notice">
+        <p>{t.authAccountDeletedAnalysis}</p>
+      </Alert>
+    ) : null}
+    {queryError ? (
+      <Alert variant="destructive" class="account-notice">
+        <p>{t.authGenericError}</p>
+      </Alert>
+    ) : null}
+
+    {items.length === 0 && !queryError ? (
+      <div class="history-empty">
+        <h2>{t.authAccountHistoryEmptyTitle}</h2>
+        <p>{t.authAccountHistoryEmptyText}</p>
+        <a class="button button--primary" href="/#ediciones">
+          {t.authAccountHistoryEmptyCta}
+        </a>
+      </div>
+    ) : (
+      <>
+        <p class="history-count">
+          {t.authAccountHistoryCount.replace("{total}", String(total))}
+        </p>
+        <ol class="history-list">
+          {items.map((item) => (
+            <li class="history-item">
+              <div class="history-item__head">
+                <div>
+                  <p class="history-item__mode">{modeCopy(item.mode).label}</p>
+                  <h2 class="history-item__ref">
+                    <a href={`/cuenta/historial/${item.id}`}>
+                      {item.reference}
+                    </a>
+                  </h2>
+                </div>
+                <time datetime={item.createdAt}>
+                  {formatDateTime(item.createdAt)}
+                </time>
+              </div>
+              <p class="history-item__snippet">{textSnippet(item.text)}</p>
+              <a
+                class="history-item__open"
+                href={`/cuenta/historial/${item.id}`}
+              >
+                {t.authAccountOpenAnalysis} →
+              </a>
+            </li>
+          ))}
+        </ol>
+
+        {pages > 1 ? (
+          <nav class="history-pagination" aria-label={t.authAccountHistory}>
+            {requestedPage > 1 ? (
+              <a
+                class="history-pagination__link"
+                href={`/cuenta/historial?page=${requestedPage - 1}`}
+              >
+                ← {t.authPrevious}
+              </a>
+            ) : (
+              <span class="history-pagination__link is-disabled">
+                ← {t.authPrevious}
+              </span>
+            )}
+            <span class="history-pagination__status">
+              {t.authAccountPage
+                .replace("{page}", String(requestedPage))
+                .replace("{pages}", String(pages))}
+            </span>
+            {requestedPage < pages ? (
+              <a
+                class="history-pagination__link"
+                href={`/cuenta/historial?page=${requestedPage + 1}`}
+              >
+                {t.authNext} →
+              </a>
+            ) : (
+              <span class="history-pagination__link is-disabled">
+                {t.authNext} →
+              </span>
+            )}
+          </nav>
+        ) : null}
+      </>
+    )}
+  </AccountShell>
+</BaseLayout>

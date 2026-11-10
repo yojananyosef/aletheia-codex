@@ -1,5 +1,6 @@
 ---
 import { t } from "../i18n";
+import { authAvailable } from "../lib/auth/config";
 ---
 
 <header class="site-header">
@@ -17,6 +18,11 @@ import { t } from "../i18n";
       <a class="site-nav__link" href="/#como-leer">
         {t.navReading}
       </a>
+      {authAvailable() ? (
+        <a class="site-nav__link site-nav__cta" href="/cuenta">
+          {t.navAccount}
+        </a>
+      ) : null}
     </nav>
   </div>
 </header>

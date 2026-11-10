@@ -8,8 +8,10 @@ los corpus; la exportación estática queda como respaldo.
 
 La versión SSR incluye además un asistente de estudio con IA, opcional y
 desactivado por defecto, que genera resúmenes, explicaciones y análisis
-gramaticales a partir del mismo texto y de la morfología del corpus. La
-exportación estática no incluye esta función porque no tiene backend.
+gramaticales a partir del mismo texto y de la morfología del corpus. Para
+usarlo hace falta una cuenta: cada análisis se guarda en el historial del
+usuario y la cuota se aplica por cuenta, no por dirección IP. La exportación
+estática no incluye esta función porque no tiene backend.
 
 Este primer corte cubre la lectura de corpus, libros y capítulos: hebreo con
 transliteración, griego y latín, con la forma en el texto, el lexema, la
@@ -50,6 +52,11 @@ necesidad de MySQL.
 - `/`: selección de corpus, libro y capítulo.
 - `/read/:corpus/:book/:chapter`: lectura del capítulo.
 - `/read/:corpus/:book/:chapter/explain`: asistente de estudio con IA (solo SSR).
+- `/entrar` y `/crear-cuenta`: acceso y registro de cuentas.
+- `/cuenta`: resumen de la cuenta.
+- `/cuenta/historial` y `/cuenta/historial/:id`: análisis guardados.
+- `/cuenta/contrasena` y `/cuenta/eliminar`: gestión de la cuenta.
+- `/privacidad`: qué datos se guardan y cómo eliminarlos.
 - `/read?corpus=...&book=...&chapter=...`: redirección a la URL canónica.
 - `?translit=1`: muestra la transliteración cuando el corpus la ofrece.
 - `?grammar=1`: muestra la estructura gramatical por versículo.
@@ -109,11 +116,20 @@ Variables recomendadas en Vercel (Production):
 - `AI_SITE_URL=https://bibleol-astro.vercel.app`.
 - `AI_IP_SALT=<secreto-largo>`.
 - `AI_TRUST_PROXY=1`: Vercel reescribe `X-Forwarded-For`.
+- `AI_REQUIRE_ACCOUNT=1`: exige una cuenta para generar análisis.
 - `VERCEL_SUPPORT_LARGE_FUNCTIONS=1`: necesario si la imagen supera el límite
   estándar de funciones.
 - `BIBLEOL_AI_DB=/tmp/ai.sqlite`: respaldo local si no hay Redis.
 - `KV_REST_API_URL` y `KV_REST_API_TOKEN`: los añade la integración de Upstash
   Redis y permiten compartir caché y cuotas entre instancias.
+- `PUBLIC_SUPABASE_URL`, `PUBLIC_SUPABASE_ANON_KEY` y
+  `SUPABASE_SERVICE_ROLE_KEY`: los añade la integración de Supabase. La clave
+  de servicio es solo para el servidor.
+- `PUBLIC_SITE_URL`: URL pública usada en los enlaces de confirmación.
+- `AUTH_SIGNUP_ENABLED=1` y `AUTH_REQUIRE_EMAIL_CONFIRMATION=0`: controlan el
+  registro y la confirmación por correo.
+- `AUTH_CSRF_SECRET` y `AUTH_RATE_SALT`: secretos independientes recomendados
+  para los formularios y los límites de intentos.
 
 La integración de Redis se puede provisionar desde el CLI:
 
@@ -166,13 +182,44 @@ color del proyecto original. Las palabras se agrupan bajo el objeto gramatical
 más profundo que las contiene y siguen siendo desplegables para consultar todos
 sus datos.
 
+## Cuentas e historial
+
+Las cuentas usan Supabase Auth y el historial se guarda en Postgres. La
+integración de Supabase en Vercel escribe las variables `SUPABASE_*`,
+`PUBLIC_SUPABASE_*` y `POSTGRES_*`; en local se descargan con:
+
+```sh
+vercel env pull .env.local
+```
+
+La tabla `public.analyses` se crea con las migraciones versionadas de
+`supabase/migrations`. El ejecutor usa la conexión agrupada de Postgres y lleva
+su propio registro en `public.app_migrations`:
+
+```sh
+pnpm db:status
+pnpm db:migrate
+```
+
+Cada fila pertenece a un usuario y las políticas RLS impiden que una cuenta lea
+o modifique el historial de otra. Al eliminar la cuenta, la clave foránea borra
+también todos sus análisis. El registro crea la cuenta ya confirmada mediante
+la API de administración; para exigir confirmación por correo, configure el
+SMTP y la URL pública en Supabase y active
+`AUTH_REQUIRE_EMAIL_CONFIRMATION=1`.
+
+Los formularios funcionan sin JavaScript y llevan un token CSRF firmado. Los
+intentos de acceso, registro y cambio de contraseña se limitan por IP y por
+cuenta con Upstash Redis cuando está disponible.
+
 ## Asistente de IA (opcional)
 
 La versión SSR puede generar resúmenes, explicaciones y análisis gramaticales
 del pasaje visible. La función está desactivada por defecto y solo aparece
 cuando el servidor tiene `OPENROUTER_API_KEY` (o `AI_ENABLED=1` y una clave).
-La exportación estática no la incluye: el panel se oculta con
-`STATIC_EXPORT=1` y la ruta `/explain` no se exporta.
+Con `AI_REQUIRE_ACCOUNT=1` (valor por defecto), los visitantes anónimos ven un
+aviso para entrar o crear una cuenta. La exportación estática no la incluye: el
+panel se oculta con `STATIC_EXPORT=1` y la ruta `/explain` no se exporta.
 
 ### Configuración
 
@@ -182,32 +229,34 @@ La exportación estática no la incluye: el panel se oculta con
 3. Para un despliegue público, defina `AI_SITE_URL`, `AI_IP_SALT` y, si hay un
    proxy inverso de confianza que reescribe `X-Forwarded-For`, active
    `AI_TRUST_PROXY=1`. No lo active si el servidor recibe tráfico directo.
-4. Arranque `pnpm dev` o `pnpm build && pnpm start`.
+4. Configure Supabase y aplique las migraciones (véase «Cuentas e historial»).
+5. Arranque `pnpm dev` o `pnpm build && pnpm start`.
 
 Valores por defecto:
 
-| Variable             | Valor                                    |
-| -------------------- | ---------------------------------------- |
-| `AI_MODEL`           | `google/gemma-4-31b-it:free`             |
-| `AI_FALLBACK_MODELS` | `nvidia/nemotron-3-ultra-550b-a55b:free` |
-| `AI_PER_USER_DAILY`  | 15 análisis por IP y día                 |
-| `AI_PER_USER_BURST`  | 3 análisis por IP y minuto               |
-| `AI_GLOBAL_DAILY`    | 40 análisis por día en todo el servidor  |
-| `AI_MAX_VERSES`      | 80 versículos por análisis               |
-| `AI_MAX_CONCURRENT`  | 3 peticiones simultáneas                 |
-| `AI_CACHE_TTL_DAYS`  | 30 días                                  |
+| Variable             | Valor                                                                          |
+| -------------------- | ------------------------------------------------------------------------------ |
+| `AI_MODEL`           | `google/gemma-4-26b-a4b-it:free`                                               |
+| `AI_FALLBACK_MODELS` | `nvidia/nemotron-3.5-lightning:free`, `nvidia/nemotron-3-ultra-550b-a55b:free` |
+| `AI_PER_USER_DAILY`  | 15 análisis por cuenta y día                                                   |
+| `AI_PER_USER_BURST`  | 3 análisis por cuenta y minuto                                                 |
+| `AI_GLOBAL_DAILY`    | 120 análisis por día en todo el servidor                                       |
+| `AI_MAX_VERSES`      | 80 versículos por análisis                                                     |
+| `AI_MAX_CONCURRENT`  | 3 peticiones simultáneas                                                       |
+| `AI_CACHE_TTL_DAYS`  | 30 días                                                                        |
 
 Use `AI_FALLBACK_MODELS=-` para desactivar el modelo de respaldo.
 
 ### Modelos y límites de OpenRouter
 
-Los dos modelos gratuitos recomendados existen en OpenRouter y se comprobaron
+Los modelos gratuitos recomendados existen en OpenRouter y se comprobaron
 contra su catálogo:
 
-- `google/gemma-4-31b-it:free`: 262.144 tokens de contexto, gratuito y con
-  razonamiento. Es el modelo principal.
+- `google/gemma-4-26b-a4b-it:free`: variante de mezcla de expertos, más rápida
+  que el modelo denso, gratuita y con razonamiento. Es el modelo principal.
+- `nvidia/nemotron-3.5-lightning:free`: respaldo rápido y ligero.
 - `nvidia/nemotron-3-ultra-550b-a55b:free`: 1.000.000 de tokens de contexto,
-  gratuito y solo texto. Es el respaldo.
+  gratuito y solo texto. Es el segundo respaldo.
 
 Los límites de la plataforma son independientes de los de BibleOL. Según la
 documentación de OpenRouter, los modelos `:free` permiten 20 solicitudes por
@@ -216,10 +265,11 @@ minuto y:
 - 50 solicitudes por día si la cuenta ha comprado menos de 10 créditos;
 - 1.000 solicitudes por día si ha comprado al menos 10 créditos.
 
-Por eso `AI_GLOBAL_DAILY` vale 40 por defecto: deja margen bajo el límite diario
-de 50 del plan gratuito. Si su cuenta tiene el límite de 1.000, puede subirlo.
-Los límites por IP y el límite global se aplican en SQLite antes de llamar al
-proveedor. Una respuesta ya guardada en caché no consume cuota.
+Por eso `AI_GLOBAL_DAILY` vale 120 por defecto: deja margen bajo el límite
+diario de 1.000 y sigue protegiendo el servicio. Si su cuenta usa el plan
+gratuito de 50, bájelo a 40. Los límites por cuenta y el límite global se
+aplican en Redis (o SQLite) antes de llamar al proveedor. Una respuesta ya
+guardada en caché no consume cuota.
 
 También puede usar modelos de pago: el coste lo asume el operador. El caché
 exacto y los límites protegen la factura. `AI_REASONING=0` desactiva el

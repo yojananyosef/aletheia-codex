@@ -1,0 +1,182 @@
+---
+import Alert from "../../components/ui/Alert.astro";
+import Button from "../../components/ui/Button.astro";
+import Field from "../../components/ui/Field.astro";
+import Input from "../../components/ui/Input.astro";
+import AccountShell from "../../features/account/AccountShell.astro";
+import CsrfInput from "../../features/auth/CsrfInput.astro";
+import { t } from "../../i18n";
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import {
+  clientIp,
+  consumeAuthRateLimit,
+  createCsrfToken,
+  getAuthConfig,
+  isSameOriginRequest,
+  loginUrl,
+  passwordIssue,
+  readFormValue,
+  verifyFormCsrf,
+} from "../../lib/auth";
+
+const user = Astro.locals.user;
+if (!user) {
+  return Astro.redirect(loginUrl("/cuenta/contrasena"), 303);
+}
+
+const config = getAuthConfig();
+const csrf = createCsrfToken();
+const email = user.email ?? "—";
+
+let error: string | null = null;
+let changed = false;
+let retryAfter: number | null = null;
+
+if (Astro.request.method.toUpperCase() === "POST") {
+  const form = await Astro.request.formData();
+  const currentPassword = readFormValue(form, "currentPassword", 200);
+  const newPassword = readFormValue(form, "newPassword", 200);
+  const confirmation = readFormValue(form, "passwordConfirm", 200);
+  const issue = passwordIssue(newPassword, config.passwordMinLength);
+
+  if (!isSameOriginRequest(Astro.request, Astro.url) || !verifyFormCsrf(form)) {
+    Astro.response.status = 403;
+    error = t.authGenericError;
+  } else if (!user.email) {
+    Astro.response.status = 400;
+    error = t.authGenericError;
+  } else if (!currentPassword) {
+    Astro.response.status = 400;
+    error = t.authAccountPasswordWrong;
+  } else if (issue === "short") {
+    Astro.response.status = 400;
+    error = t.authPasswordShort.replace(
+      "{min}",
+      String(config.passwordMinLength),
+    );
+  } else if (issue === "long") {
+    Astro.response.status = 400;
+    error = t.authPasswordLong;
+  } else if (issue === "weak") {
+    Astro.response.status = 400;
+    error = t.authPasswordWeak;
+  } else if (newPassword !== confirmation) {
+    Astro.response.status = 400;
+    error = t.authPasswordMismatch;
+  } else {
+    const limit = await consumeAuthRateLimit({
+      scope: "password-user",
+      identifier: `${user.id}:${clientIp(Astro.request, Astro.clientAddress)}`,
+      limit: 6,
+      windowSeconds: 15 * 60,
+    });
+    if (!limit.allowed) {
+      Astro.response.status = 429;
+      retryAfter = limit.retryAfterSeconds;
+      Astro.response.headers.set("Retry-After", String(retryAfter));
+      error = t.authRateLimited;
+    } else {
+      const supabase = Astro.locals.supabase;
+      if (!supabase) {
+        Astro.response.status = 503;
+        error = t.authUnavailableText;
+      } else {
+        const { error: reauthError } = await supabase.auth.signInWithPassword({
+          email: user.email,
+          password: currentPassword,
+        });
+        if (reauthError) {
+          Astro.response.status = 400;
+          error = t.authAccountPasswordWrong;
+        } else {
+          const { error: updateError } = await supabase.auth.updateUser({
+            password: newPassword,
+          });
+          if (updateError) {
+            Astro.response.status = 400;
+            console.error(
+              `[auth] no se pudo cambiar la contraseña: ${updateError.message}`,
+            );
+            error = t.authGenericError;
+          } else {
+            changed = true;
+          }
+        }
+      }
+    }
+  }
+}
+---
+
+<BaseLayout
+  title={`${t.authAccountPasswordTitle} — ${t.appName}`}
+  description={t.authAccountPasswordIntro}
+  robots="noindex, nofollow"
+>
+  <AccountShell
+    title={t.authAccountPasswordTitle}
+    intro={t.authAccountPasswordIntro}
+    active="password"
+    email={email}
+  >
+    {changed ? (
+      <Alert variant="success" class="account-notice">
+        <p>{t.authAccountPasswordChanged}</p>
+      </Alert>
+    ) : null}
+    {error ? (
+      <Alert variant="destructive" class="account-notice">
+        <p>{error}</p>
+      </Alert>
+    ) : null}
+
+    <form
+      class="auth-form account-form"
+      action="/cuenta/contrasena"
+      method="post"
+    >
+      <CsrfInput token={csrf} />
+      <Field label={t.authCurrentPasswordLabel} for="current-password">
+        <Input
+          id="current-password"
+          name="currentPassword"
+          type="password"
+          autocomplete="current-password"
+          required
+          maxlength="200"
+        />
+      </Field>
+      <Field
+        label={t.authNewPasswordLabel}
+        for="new-password"
+        hint={t.authPasswordHint.replace(
+          "{min}",
+          String(config.passwordMinLength),
+        )}
+      >
+        <Input
+          id="new-password"
+          name="newPassword"
+          type="password"
+          autocomplete="new-password"
+          required
+          minlength={config.passwordMinLength}
+          maxlength="200"
+        />
+      </Field>
+      <Field label={t.authPasswordConfirmLabel} for="confirm-password">
+        <Input
+          id="confirm-password"
+          name="passwordConfirm"
+          type="password"
+          autocomplete="new-password"
+          required
+          minlength={config.passwordMinLength}
+          maxlength="200"
+        />
+      </Field>
+      <Button type="submit">{t.authAccountPasswordButton}</Button>
+      {retryAfter ? <p class="auth-form__hint">{t.authRetryHint}</p> : null}
+    </form>
+  </AccountShell>
+</BaseLayout>
