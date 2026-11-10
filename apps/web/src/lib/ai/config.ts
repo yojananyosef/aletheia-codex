@@ -2,7 +2,9 @@ import { createHash } from "node:crypto";
 import { resolve } from "node:path";
 import { getDataPaths } from "../data-paths";
 
-const DEFAULT_MODEL = "google/gemma-4-31b-it:free";
+// The mixture-of-experts Gemma variant is markedly faster than the dense 31B
+// model, which is what matters on free endpoints that queue requests.
+const DEFAULT_MODEL = "google/gemma-4-26b-a4b-it:free";
 const DEFAULT_FALLBACK_MODELS = [
   "nvidia/nemotron-3.5-lightning:free",
   "nvidia/nemotron-3-ultra-550b-a55b:free",
@@ -143,11 +145,11 @@ export function getAiConfig(): AiConfig {
       "",
     ),
     appName: "BibleOL",
-    timeoutMs: readInteger("AI_TIMEOUT_MS", 90_000, 5_000, 300_000),
+    timeoutMs: readInteger("AI_TIMEOUT_MS", 120_000, 5_000, 300_000),
     temperature: readFloat("AI_TEMPERATURE", 0.3, 0, 2),
     maxVerses: readInteger("AI_MAX_VERSES", 80, 1, 176),
     maxPromptChars: readInteger("AI_MAX_PROMPT_CHARS", 120_000, 5_000, 500_000),
-    maxOutputTokens: readInteger("AI_MAX_OUTPUT_TOKENS", 8_000, 256, 32_768),
+    maxOutputTokens: readInteger("AI_MAX_OUTPUT_TOKENS", 2_500, 256, 32_768),
     perUserDaily: readInteger("AI_PER_USER_DAILY", 15, 1, 1_000),
     perUserBurst: readInteger("AI_PER_USER_BURST", 3, 1, 60),
     globalDaily: readInteger("AI_GLOBAL_DAILY", 40, 1, 100_000),

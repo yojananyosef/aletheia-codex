@@ -140,10 +140,16 @@ export async function requestCompletion(
     temperature: config.temperature,
     max_tokens: config.maxOutputTokens,
     usage: { include: true },
+    // Free endpoints queue behind other traffic. Prefer the provider with the
+    // most throughput instead of the default price-first routing.
+    provider: {
+      sort: { by: "throughput", partition: "none" },
+      allow_fallbacks: true,
+    },
+    // Always send an explicit value: some models reason by default, which can
+    // spend the whole token budget and never produce an answer.
+    reasoning: { enabled: config.reasoning, exclude: true },
   };
-  if (config.reasoning) {
-    body.reasoning = { enabled: true, exclude: true };
-  }
 
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), config.timeoutMs);
