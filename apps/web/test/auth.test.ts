@@ -16,6 +16,7 @@ import {
 function configure(): void {
   vi.stubEnv("AUTH_CSRF_SECRET", "test-csrf-secret");
   vi.stubEnv("AUTH_RATE_SALT", "test-rate-salt");
+  vi.stubEnv("PUBLIC_SITE_URL", "https://bibleol.example");
   vi.stubEnv("KV_REST_API_URL", "");
   vi.stubEnv("KV_REST_API_TOKEN", "");
   vi.stubEnv("UPSTASH_REDIS_REST_URL", "");
@@ -59,6 +60,57 @@ describe("CSRF", () => {
     expect(
       isSameOriginRequest(
         new Request(url, { headers: { origin: "https://evil.example" } }),
+        url,
+      ),
+    ).toBe(false);
+  });
+
+  it("accepts the public host when Astro sees an internal URL", () => {
+    configure();
+    const url = new URL("http://localhost:3000/cuenta");
+    const request = new Request(url, {
+      method: "POST",
+      headers: {
+        host: "bibleol-astro.vercel.app",
+        origin: "https://bibleol-astro.vercel.app",
+        "sec-fetch-site": "same-origin",
+      },
+    });
+    expect(isSameOriginRequest(request, url)).toBe(true);
+  });
+
+  it("accepts the forwarded host used by Vercel", () => {
+    configure();
+    vi.stubEnv("PUBLIC_SITE_URL", "");
+    vi.stubEnv("SITE_URL", "");
+    vi.stubEnv("VERCEL_PROJECT_PRODUCTION_URL", "");
+    vi.stubEnv("VERCEL_URL", "");
+    vi.stubEnv("AI_SITE_URL", "");
+    resetAuthConfigForTests();
+    const url = new URL("http://localhost:3000/cuenta");
+    const request = new Request(url, {
+      method: "POST",
+      headers: {
+        origin: "https://preview.example.vercel.app",
+        "x-forwarded-host": "preview.example.vercel.app",
+        "x-forwarded-proto": "https",
+      },
+    });
+    expect(isSameOriginRequest(request, url)).toBe(true);
+  });
+
+  it("rejects a null or malformed origin", () => {
+    configure();
+    const url = new URL("https://bibleol.example/cuenta");
+    expect(
+      isSameOriginRequest(
+        new Request(url, { headers: { origin: "null" } }),
+        url,
+      ),
+    ).toBe(false);
+    expect(
+      isSameOriginRequest(
+        new Request(url, { headers: { origin: "no-es-una-url" } }),
         url,
       ),
     ).toBe(false);

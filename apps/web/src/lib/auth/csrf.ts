@@ -56,14 +56,84 @@ export function verifyFormCsrf(form: FormData): boolean {
   return typeof value === "string" && verifyCsrfToken(value);
 }
 
+function firstHeaderValue(value: string | null): string | null {
+  const first = value?.split(",")[0]?.trim();
+  return first || null;
+}
+
+function hostFromValue(value: string | null): string | null {
+  const candidate = firstHeaderValue(value);
+  if (!candidate) {
+    return null;
+  }
+  try {
+    const parsed = new URL(
+      /^[a-z][a-z0-9+.-]*:\/\//i.test(candidate)
+        ? candidate
+        : `https://${candidate}`,
+    );
+    return parsed.host.toLowerCase();
+  } catch {
+    return null;
+  }
+}
+
+function isLoopbackHost(host: string): boolean {
+  const hostname = (
+    host.startsWith("[")
+      ? host.slice(1, host.indexOf("]"))
+      : (host.split(":")[0] ?? "")
+  ).toLowerCase();
+  return (
+    hostname === "localhost" || hostname === "127.0.0.1" || hostname === "::1"
+  );
+}
+
 /**
  * Defence in depth on top of the token: reject obvious cross-site form posts
  * before touching credentials.
+ *
+ * Behind a reverse proxy such as Vercel, Astro can build `url` from the
+ * internal listener address (`http://localhost:...`) because forwarded headers
+ * are only trusted when `security.allowedDomains` is configured. Compare
+ * against the public host instead of trusting `url.origin` alone.
  */
 export function isSameOriginRequest(request: Request, url: URL): boolean {
   const origin = request.headers.get("origin");
-  if (origin) {
-    return origin === url.origin;
+  if (!origin) {
+    return request.headers.get("sec-fetch-site") !== "cross-site";
   }
-  return request.headers.get("sec-fetch-site") !== "cross-site";
+
+  let originHost: string;
+  try {
+    const parsed = new URL(origin);
+    if (parsed.protocol !== "http:" && parsed.protocol !== "https:") {
+      return false;
+    }
+    originHost = parsed.host.toLowerCase();
+  } catch {
+    return false;
+  }
+
+  const siteHost = hostFromValue(getAuthConfig().siteUrl);
+  const hosts = new Set<string>();
+  for (const value of [
+    siteHost,
+    request.headers.get("host"),
+    request.headers.get("x-forwarded-host"),
+  ]) {
+    const host = hostFromValue(value);
+    if (host) {
+      hosts.add(host);
+    }
+  }
+
+  // The configured site URL and the incoming Host header cover normal
+  // deployments. Keep the internal URL as a fallback for local development on
+  // a port other than the configured one.
+  if (siteHost && isLoopbackHost(siteHost)) {
+    hosts.add(url.host.toLowerCase());
+  }
+
+  return hosts.has(originHost);
 }

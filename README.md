@@ -125,7 +125,8 @@ Variables recomendadas en Vercel (Production):
 - `PUBLIC_SUPABASE_URL`, `PUBLIC_SUPABASE_ANON_KEY` y
   `SUPABASE_SERVICE_ROLE_KEY`: los añade la integración de Supabase. La clave
   de servicio es solo para el servidor.
-- `PUBLIC_SITE_URL`: URL pública usada en los enlaces de confirmación.
+- `PUBLIC_SITE_URL`: URL pública usada en los enlaces de confirmación y para
+  validar el origen de los formularios.
 - `AUTH_SIGNUP_ENABLED=1` y `AUTH_REQUIRE_EMAIL_CONFIRMATION=0`: controlan el
   registro y la confirmación por correo.
 - `AUTH_CSRF_SECRET` y `AUTH_RATE_SALT`: secretos independientes recomendados
