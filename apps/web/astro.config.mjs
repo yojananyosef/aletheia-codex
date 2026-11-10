@@ -43,6 +43,10 @@ export default defineConfig({
   output: "server",
   security: {
     allowedDomains: allowedDomains(),
+    // The auth routes validate Origin/Host and a signed CSRF token. Astro's
+    // built-in check compares against its internal URL, which is unreliable
+    // behind a proxy that preserves the Host but terminates TLS.
+    checkOrigin: false,
   },
   adapter: node({ mode: "standalone" }),
   server: {
