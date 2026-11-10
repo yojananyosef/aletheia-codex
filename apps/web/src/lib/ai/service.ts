@@ -226,9 +226,12 @@ export async function explainPassage(
     };
   }
 
-  const identifier = options.userId
-    ? `user:${options.userId}`
-    : hashIdentifier(options.clientAddress ?? "unknown", config.ipSalt);
+  const identifier = hashIdentifier(
+    options.userId
+      ? `user:${options.userId}`
+      : (options.clientAddress ?? "unknown"),
+    config.ipSalt,
+  );
   const release = acquireSlot(config.maxConcurrent);
   try {
     let decision: Awaited<ReturnType<AiBackend["consume"]>>;
