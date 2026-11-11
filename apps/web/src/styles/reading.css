@@ -515,12 +515,13 @@
     margin: 0 -0.45em;
     padding: 0.06em 0.45em;
     border-radius: 4px;
-    cursor: help;
+    cursor: pointer;
     text-align: center;
     transition: background-color 0.14s ease;
   }
 
-  .word__trigger:hover {
+  .word__trigger:hover,
+  .word:focus-within > .word__trigger {
     background: var(--brand-soft);
   }
 
@@ -713,14 +714,9 @@
     color: var(--muted);
   }
 
-  /* The panel is a single preview, never a second pinned copy: it opens on
-     hover, on keyboard focus and on touch focus. The compact card keeps the
-     form, lemma, morphology and glosses; the long lexical statistics are
-     deliberately left out. */
-  .word__panel .word__group[data-group="lexeme"] {
-    display: none;
-  }
-
+  /* The panel opens on hover and on focus. A click focuses the word and keeps
+     the card pinned so the reader can scroll the full entry, including the
+     lexical statistics; focusing anything outside closes it. */
   .word__panel:focus-visible {
     outline: 2px solid var(--ring);
     outline-offset: 2px;
@@ -728,8 +724,7 @@
 
   @media (hover: hover) and (pointer: fine) {
     .word:hover > .word__panel,
-    .word:has(> .word__trigger:focus-visible) > .word__panel,
-    .word:has(> .word__panel:focus-visible) > .word__panel {
+    .word:focus-within > .word__panel {
       position-anchor: var(--word-anchor);
       position: fixed;
       top: calc(anchor(below) + 0.35rem);
@@ -744,6 +739,14 @@
       transform: none;
       animation: word-panel-in 120ms ease-out;
       position-try-fallbacks: --word-panel-above;
+    }
+
+    /* While a word is pinned by focus, hovering another word must not open a
+       second card on top of it. */
+    .reading-main:has(.word:focus-within)
+      .word:hover:not(:focus-within)
+      > .word__panel {
+      display: none;
     }
   }
 
@@ -805,14 +808,12 @@
     }
 
     .reading-layout:has(.word:hover > .word__panel) .word-inspector,
-    .reading-layout:has(.word > .word__trigger:focus-visible) .word-inspector,
-    .reading-layout:has(.word > .word__panel:focus-visible) .word-inspector {
+    .reading-layout:has(.word:focus-within > .word__panel) .word-inspector {
       opacity: 0;
     }
 
     .word:hover > .word__panel,
-    .word:has(> .word__trigger:focus-visible) > .word__panel,
-    .word:has(> .word__panel:focus-visible) > .word__panel {
+    .word:focus-within > .word__panel {
       position-anchor: --word-inspector;
       top: anchor(top);
       left: anchor(left);

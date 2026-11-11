@@ -2,7 +2,12 @@ import { NotFoundError } from "@bibleol/contracts";
 import { bookName } from "../book-names";
 import { getReader } from "../reader";
 import type { AiBackend } from "./backend";
-import { AiStore, cacheKey, hashIdentifier } from "./cache";
+import {
+  AiStore,
+  cacheKey,
+  hashIdentifier,
+  type RateLimitStatus,
+} from "./cache";
 import { getAiConfig, type AiConfig } from "./config";
 import {
   AiAuthRequiredError,
@@ -76,6 +81,33 @@ export function aiAvailable(): boolean {
   }
   const config = getAiConfig();
   return config.enabled && config.configured;
+}
+
+/**
+ * Read the authenticated user's remaining daily quota without consuming it.
+ * The identifier must match the one used by `explainPassage`.
+ */
+export async function getAiQuotaStatus(
+  userId: string,
+): Promise<RateLimitStatus> {
+  const config = getAiConfig();
+  if (!config.enabled || !config.configured) {
+    throw new AiNotConfiguredError();
+  }
+
+  const identifier = hashIdentifier(`user:${userId}`, config.ipSalt);
+  const database = getBackend(config);
+  try {
+    return await database.status(identifier, {
+      perUserDaily: config.perUserDaily,
+      perUserBurst: config.perUserBurst,
+      globalDaily: config.globalDaily,
+    });
+  } catch (error) {
+    throw new AiStorageError(
+      error instanceof Error ? error.message : String(error),
+    );
+  }
 }
 
 function selectVerses(

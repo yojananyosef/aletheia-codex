@@ -5,10 +5,12 @@ import {
   minuteKey,
   secondsUntilNextMinute,
   secondsUntilUtcTomorrow,
+  utcTomorrow,
   type CacheEntry,
   type RateLimitDecision,
   type RateLimitReason,
   type RateLimits,
+  type RateLimitStatus,
   type RateReservation,
 } from "./cache";
 
@@ -164,6 +166,23 @@ export class RedisAiBackend implements AiBackend {
         parsed.reason === "burst"
           ? secondsUntilNextMinute(now)
           : secondsUntilUtcTomorrow(now),
+    };
+  }
+
+  async status(
+    identifier: string,
+    limits: RateLimits,
+    now: Date = new Date(),
+  ): Promise<RateLimitStatus> {
+    const day = dayKey(now);
+    const userKey = `${USAGE_PREFIX}:day:${day}:user:${identifier}`;
+    const raw = await this.#redis.get<number | string>(userKey);
+    const used = Math.max(0, Number(raw ?? 0) || 0);
+    return {
+      used,
+      limit: limits.perUserDaily,
+      remaining: Math.max(0, limits.perUserDaily - used),
+      resetAt: utcTomorrow(now).toISOString(),
     };
   }
 

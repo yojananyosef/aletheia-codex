@@ -4,6 +4,7 @@ import type {
   CacheEntry,
   RateLimitDecision,
   RateLimits,
+  RateLimitStatus,
   RateReservation,
 } from "./cache";
 
@@ -34,6 +35,14 @@ export class SqliteAiBackend implements AiBackend {
     now: Date = new Date(),
   ): Promise<RateLimitDecision> {
     return this.#store.consume(identifier, limits, now);
+  }
+
+  async status(
+    identifier: string,
+    limits: RateLimits,
+    now: Date = new Date(),
+  ): Promise<RateLimitStatus> {
+    return this.#store.status(identifier, limits, now);
   }
 
   async refund(reservation: RateReservation): Promise<void> {

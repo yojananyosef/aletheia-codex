@@ -2,6 +2,7 @@ import type {
   CacheEntry,
   RateLimitDecision,
   RateLimits,
+  RateLimitStatus,
   RateReservation,
 } from "./cache";
 
@@ -18,5 +19,10 @@ export interface AiBackend {
     limits: RateLimits,
     now?: Date,
   ): Promise<RateLimitDecision>;
+  status(
+    identifier: string,
+    limits: RateLimits,
+    now?: Date,
+  ): Promise<RateLimitStatus>;
   refund(reservation: RateReservation): Promise<void>;
 }

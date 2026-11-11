@@ -6,11 +6,13 @@ export {
   type AiUsage,
 } from "./types";
 export { getAiConfig, resetAiConfigForTests, type AiConfig } from "./config";
+export type { RateLimitStatus } from "./cache";
 export { modeCopy, modelLabel, type ModeCopy } from "./labels";
 export {
   aiAvailable,
   clientIdentifier,
   explainPassage,
+  getAiQuotaStatus,
   resetAiServiceForTests,
   type ExplainPassageOptions,
 } from "./service";

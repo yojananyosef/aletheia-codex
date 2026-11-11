@@ -6,6 +6,7 @@ import {
   minuteKey,
   secondsUntilNextMinute,
   secondsUntilUtcTomorrow,
+  utcTomorrow,
 } from "../src/lib/ai/cache";
 
 const limits = { perUserDaily: 2, perUserBurst: 3, globalDaily: 10 };
@@ -121,6 +122,32 @@ describe("AiStore rate limits", () => {
       store.close();
     }
   });
+
+  it("reports the remaining daily quota without consuming it", () => {
+    const store = new AiStore(":memory:");
+    try {
+      expect(store.status("user", limits, now)).toEqual({
+        used: 0,
+        limit: 2,
+        remaining: 2,
+        resetAt: "2026-01-02T00:00:00.000Z",
+      });
+
+      expect(store.consume("user", limits, now).allowed).toBe(true);
+      const status = store.status("user", limits, now);
+      expect(status).toMatchObject({ used: 1, limit: 2, remaining: 1 });
+
+      // Reading the status twice must not spend the second slot.
+      expect(store.status("user", limits, now).remaining).toBe(1);
+      expect(store.consume("user", limits, now).allowed).toBe(true);
+      expect(store.status("user", limits, now).remaining).toBe(0);
+
+      // Other identifiers keep their own counter.
+      expect(store.status("other", limits, now).remaining).toBe(2);
+    } finally {
+      store.close();
+    }
+  });
 });
 
 describe("time windows", () => {
@@ -132,5 +159,6 @@ describe("time windows", () => {
   it("calculates retry windows", () => {
     expect(secondsUntilNextMinute(now)).toBe(60);
     expect(secondsUntilUtcTomorrow(now)).toBe(14 * 60 * 60);
+    expect(utcTomorrow(now).toISOString()).toBe("2026-01-02T00:00:00.000Z");
   });
 });

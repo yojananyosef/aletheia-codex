@@ -27,6 +27,14 @@ export type RateLimitDecision =
   | { allowed: true; reservation: RateReservation }
   | { allowed: false; reason: RateLimitReason; retryAfterSeconds: number };
 
+export interface RateLimitStatus {
+  used: number;
+  limit: number;
+  remaining: number;
+  /** UTC instant when the daily counter resets, as an ISO string. */
+  resetAt: string;
+}
+
 interface CacheRow {
   text: string;
   model: string;
@@ -97,13 +105,17 @@ export function minuteKey(now: Date = new Date()): string {
   return now.toISOString().slice(0, 16);
 }
 
-export function secondsUntilUtcTomorrow(now: Date = new Date()): number {
-  const tomorrow = Date.UTC(
-    now.getUTCFullYear(),
-    now.getUTCMonth(),
-    now.getUTCDate() + 1,
+export function utcTomorrow(now: Date = new Date()): Date {
+  return new Date(
+    Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() + 1),
   );
-  return Math.max(1, Math.ceil((tomorrow - now.getTime()) / 1000));
+}
+
+export function secondsUntilUtcTomorrow(now: Date = new Date()): number {
+  return Math.max(
+    1,
+    Math.ceil((utcTomorrow(now).getTime() - now.getTime()) / 1000),
+  );
 }
 
 export function secondsUntilNextMinute(now: Date = new Date()): number {
@@ -240,6 +252,21 @@ export class AiStore {
     });
 
     return transaction.immediate();
+  }
+
+  /** Read the current daily usage without consuming quota. */
+  status(
+    identifier: string,
+    limits: RateLimits,
+    now: Date = new Date(),
+  ): RateLimitStatus {
+    const used = this.#count(dayKey(now), "user", identifier);
+    return {
+      used,
+      limit: limits.perUserDaily,
+      remaining: Math.max(0, limits.perUserDaily - used),
+      resetAt: utcTomorrow(now).toISOString(),
+    };
   }
 
   /**

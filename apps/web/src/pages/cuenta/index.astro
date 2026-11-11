@@ -5,7 +5,12 @@ import AccountShell from "../../features/account/AccountShell.astro";
 import { t } from "../../i18n";
 import BaseLayout from "../../layouts/BaseLayout.astro";
 import { countAnalyses, loginUrl } from "../../lib/auth";
-import { getAiConfig } from "../../lib/ai";
+import {
+  aiAvailable,
+  getAiConfig,
+  getAiQuotaStatus,
+  type RateLimitStatus,
+} from "../../lib/ai";
 import { formatDate, formatDateTime } from "../../lib/date-format";
 
 const user = Astro.locals.user;
@@ -37,6 +42,21 @@ const email = user.email ?? "—";
 const created = Astro.url.searchParams.get("created") === "1";
 const confirmed = Astro.url.searchParams.get("confirmado") === "1";
 const aiConfig = getAiConfig();
+
+let quota: RateLimitStatus | null = null;
+let quotaError = false;
+if (aiAvailable()) {
+  try {
+    quota = await getAiQuotaStatus(user.id);
+  } catch (error) {
+    quotaError = true;
+    console.error(
+      `[account] no se pudo leer la cuota de IA: ${
+        error instanceof Error ? error.message : String(error)
+      }`,
+    );
+  }
+}
 ---
 
 <BaseLayout
@@ -95,13 +115,38 @@ const aiConfig = getAiConfig();
       </Button>
     </div>
 
-    <div class="account-note">
-      <h2>{t.aiQuotaTitle}</h2>
-      <p>
-        {t.aiQuotaAccountText
-          .replace("{daily}", String(aiConfig.perUserDaily))
-          .replace("{burst}", String(aiConfig.perUserBurst))}
-      </p>
-    </div>
+    {quota ? (
+      <section class="account-quota" aria-labelledby="account-quota-title">
+        <p class="account-quota__value">
+          <strong>{quota.remaining}</strong>
+          <span>/ {quota.limit}</span>
+        </p>
+        <div class="account-quota__copy">
+          <h2 id="account-quota-title">{t.aiQuotaRemaining}</h2>
+          <p>
+            {t.aiQuotaRemainingText
+              .replace("{remaining}", String(quota.remaining))
+              .replace("{daily}", String(quota.limit))
+              .replace("{burst}", String(aiConfig.perUserBurst))}
+          </p>
+          <p class="account-quota__reset">
+            {t.aiQuotaResetText.replace(
+              "{date}",
+              formatDateTime(quota.resetAt),
+            )}
+          </p>
+        </div>
+      </section>
+    ) : (
+      <div class="account-note">
+        <h2>{t.aiQuotaTitle}</h2>
+        <p>
+          {t.aiQuotaAccountText
+            .replace("{daily}", String(aiConfig.perUserDaily))
+            .replace("{burst}", String(aiConfig.perUserBurst))}
+        </p>
+        {quotaError ? <p>{t.aiQuotaStatusError}</p> : null}
+      </div>
+    )}
   </AccountShell>
 </BaseLayout>

@@ -26,7 +26,7 @@ export const es = {
     "Una lectura preparada para estudiar: la lengua original, el aparato morfológico y el español, sin salir de la página.",
   homeFeature1Title: "Morfología al pasar",
   homeFeature1Text:
-    "Cada palabra muestra su forma, su lexema, sus rasgos y sus glosas al pasar el cursor; en pantallas táctiles, se pulsa.",
+    "Cada palabra muestra su forma, su lexema, su frecuencia, sus rasgos y sus glosas al pasar el cursor; púlsela para fijar el detalle.",
   homeFeature2Title: "Escritura original",
   homeFeature2Text:
     "Hebreo, griego y latín se componen con sus propias fuentes, direcciones y tamaños de lectura.",
@@ -50,9 +50,9 @@ export const es = {
   showGrammar: "Mostrar gramática",
   hideGrammar: "Ocultar gramática",
   grammarHint:
-    "Pase el cursor sobre una palabra para ver su forma, su lexema, su morfología y sus glosas. En pantallas táctiles, púlsela.",
+    "Pase el cursor o pulse una palabra para ver su forma, su lexema, su frecuencia, su morfología y sus glosas.",
   grammarModeHint:
-    "Vista gramatical: cada nivel aparece con su color. Pase el cursor sobre una palabra para ver todos sus datos; en pantallas táctiles, púlsela.",
+    "Vista gramatical: cada nivel aparece con su color. Pase el cursor o pulse una palabra para ver todos sus datos.",
   grammarLevels: "Niveles",
   grammarStructure: "Estructura gramatical",
   text: "Texto",
@@ -113,6 +113,11 @@ export const es = {
     "Cada cuenta puede generar {daily} análisis al día y {burst} por minuto. Las respuestas ya guardadas no consumen cuota.",
   aiQuotaAccountText:
     "Su cuenta puede generar {daily} análisis al día y {burst} por minuto. Las respuestas ya guardadas no consumen cuota.",
+  aiQuotaRemaining: "Análisis de IA restantes hoy",
+  aiQuotaRemainingText:
+    "Le quedan {remaining} de {daily} análisis. Puede generar hasta {burst} por minuto; las respuestas ya guardadas no consumen cuota.",
+  aiQuotaResetText: "La cuota se renueva el {date}.",
+  aiQuotaStatusError: "No se pudo consultar su cuota en este momento.",
   aiPrivacyTitle: "Privacidad",
   aiPrivacyText:
     "El texto del pasaje y sus datos morfológicos se envían a un servicio externo para generar la respuesta. El análisis se guarda en su cuenta; no se envían su correo ni su contraseña.",
@@ -297,7 +302,7 @@ export const es = {
   privacyBack: "Volver a la lectura",
   footerPrivacy: "Privacidad",
   wordInspectorLabel: "Detalle",
-  wordInspectorHint: "Pase el cursor sobre una palabra del texto.",
+  wordInspectorHint: "Pase el cursor o pulse una palabra del texto.",
 } as const;
 
 export type MessageKey = keyof typeof es;

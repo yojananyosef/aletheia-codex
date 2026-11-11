@@ -8,7 +8,11 @@ import {
   AiProviderError,
   AiRateLimitError,
 } from "../src/lib/ai/errors";
-import { explainPassage, resetAiServiceForTests } from "../src/lib/ai/service";
+import {
+  explainPassage,
+  getAiQuotaStatus,
+  resetAiServiceForTests,
+} from "../src/lib/ai/service";
 
 const dataDir = fileURLToPath(new URL("../../../data", import.meta.url));
 const available =
@@ -32,25 +36,26 @@ function configure(overrides: Record<string, string> = {}): void {
 }
 
 function mockCompletion(text = "Respuesta de prueba") {
-  return vi.spyOn(globalThis, "fetch").mockResolvedValue(
-    new Response(
-      JSON.stringify({
-        model: "google/gemma-4-31b-it:free",
-        choices: [
-          {
-            message: { role: "assistant", content: text },
-            finish_reason: "stop",
+  return vi.spyOn(globalThis, "fetch").mockImplementation(
+    async () =>
+      new Response(
+        JSON.stringify({
+          model: "google/gemma-4-31b-it:free",
+          choices: [
+            {
+              message: { role: "assistant", content: text },
+              finish_reason: "stop",
+            },
+          ],
+          usage: {
+            prompt_tokens: 10,
+            completion_tokens: 20,
+            total_tokens: 30,
+            cost: 0,
           },
-        ],
-        usage: {
-          prompt_tokens: 10,
-          completion_tokens: 20,
-          total_tokens: 30,
-          cost: 0,
-        },
-      }),
-      { status: 200, headers: { "content-type": "application/json" } },
-    ),
+        }),
+        { status: 200, headers: { "content-type": "application/json" } },
+      ),
   );
 }
 
@@ -100,6 +105,33 @@ describe.skipIf(!available)("explainPassage", () => {
       explainPassage({ ...options, from: 2, to: 2 }),
     ).rejects.toMatchObject({ reason: "user-daily" });
     expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
+  it("reports the remaining quota without consuming it", async () => {
+    configure({ AI_PER_USER_DAILY: "2", AI_PER_USER_BURST: "10" });
+    mockCompletion();
+    vi.spyOn(console, "info").mockImplementation(() => {});
+
+    await expect(getAiQuotaStatus(options.userId)).resolves.toMatchObject({
+      used: 0,
+      limit: 2,
+      remaining: 2,
+    });
+
+    await explainPassage(options);
+    await expect(getAiQuotaStatus(options.userId)).resolves.toMatchObject({
+      used: 1,
+      limit: 2,
+      remaining: 1,
+    });
+
+    // Reading the status again must not spend the second analysis.
+    await expect(getAiQuotaStatus(options.userId)).resolves.toMatchObject({
+      remaining: 1,
+    });
+    await expect(
+      explainPassage({ ...options, from: 2, to: 2 }),
+    ).resolves.toMatchObject({ cached: false });
   });
 
   it("applies the per-minute burst limit to new passages", async () => {

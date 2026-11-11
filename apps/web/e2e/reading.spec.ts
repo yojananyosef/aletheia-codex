@@ -89,7 +89,7 @@ test.describe("selección", () => {
 });
 
 test.describe("lectura hebrea", () => {
-  test("muestra el panel al pasar el cursor sin fijarlo con un clic", async ({
+  test("muestra el panel al pasar el cursor y lo cierra al salir", async ({
     page,
   }) => {
     await page.goto("/read/ETCBC4/Genesis/1");
@@ -118,18 +118,7 @@ test.describe("lectura hebrea", () => {
     expect(panelBox.x).toBeCloseTo(railBox.x, 0);
     expect(panelBox.y).toBeGreaterThanOrEqual(0);
     expect(panelBox.y + panelBox.height).toBeLessThanOrEqual(viewport.height);
-    expect(
-      await panel.evaluate(
-        (element) => element.scrollHeight - element.clientHeight,
-      ),
-    ).toBeLessThanOrEqual(1);
 
-    await page.mouse.move(0, 0);
-    await expect(panel).toBeHidden();
-
-    // The card is a preview only: a click must not pin a second copy or
-    // leave the panel open once the pointer leaves the word.
-    await trigger.click();
     await page.mouse.move(0, 0);
     await expect(panel).toBeHidden();
   });
@@ -163,11 +152,18 @@ test.describe("lectura hebrea", () => {
     await expect(
       panel.getByText("Lexema (con variante)", { exact: true }),
     ).toBeVisible();
-    // The preview is compact: the long lexeme statistics stay out of the card.
-    await expect(panel.locator('[data-group="lexeme"]')).toBeHidden();
+    // The panel carries the full lexical entry, not just the preview.
+    await expect(panel.locator('[data-group="lexeme"]')).toBeVisible();
     await expect(
       panel.locator("dt", { hasText: "Parte del discurso" }),
-    ).toBeHidden();
+    ).toBeVisible();
+    await expect(panel.locator("dt", { hasText: "Ocurrencias" })).toBeVisible();
+    await expect(
+      panel.locator("dt", { hasText: "Rango de frecuencia" }),
+    ).toBeVisible();
+    await expect(
+      panel.locator("dt", { hasText: "Lexema (transliterado)" }),
+    ).toBeVisible();
     await expect(panel.locator("dt", { hasText: "Texto" })).toBeVisible();
     await expect(
       panel.locator("dt", { hasText: "Transliteración" }),
@@ -460,6 +456,32 @@ test.describe("lectura hebrea", () => {
   });
 });
 
+test.describe("panel de palabra fijado por foco", () => {
+  test("el clic mantiene el panel abierto y el clic fuera lo cierra", async ({
+    page,
+  }) => {
+    await page.goto("/read/ETCBC4/Genesis/1");
+
+    const firstWord = page.locator(".verse").first().locator(".word").first();
+    const trigger = firstWord.locator(".word__trigger");
+    const panel = firstWord.locator(".word__panel");
+
+    await trigger.click();
+    await expect(panel).toBeVisible();
+    await expect(panel.locator('[data-group="lexeme"]')).toBeVisible();
+
+    await page.mouse.move(0, 0);
+    await expect(panel).toBeVisible();
+
+    // Clicking inside the card keeps it open.
+    await panel.click({ position: { x: 8, y: 8 } });
+    await expect(panel).toBeVisible();
+
+    await page.getByRole("heading", { level: 1 }).click();
+    await expect(panel).toBeHidden();
+  });
+});
+
 test.describe("lectura griega y latina", () => {
   test("el griego se muestra LTR y sin transliteración", async ({ page }) => {
     await page.goto("/read/nestle1904/Matthew/1");
@@ -512,7 +534,11 @@ test.describe("lectura griega y latina", () => {
     await firstWord.locator(".word__trigger").hover();
     const panel = firstWord.locator(".word__panel");
     await expect(panel).toBeVisible();
-    await expect(panel.locator('[data-group="lexeme"]')).toBeHidden();
+    await expect(panel.locator('[data-group="lexeme"]')).toBeVisible();
+    await expect(panel.locator("dt", { hasText: "Ocurrencias" })).toBeVisible();
+    await expect(
+      panel.locator("dt", { hasText: "Rango de frecuencia" }),
+    ).toBeVisible();
     await expect(panel.locator("dd", { hasText: "-MSg" })).toBeVisible();
     await expect(
       panel.locator(".word__group-title", { hasText: "Morfología" }),

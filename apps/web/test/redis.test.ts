@@ -101,6 +101,32 @@ describe("RedisAiBackend limits", () => {
     });
   });
 
+  it("reads the daily usage without consuming quota", async () => {
+    mocks.get.mockResolvedValueOnce("4");
+    const backend = new RedisAiBackend("https://example.com", "token");
+
+    await expect(backend.status("user", limits, now)).resolves.toEqual({
+      used: 4,
+      limit: 15,
+      remaining: 11,
+      resetAt: "2026-01-02T00:00:00.000Z",
+    });
+    expect(mocks.get).toHaveBeenCalledWith(
+      "bibleol:ai:usage:day:2026-01-01:user:user",
+    );
+    expect(mocks.eval).not.toHaveBeenCalled();
+  });
+
+  it("treats an empty daily counter as zero", async () => {
+    mocks.get.mockResolvedValueOnce(null);
+    const backend = new RedisAiBackend("https://example.com", "token");
+
+    await expect(backend.status("user", limits, now)).resolves.toMatchObject({
+      used: 0,
+      remaining: 15,
+    });
+  });
+
   it("refunds the daily counters", async () => {
     const backend = new RedisAiBackend("https://example.com", "token");
 
