@@ -9,9 +9,9 @@
 @layer components {
   .reading-page {
     --reading-accent: var(--brand);
-    --word-inspector-width: clamp(18.5rem, 23vw, 20.5rem);
+    --word-inspector-width: clamp(20rem, 30vw, 25rem);
     --word-inspector-gap: clamp(1.5rem, 2.5vw, 2.2rem);
-    --word-inspector-top: 5.75rem;
+    --word-inspector-top: 4.5rem;
     padding-bottom: 5rem;
   }
 
@@ -28,7 +28,7 @@
   }
 
   .reading-page > .wrap {
-    max-width: 72rem;
+    max-width: 76rem;
   }
 
   .reading-layout {
@@ -399,18 +399,6 @@
     color: var(--brand-strong);
   }
 
-  .tool-link--ai {
-    border-color: var(--foreground);
-    background: var(--foreground);
-    color: var(--background);
-  }
-
-  .tool-link--ai:hover {
-    border-color: var(--brand);
-    background: var(--brand);
-    color: var(--primary-foreground);
-  }
-
   .tool-link__label {
     white-space: nowrap;
   }
@@ -437,7 +425,7 @@
     grid-template-columns: 2.5rem minmax(0, 1fr);
     padding: 0.7rem 0 0.85rem;
     border-bottom: 1px solid var(--border-soft);
-    scroll-margin-top: 6rem;
+    scroll-margin-top: 5rem;
   }
 
   .verse:last-child {
@@ -595,10 +583,10 @@
     left: 50%;
     z-index: 40;
     display: none;
-    width: 19rem;
-    max-width: min(80vw, 19rem);
-    max-height: min(75vh, 36rem);
-    padding: 0.95rem 1.05rem;
+    width: 22rem;
+    max-width: min(88vw, 22rem);
+    max-height: min(78vh, 38rem);
+    padding: 0.75rem 1rem;
     overflow-y: auto;
     border: 1px solid var(--border);
     border-radius: var(--radius-lg);
@@ -607,7 +595,7 @@
     color: var(--foreground);
     font-family: var(--font-sans);
     font-size: 0.8rem;
-    line-height: 1.45;
+    line-height: 1.34;
     text-align: left;
     transform: translateX(-50%);
   }
@@ -617,8 +605,8 @@
     align-items: baseline;
     justify-content: space-between;
     gap: 0.75rem;
-    margin: 0 0 0.6rem;
-    padding-bottom: 0.5rem;
+    margin: 0 0 0.35rem;
+    padding-bottom: 0.25rem;
     border-bottom: 1px solid var(--border);
   }
 
@@ -660,13 +648,13 @@
   .word__features {
     display: grid;
     grid-template-columns: max-content minmax(0, 1fr);
-    gap: 0.28rem 0.7rem;
+    gap: 0.1rem 0.7rem;
     margin: 0;
   }
 
   .word__features--head {
-    margin-bottom: 0.6rem;
-    padding-bottom: 0.5rem;
+    margin-bottom: 0.35rem;
+    padding-bottom: 0.25rem;
     border-bottom: 1px solid var(--border);
   }
 
@@ -674,14 +662,14 @@
     color: var(--muted);
     font-size: 0.6rem;
     font-weight: 600;
-    letter-spacing: 0.05em;
+    letter-spacing: 0.04em;
     text-transform: uppercase;
   }
 
   .word__features dd {
     min-width: 0;
     margin: 0;
-    overflow-wrap: anywhere;
+    overflow-wrap: break-word;
   }
 
   .word__head-lexeme-value bdi {
@@ -690,13 +678,13 @@
   }
 
   .word__group + .word__group {
-    margin-top: 0.6rem;
-    padding-top: 0.6rem;
+    margin-top: 0.35rem;
+    padding-top: 0.35rem;
     border-top: 1px dashed var(--border-soft);
   }
 
   .word__group-title {
-    margin: 0 0 0.32rem;
+    margin: 0 0 0.15rem;
     color: var(--brand);
     font-size: 0.56rem;
     font-weight: 700;
@@ -730,12 +718,12 @@
       top: calc(anchor(below) + 0.35rem);
       right: auto;
       bottom: auto;
-      left: clamp(1rem, calc(anchor(center) - 9.5rem), calc(100vw - 20rem));
+      left: clamp(1rem, calc(anchor(center) - 11rem), calc(100vw - 23rem));
       z-index: 60;
       display: block;
-      width: 19rem;
-      max-width: min(80vw, 19rem);
-      max-height: min(40vh, 26rem);
+      width: 22rem;
+      max-width: min(88vw, 22rem);
+      max-height: min(70vh, 34rem);
       transform: none;
       animation: word-panel-in 120ms ease-out;
       position-try-fallbacks: --word-panel-above;
@@ -822,7 +810,7 @@
       z-index: 45;
       width: var(--word-inspector-width);
       max-width: none;
-      max-height: calc(100dvh - var(--word-inspector-top) - 1.5rem);
+      max-height: calc(100dvh - var(--word-inspector-top) - 0.9rem);
       transform: none;
       position-try-fallbacks: none;
     }
@@ -831,7 +819,7 @@
   @position-try --word-panel-above {
     top: auto;
     bottom: calc(anchor(top) - 0.35rem);
-    left: clamp(1rem, calc(anchor(center) - 9.5rem), calc(100vw - 20rem));
+    left: clamp(1rem, calc(anchor(center) - 11rem), calc(100vw - 23rem));
   }
 
   @keyframes word-panel-in {
@@ -909,7 +897,7 @@
     grid-template-columns: 2.5rem minmax(0, 1fr);
     padding: 0.7rem 0 0.9rem;
     border-bottom: 1px solid var(--border-soft);
-    scroll-margin-top: 6rem;
+    scroll-margin-top: 5rem;
   }
 
   .grammar-verse:last-child {

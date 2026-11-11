@@ -9,6 +9,7 @@ export interface ChapterUrlOptions {
   transliteration?: boolean;
   grammar?: boolean;
   gloss?: boolean;
+  ai?: boolean;
   verseRange?: VerseRange | null;
 }
 
@@ -28,6 +29,9 @@ export function chapterUrl(
   }
   if (options.gloss) {
     params.set("gloss", "1");
+  }
+  if (options.ai) {
+    params.set("ai", "1");
   }
   if (options.verseRange) {
     params.set("from", String(options.verseRange.from));
@@ -64,6 +68,9 @@ export function explainUrl(
   }
   if (options.gloss) {
     params.set("gloss", "1");
+  }
+  if (options.ai) {
+    params.set("ai", "1");
   }
   if (options.mode) {
     params.set("mode", options.mode);

@@ -81,7 +81,8 @@ const showGloss =
 const omitPanels =
   process.env.STATIC_EXPORT === "1" &&
   Astro.url.searchParams.get("panels") === "0";
-const showAi = process.env.STATIC_EXPORT !== "1" && aiAvailable();
+const aiEnabled = process.env.STATIC_EXPORT !== "1" && aiAvailable();
+const showAi = aiEnabled && Astro.url.searchParams.get("ai") === "1";
 
 const corpusTabs = reader
   .listCorpora()
@@ -103,13 +104,14 @@ const corpusTabs = reader
           transliteration: showTransliteration && item.hasTransliteration,
           grammar: showGrammar,
           gloss: showGloss && item.gloss !== null,
+          ai: showAi,
         },
       ),
     };
   })
   .filter((item) => item !== null);
 
-function toggleHref(key: "translit" | "grammar" | "gloss"): string {
+function toggleHref(key: "translit" | "grammar" | "gloss" | "ai"): string {
   const params = new URLSearchParams(Astro.url.searchParams);
   if (params.get(key) === "1") {
     params.delete(key);
@@ -180,6 +182,7 @@ Astro.response.headers.set(
           showTransliteration={showTransliteration}
           showGrammar={showGrammar}
           showGloss={showGloss}
+          showAi={showAi}
           withVerseRange
           verseRange={verseRange}
           lastVerse={lastVerse}
@@ -239,10 +242,18 @@ Astro.response.headers.set(
                 </span>
               </a>
             ) : null}
-            {showAi ? (
-              <a class="tool-link tool-link--ai" href="#ai">
+            {aiEnabled ? (
+              <a
+                class:list={["tool-link", { "tool-link--active": showAi }]}
+                href={toggleHref("ai")}
+                data-toggle="ai"
+                data-show-label={t.aiOpen}
+                data-hide-label={t.hideAi}
+              >
                 <Icon name="sparkles" size={14} class="tool-link__icon" />
-                <span class="tool-link__label">{t.aiOpen}</span>
+                <span class="tool-link__label">
+                  {showAi ? t.hideAi : t.aiOpen}
+                </span>
               </a>
             ) : null}
           </div>

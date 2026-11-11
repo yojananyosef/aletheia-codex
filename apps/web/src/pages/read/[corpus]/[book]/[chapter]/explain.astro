@@ -84,6 +84,7 @@ const viewOptions = {
   transliteration: Astro.url.searchParams.get("translit") === "1",
   grammar: Astro.url.searchParams.get("grammar") === "1",
   gloss: Astro.url.searchParams.get("gloss") === "1",
+  ai: Astro.url.searchParams.get("ai") === "1",
   verseRange: parsedRange,
 };
 
@@ -451,6 +452,7 @@ if (result && user) {
               showTransliteration={viewOptions.transliteration}
               showGrammar={viewOptions.grammar}
               showGloss={viewOptions.gloss}
+              showAi={viewOptions.ai}
               maxVerses={config.maxVerses}
             />
 

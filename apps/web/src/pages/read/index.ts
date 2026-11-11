@@ -44,6 +44,7 @@ export const GET: APIRoute = (context) => {
   const transliteration = params.get("translit") === "1";
   const grammar = params.get("grammar") === "1";
   const gloss = params.get("gloss") === "1" && corpus.gloss !== null;
+  const ai = params.get("ai") === "1";
   const verseRange = requestedVerseRange(params);
 
   return context.redirect(
@@ -51,6 +52,7 @@ export const GET: APIRoute = (context) => {
       transliteration,
       grammar,
       gloss,
+      ai,
       verseRange,
     }),
     302,

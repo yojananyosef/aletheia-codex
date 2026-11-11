@@ -23,6 +23,7 @@ interface Props {
   showTransliteration: boolean;
   showGrammar: boolean;
   showGloss: boolean;
+  showAi?: boolean;
   maxVerses: number;
 }
 
@@ -36,6 +37,7 @@ const {
   showTransliteration,
   showGrammar,
   showGloss,
+  showAi = false,
   maxVerses,
 } = Astro.props;
 
@@ -61,6 +63,7 @@ const action = explainUrl(corpus.id, book.id, chapter);
   ) : null}
   {showGrammar ? <input type="hidden" name="grammar" value="1" /> : null}
   {showGloss ? <input type="hidden" name="gloss" value="1" /> : null}
+  {showAi ? <input type="hidden" name="ai" value="1" /> : null}
 
   <Separator class="ai-form__separator" />
 

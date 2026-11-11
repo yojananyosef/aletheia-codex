@@ -60,10 +60,10 @@ html.static-reading .word-inspector {
     top: calc(anchor(below) + 0.35rem);
     right: auto;
     bottom: auto;
-    left: clamp(1rem, calc(anchor(center) - 9.5rem), calc(100vw - 20rem));
-    width: 19rem;
-    max-width: min(80vw, 19rem);
-    max-height: min(40vh, 26rem);
+    left: clamp(1rem, calc(anchor(center) - 11rem), calc(100vw - 23rem));
+    width: 22rem;
+    max-width: min(88vw, 22rem);
+    max-height: min(70vh, 34rem);
     transform: none;
     position-try-fallbacks: --word-panel-above;
   }

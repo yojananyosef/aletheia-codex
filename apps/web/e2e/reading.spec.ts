@@ -123,6 +123,37 @@ test.describe("lectura hebrea", () => {
     await expect(panel).toBeHidden();
   });
 
+  test("el panel de escritorio es ancho y no necesita scroll", async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width: 1440, height: 775 });
+    await page.goto("/read/ETCBC4/Genesis/1");
+
+    const firstWord = page.locator(".verse").first().locator(".word").first();
+    await firstWord.locator(".word__trigger").hover();
+    const panel = firstWord.locator(".word__panel");
+    await expect(panel).toBeVisible();
+
+    const metrics = await panel.evaluate((element) => {
+      const rows = [
+        ...element.querySelectorAll(".word__features dt, .word__features dd"),
+      ].map((row) => ({
+        text: row.textContent?.trim() ?? "",
+        height: row.getBoundingClientRect().height,
+      }));
+      return {
+        width: element.getBoundingClientRect().width,
+        scrollHeight: element.scrollHeight,
+        clientHeight: element.clientHeight,
+        wrapped: rows.filter((row) => row.height > 24),
+      };
+    });
+
+    expect(metrics.width).toBeGreaterThanOrEqual(380);
+    expect(metrics.scrollHeight).toBeLessThanOrEqual(metrics.clientHeight + 1);
+    expect(metrics.wrapped).toEqual([]);
+  });
+
   test("muestra el texto RTL y los detalles gramaticales en español", async ({
     page,
   }) => {
@@ -620,6 +651,16 @@ test.describe("direcciones", () => {
 });
 
 test.describe("producción", () => {
+  test("el header se mantiene compacto", async ({ page }) => {
+    await page.goto("/read/ETCBC4/Genesis/1");
+
+    const headerHeight = await page
+      .locator(".site-header")
+      .evaluate((element) => element.getBoundingClientRect().height);
+
+    expect(headerHeight).toBeLessThanOrEqual(64);
+  });
+
   test("la lectura no incluye scripts ni recursos externos", async ({
     request,
   }) => {
@@ -652,6 +693,17 @@ test.describe("asistente de IA", () => {
       "/read/ETCBC4/Genesis/1/explain?generate=1",
     );
     expect(response.status()).toBe(404);
+  });
+
+  test("un ai=1 obsoleto no abre el panel si no hay clave", async ({
+    page,
+  }) => {
+    await page.goto("/read/ETCBC4/Genesis/1?ai=1");
+
+    await expect(page.locator(".ai-panel")).toHaveCount(0);
+    await expect(
+      page.getByRole("link", { name: "Ocultar asistente" }),
+    ).toHaveCount(0);
   });
 });
 

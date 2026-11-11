@@ -1,5 +1,14 @@
 import { describe, expect, it } from "vitest";
-import { explainUrl } from "../src/lib/urls";
+import { chapterUrl, explainUrl } from "../src/lib/urls";
+
+describe("chapterUrl", () => {
+  it("preserves the open AI assistant across chapters", () => {
+    expect(chapterUrl("ETCBC4", "Genesis", 2, { ai: true })).toBe(
+      "/read/ETCBC4/Genesis/2?ai=1",
+    );
+    expect(chapterUrl("ETCBC4", "Genesis", 2)).toBe("/read/ETCBC4/Genesis/2");
+  });
+});
 
 describe("explainUrl", () => {
   it("builds a canonical explanation URL without query noise", () => {
@@ -16,10 +25,11 @@ describe("explainUrl", () => {
         transliteration: true,
         grammar: true,
         gloss: true,
+        ai: true,
         generate: true,
       }),
     ).toBe(
-      "/read/ETCBC4/Genesis/1/explain?translit=1&grammar=1&gloss=1&mode=gramatica&from=2&to=4&generate=1",
+      "/read/ETCBC4/Genesis/1/explain?translit=1&grammar=1&gloss=1&ai=1&mode=gramatica&from=2&to=4&generate=1",
     );
   });
 

@@ -21,6 +21,7 @@ interface Props {
   showTransliteration: boolean;
   showGrammar: boolean;
   showGloss: boolean;
+  showAi?: boolean;
   withVerseRange?: boolean;
   verseRange?: VerseRange | null;
   lastVerse?: number;
@@ -35,6 +36,7 @@ const {
   showTransliteration,
   showGrammar,
   showGloss,
+  showAi = false,
   withVerseRange = false,
   verseRange = null,
   lastVerse = 1,
@@ -48,6 +50,7 @@ const linkOptions = {
   transliteration: showTransliteration,
   grammar: showGrammar,
   gloss: showGloss,
+  ai: showAi,
 };
 ---
 
@@ -84,6 +87,7 @@ const linkOptions = {
     ) : null}
     {showGrammar ? <input type="hidden" name="grammar" value="1" /> : null}
     {showGloss ? <input type="hidden" name="gloss" value="1" /> : null}
+    {showAi ? <input type="hidden" name="ai" value="1" /> : null}
 
     <div class="chapter-jump__field chapter-jump__book">
       <label class="chapter-jump__label" for={bookSelectId}>

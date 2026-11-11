@@ -93,6 +93,7 @@ export const es = {
   aiPanelIntro:
     "Genere un resumen, una explicación o un análisis gramatical a partir del texto y la morfología del corpus.",
   aiOpen: "Asistente IA",
+  hideAi: "Ocultar asistente",
   aiBackToChapter: "Volver al capítulo",
   aiTitle: "Asistente de estudio",
   aiIntro:
