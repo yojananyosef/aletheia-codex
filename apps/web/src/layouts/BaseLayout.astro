@@ -11,6 +11,7 @@ interface Props {
 }
 
 const { title = t.siteTitle, description = t.homeIntro, robots } = Astro.props;
+const canonical = new URL(Astro.url.pathname, "https://codex.johan.cl/");
 ---
 
 <!doctype html>
@@ -23,6 +24,13 @@ const { title = t.siteTitle, description = t.homeIntro, robots } = Astro.props;
     <meta name="color-scheme" content="light dark" />
     <meta name="theme-color" content="#f4f5f2" />
     <title>{title}</title>
+    <link rel="canonical" href={canonical} />
+    <meta property="og:site_name" content={t.appName} />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content={canonical} />
+    <meta name="twitter:card" content="summary" />
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
   </head>
   <body id="top">
