@@ -673,7 +673,10 @@ test.describe("producción", () => {
 
     const html = await response.text();
     expect(html).not.toContain("<script");
-    expect(html).not.toMatch(/(src|href)="https?:\/\//);
+    // El canonical absoluto es deliberado; solo prohibimos recursos externos.
+    const externalResource =
+      /<(?:script|img|iframe)\b[^>]*\bsrc="https?:\/\/|<link\b[^>]*\brel="stylesheet"[^>]*\bhref="https?:\/\//i;
+    expect(html).not.toMatch(externalResource);
 
     const font = await request.get("/fonts/ezra-sil.woff");
     expect(font.status()).toBe(200);
