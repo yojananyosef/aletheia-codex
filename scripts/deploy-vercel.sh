@@ -7,8 +7,8 @@ set -euo pipefail
 # source without .git avoids that check while keeping the linked project.
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-TMP="${TMPDIR:-/tmp}/bibleol-vercel-deploy"
-PROJECT="${VERCEL_PROJECT:-bibleol-astro}"
+TMP="${TMPDIR:-/tmp}/aletheia-codex-vercel-deploy"
+PROJECT="${VERCEL_PROJECT:-aletheia-codex}"
 
 if ! command -v vercel >/dev/null 2>&1; then
   echo "Falta Vercel CLI. Instálalo con: npm install -g vercel" >&2

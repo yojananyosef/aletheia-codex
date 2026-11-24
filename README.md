@@ -1,4 +1,4 @@
-# BibleOL
+# Aletheia Codex
 
 Aplicación de lectura bíblica en lenguas originales. El texto se sirve como HTML
 desde Astro SSR y se lee directamente de los corpus Emdros mediante SQLite de
@@ -77,7 +77,7 @@ Las URL de lectura conservan `translit=1`, `grammar=1`, `gloss=1`, `from` y
 
 ## Despliegue en Vercel
 
-Producción: <https://bibleol-astro.vercel.app>
+Producción: <https://codex.johan.cl/>
 
 El despliegue principal es un contenedor SSR en Vercel. El `Dockerfile` de la
 raíz:
@@ -92,7 +92,7 @@ raíz:
 vincula el proyecto y despliega:
 
 ```sh
-vercel link --yes --project bibleol-astro
+vercel link --yes --project aletheia-codex
 pnpm deploy:vercel
 ```
 
@@ -113,7 +113,7 @@ Variables recomendadas en Vercel (Production):
 
 - `OPENROUTER_API_KEY`: activa el asistente de IA.
 - `AI_ENABLED=1`.
-- `AI_SITE_URL=https://bibleol-astro.vercel.app`.
+- `AI_SITE_URL=https://codex.johan.cl`.
 - `AI_IP_SALT=<secreto-largo>`.
 - `AI_TRUST_PROXY=1`: Vercel reescribe `X-Forwarded-For`.
 - `AI_REQUIRE_ACCOUNT=1`: exige una cuenta para generar análisis.
@@ -135,7 +135,7 @@ Variables recomendadas en Vercel (Production):
 La integración de Redis se puede provisionar desde el CLI:
 
 ```sh
-vercel integration add upstash/upstash-kv --name bibleol-ai -e production -e preview
+vercel integration add upstash/upstash-kv --name aletheia-codex-ai -e production -e preview
 ```
 
 El contenedor incluye los tres corpus, por lo que no depende de un hosting
@@ -259,7 +259,7 @@ contra su catálogo:
 - `nvidia/nemotron-3-ultra-550b-a55b:free`: 1.000.000 de tokens de contexto,
   gratuito y solo texto. Es el segundo respaldo.
 
-Los límites de la plataforma son independientes de los de BibleOL. Según la
+Los límites de la plataforma son independientes de los de Aletheia Codex. Según la
 documentación de OpenRouter, los modelos `:free` permiten 20 solicitudes por
 minuto y:
 
@@ -348,7 +348,7 @@ ORM ni una capa de repositorios genérica.
 
 ## Pruebas
 
-`pnpm test` ejecuta las pruebas del paquete `@bibleol/corpus` contra los datos
+`pnpm test` ejecuta las pruebas del paquete `@aletheia-codex/corpus` contra los datos
 locales y las pruebas unitarias de `apps/web` (limpieza de texto, prompt, caché,
 límites y URLs). Las pruebas del lector se omiten si los corpus no están
 descargados.

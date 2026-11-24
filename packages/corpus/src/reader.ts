@@ -15,7 +15,7 @@ import {
   type Verse,
   type Word,
   type WordGloss,
-} from "@bibleol/contracts";
+} from "@aletheia-codex/contracts";
 import { loadCatalogue } from "./metadata.js";
 
 export interface CorpusReaderOptions {

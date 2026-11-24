@@ -1,6 +1,6 @@
 # Design
 
-BibleOL looks like a critical edition, not a dashboard. The page is set like a
+Aletheia Codex looks like a critical edition, not a dashboard. The page is set like a
 book: generous margins, a serif voice, restrained rules and one strong accent.
 The interface recedes so the original script can lead.
 
@@ -215,7 +215,7 @@ Spanish word exists (`Alfabetos`, not `Scripts`). Buttons are verbs: _Leer_,
 _Ir_, _Elegir una edición_, _Probar el asistente_. Metadata is terse; prose is
 reserved for intros and explanations.
 
-The brand is written `BibleOL`, with `OL` in the accent colour. Edition IDs
+The brand is written `Aletheia Codex`, with `Codex` in the accent colour. Edition IDs
 (`ETCBC4`, `nestle1904`, `jvulgate`) are technical identifiers and stay as-is.
 
 ## Constraints

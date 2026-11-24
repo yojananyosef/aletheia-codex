@@ -1,4 +1,4 @@
-import type { FeatureValue } from "@bibleol/contracts";
+import type { FeatureValue } from "@aletheia-codex/contracts";
 
 const VALUE_LABELS: Record<string, Record<string, string>> = {
   part_of_speech_t: {

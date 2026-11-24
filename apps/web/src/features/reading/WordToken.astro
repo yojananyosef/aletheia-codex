@@ -5,7 +5,7 @@ import type {
   GrammarGroupDefinition,
   TextDirection,
   Word,
-} from "@bibleol/contracts";
+} from "@aletheia-codex/contracts";
 import { t } from "../../i18n";
 import { featureValueLabel } from "../../lib/grammar-labels";
 
@@ -51,7 +51,7 @@ const definitionByKey = new Map(
 
 // The legacy panel prints a placeholder instead of hiding a feature that has
 // no value for the current word. These are the same conventions used by
-// BibleOL (the Hebrew stem uses Ø, tense/state use "Ninguno").
+// Aletheia Codex (the Hebrew stem uses Ø, tense/state use "Ninguno").
 const EMPTY_LABELS: Record<string, string> = {
   verbal_stem_t: "Ø",
   verbal_tense_t: "Ninguno",

@@ -1,5 +1,5 @@
 import { readFileSync } from "node:fs";
-import type { CorpusCatalogue } from "@bibleol/contracts";
+import type { CorpusCatalogue } from "@aletheia-codex/contracts";
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);

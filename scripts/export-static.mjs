@@ -403,7 +403,7 @@ function bookRedirectPage(corpusId, bookId, corpora) {
   const fallback = chapterHref(corpusId, bookId, 1, new URLSearchParams());
   if (!book) {
     return redirectPage({
-      title: "Página no encontrada — BibleOL",
+      title: "Página no encontrada — Aletheia Codex",
       fallback: withBase("/404.html"),
       script: `location.replace(${JSON.stringify(withBase("/404.html"))});`,
     });
@@ -675,8 +675,8 @@ async function main() {
         const message = `El corpus ${corpus.title} no incluye este capítulo. Puede continuar en ${nearestTitle}.`;
         const page = notFound
           .replace(
-            "<title>No encontramos ese pasaje — BibleOL</title>",
-            "<title>Capítulo no disponible — BibleOL</title>",
+            "<title>No encontramos ese pasaje — Aletheia Codex</title>",
+            "<title>Capítulo no disponible — Aletheia Codex</title>",
           )
           .replace(
             '<p class="eyebrow">404</p>',

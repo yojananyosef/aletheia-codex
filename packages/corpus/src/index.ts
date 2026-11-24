@@ -19,4 +19,4 @@ export {
   type Verse,
   type Word,
   type WordGloss,
-} from "@bibleol/contracts";
+} from "@aletheia-codex/contracts";

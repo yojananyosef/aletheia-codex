@@ -1,4 +1,4 @@
-import { CorpusReader } from "@bibleol/corpus";
+import { CorpusReader } from "@aletheia-codex/corpus";
 import { getDataPaths } from "./data-paths";
 
 let reader: CorpusReader | undefined;

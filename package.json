@@ -1,5 +1,5 @@
 {
-  "name": "bibleol",
+  "name": "aletheia-codex",
   "version": "0.1.0",
   "private": true,
   "type": "module",
@@ -8,10 +8,10 @@
     "node": ">=26"
   },
   "scripts": {
-    "dev": "pnpm --filter @bibleol/web dev",
-    "build": "pnpm --filter @bibleol/web build",
-    "start": "pnpm --filter @bibleol/web start",
-    "preview": "pnpm --filter @bibleol/web preview",
+    "dev": "pnpm --filter @aletheia-codex/web dev",
+    "build": "pnpm --filter @aletheia-codex/web build",
+    "start": "pnpm --filter @aletheia-codex/web start",
+    "preview": "pnpm --filter @aletheia-codex/web preview",
     "export:static": "node scripts/export-static.mjs --start-server --out dist-static",
     "deploy:vercel": "bash scripts/deploy-vercel.sh",
     "check": "pnpm -r check",
@@ -20,7 +20,7 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "test": "pnpm -r test",
-    "test:e2e": "pnpm --filter @bibleol/web test:e2e",
+    "test:e2e": "pnpm --filter @aletheia-codex/web test:e2e",
     "db:migrate": "node scripts/db-migrate.mjs",
     "db:status": "node scripts/db-migrate.mjs --status",
     "data:import": "python3 scripts/import_legacy.py",

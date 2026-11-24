@@ -1,4 +1,4 @@
-import { NotFoundError } from "@bibleol/contracts";
+import { NotFoundError } from "@aletheia-codex/contracts";
 import type { APIRoute } from "astro";
 import { getReader } from "../../lib/reader";
 import { chapterUrl } from "../../lib/urls";

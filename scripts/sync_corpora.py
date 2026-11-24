@@ -15,7 +15,7 @@ from pathlib import Path
 def download(url: str, destination: Path) -> None:
     destination.parent.mkdir(parents=True, exist_ok=True)
     temporary = destination.with_suffix(destination.suffix + ".part")
-    request = urllib.request.Request(url, headers={"User-Agent": "BibleOL/0.1"})
+    request = urllib.request.Request(url, headers={"User-Agent": "AletheiaCodex/0.1"})
     with urllib.request.urlopen(request) as response, temporary.open("wb") as handle:
         while chunk := response.read(1024 * 1024):
             handle.write(chunk)

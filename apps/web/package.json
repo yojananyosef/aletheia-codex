@@ -1,5 +1,5 @@
 {
-  "name": "@bibleol/web",
+  "name": "@aletheia-codex/web",
   "version": "0.1.0",
   "private": true,
   "type": "module",
@@ -14,8 +14,8 @@
   },
   "dependencies": {
     "@astrojs/node": "^11.1.11",
-    "@bibleol/contracts": "workspace:*",
-    "@bibleol/corpus": "workspace:*",
+    "@aletheia-codex/contracts": "workspace:*",
+    "@aletheia-codex/corpus": "workspace:*",
     "@fontsource-variable/ibm-plex-sans": "^5.3.0",
     "@fontsource-variable/newsreader": "^5.3.0",
     "@supabase/ssr": "^0.12.7",

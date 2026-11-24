@@ -1,5 +1,5 @@
 export const es = {
-  appName: "BibleOL",
+  appName: "Aletheia Codex",
   tagline: "Lectura bíblica en lenguas originales",
   navEditions: "Ediciones",
   navReading: "Lectura",
@@ -86,7 +86,7 @@ export const es = {
   footerVersionNote: "Versión 0.1",
   skipToText: "Saltar al contenido",
   verse: "Versículo",
-  siteTitle: "BibleOL · Lectura bíblica",
+  siteTitle: "Aletheia Codex · Lectura bíblica",
   readingLabel: "Texto",
   aiLabel: "Asistente de estudio",
   aiPanelTitle: "Comprenda el pasaje con ayuda de IA",
@@ -153,7 +153,7 @@ export const es = {
   aiUnavailableText: "El asistente de IA no está configurado en este servidor.",
   aiBlockedTitle: "Solicitud bloqueada",
   aiBlockedText:
-    "Por seguridad, abra esta página directamente desde BibleOL para generar el análisis.",
+    "Por seguridad, abra esta página directamente desde Aletheia Codex para generar el análisis.",
   aiHomeNote:
     "Esta versión incluye el asistente de estudio con IA. Abre un capítulo y pulsa «Asistente IA» para generar un resumen, una explicación o un análisis gramatical.",
   aiHomeTitle: "Estudie el pasaje con el texto delante",
@@ -172,7 +172,7 @@ export const es = {
   aiAuthRequiredText:
     "Inicie sesión para generar y guardar análisis en su historial.",
   navAccount: "Cuenta",
-  authAsideEyebrow: "Cuenta BibleOL",
+  authAsideEyebrow: "Cuenta Aletheia Codex",
   authAsideBenefit1Title: "Historial privado",
   authAsideBenefit1Text:
     "Cada análisis queda guardado en su cuenta para consultarlo cuando quiera.",

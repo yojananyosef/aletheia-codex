@@ -3,7 +3,7 @@ import type {
   GrammarObject,
   Verse,
   Word,
-} from "@bibleol/contracts";
+} from "@aletheia-codex/contracts";
 
 export interface GrammarObjectNode {
   kind: "object";

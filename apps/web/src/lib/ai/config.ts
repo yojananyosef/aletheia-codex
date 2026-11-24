@@ -145,7 +145,7 @@ export function getAiConfig(): AiConfig {
       /\/+$/,
       "",
     ),
-    appName: "BibleOL",
+    appName: "Aletheia Codex",
     timeoutMs: readInteger("AI_TIMEOUT_MS", 120_000, 5_000, 300_000),
     temperature: readFloat("AI_TEMPERATURE", 0.3, 0, 2),
     maxVerses: readInteger("AI_MAX_VERSES", 80, 1, 176),

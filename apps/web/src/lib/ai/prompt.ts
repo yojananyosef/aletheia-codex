@@ -3,7 +3,7 @@ import type {
   GrammarObject,
   Verse,
   Word,
-} from "@bibleol/contracts";
+} from "@aletheia-codex/contracts";
 import { featureValueLabel } from "../grammar-labels";
 import type { AiMode } from "./types";
 
@@ -68,7 +68,7 @@ const GRAMMAR_LEVEL_KEYS = new Set([
   "phrase",
 ]);
 
-const SYSTEM_PROMPT = `Eres un asistente de estudio bíblico de BibleOL, una aplicación de lectura de la Biblia en lenguas originales.
+const SYSTEM_PROMPT = `Eres un asistente de estudio bíblico de Aletheia Codex, una aplicación de lectura de la Biblia en lenguas originales.
 
 Tu tarea es ayudar a comprender un pasaje a partir del texto original, la transliteración, las glosas en español y la morfología anotada del corpus. No eres una autoridad doctrinal ni un oráculo: eres una herramienta de estudio.
 

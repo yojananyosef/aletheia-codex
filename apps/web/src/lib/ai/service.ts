@@ -1,4 +1,4 @@
-import { NotFoundError } from "@bibleol/contracts";
+import { NotFoundError } from "@aletheia-codex/contracts";
 import { bookName } from "../book-names";
 import { getReader } from "../reader";
 import type { AiBackend } from "./backend";

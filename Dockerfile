@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile:1
 
-# Build the complete BibleOL SSR application, including the Emdros corpora,
+# Build the complete Aletheia Codex SSR application, including the Emdros corpora,
 # and run it as a Vercel container function. The image is built and run from
 # /app so Astro's absolute build paths remain valid.
 

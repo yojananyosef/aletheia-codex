@@ -1,6 +1,6 @@
 # Product
 
-BibleOL is a Spanish-language reading environment for the Bible in its original
+Aletheia Codex is a Spanish-language reading environment for the Bible in its original
 languages. It presents the Hebrew, Greek and Latin text with the linguistic
 apparatus needed to study it: transliteration, lemmas, morphology, Spanish
 glosses and syntax trees.
