@@ -159,7 +159,9 @@ test.describe("lectura hebrea", () => {
   }) => {
     await page.goto("/read/ETCBC4/Genesis/1");
 
-    await expect(page).toHaveTitle("Génesis 1 · Biblia hebrea — Aletheia Codex");
+    await expect(page).toHaveTitle(
+      "Génesis 1 · Biblia hebrea — Aletheia Codex",
+    );
     await expect(page.getByRole("heading", { level: 1 })).toHaveText(
       "Génesis 1",
     );
@@ -348,7 +350,9 @@ test.describe("lectura hebrea", () => {
 
   test("limita la lectura a un versículo o a un rango", async ({ page }) => {
     await page.goto("/read/ETCBC4/Psalmi/119?from=5");
-    await expect(page).toHaveTitle("Salmos 119:5 · Biblia hebrea — Aletheia Codex");
+    await expect(page).toHaveTitle(
+      "Salmos 119:5 · Biblia hebrea — Aletheia Codex",
+    );
     await expect(page.getByRole("heading", { level: 1 })).toHaveText(
       "Salmos 119:5",
     );

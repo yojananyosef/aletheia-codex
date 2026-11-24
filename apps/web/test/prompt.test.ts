@@ -1,4 +1,8 @@
-import type { CorpusSummary, GrammarObject, Verse } from "@aletheia-codex/contracts";
+import type {
+  CorpusSummary,
+  GrammarObject,
+  Verse,
+} from "@aletheia-codex/contracts";
 import { describe, expect, it } from "vitest";
 import { buildPrompt } from "../src/lib/ai/prompt";
 
