@@ -200,6 +200,7 @@ Astro.response.headers.set(
             <a
               class:list={["tool-link", { "tool-link--active": showGrammar }]}
               href={toggleHref("grammar")}
+              rel="nofollow"
               data-toggle="grammar"
               data-show-label={t.showGrammar}
               data-hide-label={t.hideGrammar}
@@ -216,6 +217,7 @@ Astro.response.headers.set(
                   { "tool-link--active": showTransliteration },
                 ]}
                 href={toggleHref("translit")}
+                rel="nofollow"
                 data-toggle="translit"
                 data-show-label={t.showTransliteration}
                 data-hide-label={t.hideTransliteration}
@@ -232,6 +234,7 @@ Astro.response.headers.set(
               <a
                 class:list={["tool-link", { "tool-link--active": showGloss }]}
                 href={toggleHref("gloss")}
+                rel="nofollow"
                 data-toggle="gloss"
                 data-show-label={t.showGloss}
                 data-hide-label={t.hideGloss}
@@ -246,6 +249,7 @@ Astro.response.headers.set(
               <a
                 class:list={["tool-link", { "tool-link--active": showAi }]}
                 href={toggleHref("ai")}
+                rel="nofollow"
                 data-toggle="ai"
                 data-show-label={t.aiOpen}
                 data-hide-label={t.hideAi}

@@ -11,13 +11,31 @@ const PRIVATE_PREFIXES = [
   "/restablecer",
 ];
 
+// Variantes de lectura que no aportan contenido nuevo (el canonical apunta a la
+// URL limpia). Los rastreadores las enumeraban y multiplicaban el tráfico.
+const VARIANT_PARAMS = ["translit", "grammar", "gloss", "ai", "from", "to"];
+const AI_BOT_PATTERN =
+  /(?:ClaudeBot|GPTBot|CCBot|Bytespider|Amazonbot|Applebot-Extended|meta-externalagent|Google-Extended)/i;
+
 function isPrivatePath(pathname: string): boolean {
   return PRIVATE_PREFIXES.some(
     (prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`),
   );
 }
 
+function hasVariantParams(url: URL): boolean {
+  return VARIANT_PARAMS.some((key) => url.searchParams.has(key));
+}
+
 export const onRequest = defineMiddleware(async (context, next) => {
+  const userAgent = context.request.headers.get("user-agent") ?? "";
+  if (hasVariantParams(context.url) && AI_BOT_PATTERN.test(userAgent)) {
+    return new Response("Forbidden", {
+      status: 403,
+      headers: { "X-Robots-Tag": "noindex, nofollow" },
+    });
+  }
+
   context.locals.user = null;
   context.locals.supabase = null;
 
@@ -60,6 +78,8 @@ export const onRequest = defineMiddleware(async (context, next) => {
 
   if (isPrivatePath(context.url.pathname)) {
     response.headers.set("Cache-Control", "private, no-store");
+    response.headers.set("X-Robots-Tag", "noindex, nofollow");
+  } else if (hasVariantParams(context.url)) {
     response.headers.set("X-Robots-Tag", "noindex, nofollow");
   }
 

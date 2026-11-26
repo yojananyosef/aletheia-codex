@@ -1,5 +1,10 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "framework": "container",
-  "regions": ["gru1"]
+  "regions": ["gru1"],
+  "functions": {
+    "**/*": {
+      "maxDuration": 60
+    }
+  }
 }
